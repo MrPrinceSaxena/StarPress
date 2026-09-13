@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/sections/Hero";
@@ -11,19 +9,12 @@ import PromoBanner from "@/components/sections/PromoBanner";
 import WhyChooseUs from "@/components/sections/WhyChooseUs";
 import Testimonials from "@/components/sections/Testimonials";
 import Newsletter from "@/components/sections/Newsletter";
-import { ProductItem } from "@/lib/data";
 
 export default function HomePage() {
-  const [cartCount, setCartCount] = useState(3);
-
-  const handleAddToCart = (_product: ProductItem) => {
-    setCartCount((prev) => prev + 1);
-  };
-
   return (
     <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">
       {/* 5.1 Header */}
-      <Header cartCount={cartCount} />
+      <Header />
 
       {/* Main Content: Exact sections from Section 5 in order */}
       <main className="flex-1">
@@ -37,7 +28,7 @@ export default function HomePage() {
         <CategoryGrid />
 
         {/* 5.5 Best Selling Products */}
-        <BestSellers onAddToCart={handleAddToCart} />
+        <BestSellers />
 
         {/* 5.6 Custom Printing Promo Banner */}
         <PromoBanner />

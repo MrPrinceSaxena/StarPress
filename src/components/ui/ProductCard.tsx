@@ -7,6 +7,8 @@ import { Heart, ShoppingBag, Check } from "lucide-react";
 import { ProductItem } from "@/lib/data";
 import StarRating from "./StarRating";
 import Button from "./Button";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 
 export interface ProductCardProps {
   product: ProductItem;
@@ -17,18 +19,21 @@ export default function ProductCard({
   product,
   onAddToCart,
 }: ProductCardProps) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { addItem } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const isWishlisted = isInWishlist(product.id);
   const [isAdded, setIsAdded] = useState(false);
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted((prev) => !prev);
+    toggleWishlist(product.id);
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    addItem(product, 1);
     setIsAdded(true);
     if (onAddToCart) {
       onAddToCart(product);

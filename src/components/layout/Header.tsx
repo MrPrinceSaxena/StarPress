@@ -13,12 +13,15 @@ import { NAV_LINKS } from "@/lib/data";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import MobileNavDrawer from "./MobileNavDrawer";
+import { useCart } from "@/context/CartContext";
 
 export interface HeaderProps {
   cartCount?: number;
 }
 
-export default function Header({ cartCount = 3 }: HeaderProps) {
+export default function Header({ cartCount: propCartCount }: HeaderProps) {
+  const { totalCount: dynamicCartCount } = useCart();
+  const cartCount = propCartCount !== undefined ? propCartCount : dynamicCartCount;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
