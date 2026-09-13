@@ -1,0 +1,221 @@
+// ============================================================================
+// Star Press — Database Schema (Phase 0 draft)
+// ============================================================================
+// This is the foundational schema. Pricing-rule detail (size/quantity/text-length
+// based pricing) is intentionally kept minimal here — it gets fully designed and
+// migrated in Phase 2 (Product Catalog & Pricing Logic). Every model below is
+// documented in docs/02-DATABASE-SCHEMA.md — keep both in sync.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Auth / Users
+// ----------------------------------------------------------------------------
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String?
+  phone         String?
+  role          Role      @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  addresses     Address[]
+  orders        Order[]
+  reviews       Review[]
+  customizationRequests CustomizationRequest[]
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  label       String?  // e.g. "Home", "Office"
+  line1       String
+  line2       String?
+  city        String
+  state       String
+  pincode     String
+  phone       String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Catalog
+// ----------------------------------------------------------------------------
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique   // e.g. "Business Printing"
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  displayOrder Int      @default(0)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id            String    @id @default(cuid())
+  category      Category  @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  name          String                 // e.g. "Business Cards"
+  slug          String    @unique
+  description   String?
+  basePrice     Decimal   @db.Decimal(10, 2)  // starting/reference price shown on cards
+  isFeatured    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  images        ProductImage[]
+  // Full pricing-rule structure (size/qty/text-length) designed in Phase 2.
+  // Placeholder relation so the shape exists in the schema from day one:
+  pricingRules  PricingRule[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  reviews       Review[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ProductImage {
+  id         String   @id @default(cuid())
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  String
+  url        String
+  altText    String?
+  displayOrder Int    @default(0)
+}
+
+// Placeholder — real structure (per size/quantity/text-length pricing) is
+// designed in Phase 2. Kept minimal now so Product already has the relation.
+model PricingRule {
+  id          String   @id @default(cuid())
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   String
+  label       String   // e.g. "A6 / 100 pcs"
+  price       Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Cart / Orders
+// ----------------------------------------------------------------------------
+
+model Cart {
+  id         String     @id @default(cuid())
+  userId     String?    @unique  // null = guest cart (session-based, Phase 3 decision)
+  items      CartItem[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model CartItem {
+  id          String   @id @default(cuid())
+  cart        Cart     @relation(fields: [cartId], references: [id])
+  cartId      String
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   String
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  specs       Json?    // chosen size/text/etc. — finalized in Phase 2
+  createdAt   DateTime @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_PRODUCTION
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id            String       @id @default(cuid())
+  user          User         @relation(fields: [userId], references: [id])
+  userId        String
+  status        OrderStatus  @default(PENDING)
+  totalAmount   Decimal      @db.Decimal(10, 2)
+  shippingAddress Json       // snapshot of address at order time
+  paymentId     String?      // Razorpay payment/order id
+  paymentStatus String?      // e.g. "paid", "failed", "refunded"
+  items         OrderItem[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  order       Order    @relation(fields: [orderId], references: [id])
+  orderId     String
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   String
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  specs       Json?
+}
+
+// ----------------------------------------------------------------------------
+// Reviews / Leads / Support
+// ----------------------------------------------------------------------------
+
+model Review {
+  id         String   @id @default(cuid())
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  rating     Int      // 1-5
+  comment    String?
+  createdAt  DateTime @default(now())
+}
+
+model CustomizationRequest {
+  id          String   @id @default(cuid())
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?
+  productType String   // free text or linked product, decided in Phase 2/3
+  details     String?
+  fileUrl     String?  // uploaded design file (Cloudinary/S3 URL)
+  status      String   @default("new") // new / reviewed / quoted / converted
+  createdAt   DateTime @default(now())
+}
+
+model BulkOrderInquiry {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String
+  email        String?
+  company      String?
+  productType  String?
+  quantity     String?
+  details      String?
+  status       String   @default("new")
+  createdAt    DateTime @default(now())
+}
+
+model ContactInquiry {
+  id         String   @id @default(cuid())
+  name       String
+  email      String?
+  phone      String?
+  message    String
+  status     String   @default("new")
+  createdAt  DateTime @default(now())
+}
