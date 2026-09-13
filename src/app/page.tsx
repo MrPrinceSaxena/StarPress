@@ -1,15 +1,59 @@
-// Placeholder — this is Phase 0 only, confirming the app boots.
-// Real homepage (hero, categories, best sellers, etc.) is built in Phase 7
-// per docs/04-PAGES-AND-FEATURES.md.
+"use client";
+
+import React, { useState } from "react";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import Hero from "@/components/sections/Hero";
+import TrustBadges from "@/components/sections/TrustBadges";
+import CategoryGrid from "@/components/sections/CategoryGrid";
+import BestSellers from "@/components/sections/BestSellers";
+import PromoBanner from "@/components/sections/PromoBanner";
+import WhyChooseUs from "@/components/sections/WhyChooseUs";
+import Testimonials from "@/components/sections/Testimonials";
+import Newsletter from "@/components/sections/Newsletter";
+import { ProductItem } from "@/lib/data";
 
 export default function HomePage() {
+  const [cartCount, setCartCount] = useState(3);
+
+  const handleAddToCart = (_product: ProductItem) => {
+    setCartCount((prev) => prev + 1);
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
-      <h1 className="text-3xl font-bold text-brand-navy">Star Press</h1>
-      <p className="text-brand-gold font-medium">Turning Ideas Into Print</p>
-      <p className="text-sm text-gray-500">
-        Phase 0 scaffold — see docs/04-PAGES-AND-FEATURES.md for build status.
-      </p>
-    </main>
+    <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">
+      {/* 5.1 Header */}
+      <Header cartCount={cartCount} />
+
+      {/* Main Content: Exact sections from Section 5 in order */}
+      <main className="flex-1">
+        {/* 5.2 Hero Section */}
+        <Hero />
+
+        {/* 5.3 Trust Badges Strip */}
+        <TrustBadges />
+
+        {/* 5.4 Shop by Category */}
+        <CategoryGrid />
+
+        {/* 5.5 Best Selling Products */}
+        <BestSellers onAddToCart={handleAddToCart} />
+
+        {/* 5.6 Custom Printing Promo Banner */}
+        <PromoBanner />
+
+        {/* 5.7 Why Choose STAR PRESS? */}
+        <WhyChooseUs />
+
+        {/* 5.8 Testimonials — "What Our Customers Say" */}
+        <Testimonials />
+
+        {/* 5.9 Newsletter CTA */}
+        <Newsletter />
+      </main>
+
+      {/* 5.10 Footer */}
+      <Footer />
+    </div>
   );
 }

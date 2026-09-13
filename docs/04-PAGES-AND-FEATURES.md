@@ -8,7 +8,7 @@ for a new developer (or future-you) to see what actually exists vs. what's still
 ## Pages
 | Page | Priority | Status | Phase |
 |---|---|---|---|
-| Home | High | 🔲 | 7 |
+| Home | High | ✅ | 7 |
 | Shop | High | 🔲 | 2 |
 | Categories | High | 🔲 | 2 |
 | Product detail | High | 🔲 | 2 |

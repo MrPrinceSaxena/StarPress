@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="bg-rohit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="accent-rohit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFCF1B" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="60" fill="url(#bg-rohit)" />
+  <circle cx="60" cy="46" r="22" fill="#E2E8F0" />
+  <path d="M60 22 C48 22 40 32 40 44 C46 44 50 36 60 36 C70 36 74 44 80 44 C80 32 72 22 60 22 Z" fill="#1E293B" />
+  <circle cx="53" cy="46" r="2.5" fill="#0F172A" />
+  <circle cx="67" cy="46" r="2.5" fill="#0F172A" />
+  <path d="M55 56 Q60 60 65 56" stroke="#0F172A" stroke-width="2" fill="none" stroke-linecap="round" />
+  <path d="M26 104 C28 82 44 74 60 74 C76 74 92 82 94 104 Z" fill="url(#accent-rohit)" />
+</svg>
