@@ -5,6 +5,29 @@ and open questions. This is the audit trail for the whole project.
 
 ---
 
+## Architecture & Hardening — Enterprise Foundation & Production SEO
+**Date:** 2026-09-13
+
+**Built & Hardened:**
+- **Developer Tooling & Linting**: Created `.eslintrc.json` extending `next/core-web-vitals` with proper browser/node environments; hardened `tsconfig.json` with strict casing and type checks. Clean `npm run lint` passing with 0 warnings/errors.
+- **Security & Headers**: Configured HTTP security headers in `next.config.js` (`X-DNS-Prefetch-Control`, `X-XSS-Protection`, `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`) and disabled `poweredByHeader`.
+- **Global Reactive State (Cart & Wishlist)**:
+  - Created typed `CartContext` (`src/context/CartContext.tsx`) with quantity adjustments, item removal, subtotal calculation, and SSR-safe `localStorage` persistence.
+  - Created typed `WishlistContext` (`src/context/WishlistContext.tsx`) with toggle operations and persistent storage.
+  - Integrated `AppProviders` into root `layout.tsx`, connecting `Header.tsx`'s live cart count badge and `ProductCard.tsx`'s interactive wishlist and cart actions.
+- **Resilience & Error Boundaries**:
+  - Branded 404 page (`src/app/not-found.tsx`) with Star Press neon styling and recovery paths.
+  - Client runtime error boundary (`src/app/error.tsx`) with incident logging and retry capabilities.
+  - Route suspense skeleton (`src/app/loading.tsx`).
+- **Production SEO & Structured Data**:
+  - Schema.org JSON-LD graph (`src/components/seo/JsonLd.tsx`) covering `WebSite`, `Organization`, and `LocalBusiness` for Google rich snippet indexing.
+  - Dynamic `robots.txt` generator (`src/app/robots.ts`).
+  - Dynamic `sitemap.xml` generator (`src/app/sitemap.ts`).
+  - Enhanced OpenGraph, Twitter card, viewport, and canonical metadata in `src/app/layout.tsx`.
+- **Environment Schema Validation**: Type-safe Zod schema validation in `src/lib/env.ts`.
+
+---
+
 ## Phase 7 (Landing Page) — Pixel-Accurate Star Press Homepage
 **Date:** 2026-09-13
 

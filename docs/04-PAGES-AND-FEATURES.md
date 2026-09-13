@@ -35,7 +35,7 @@ for a new developer (or future-you) to see what actually exists vs. what's still
 | Admin auth/role gating | 🔲 | 1 |
 | Product catalog (categories, products, images) | 🔲 | 2 |
 | Size/quantity/text-based pricing engine | 🔲 | 2 |
-| Cart | 🔲 | 3 |
+| Cart | 🟡 | 3 |
 | Checkout | 🔲 | 3 |
 | Order creation + status tracking | 🔲 | 4 |
 | Razorpay payment integration | 🔲 | 5 |
@@ -46,7 +46,7 @@ for a new developer (or future-you) to see what actually exists vs. what's still
 | Contact enquiry form | 🔲 | 7 |
 | Product reviews | 🔲 | 2/7 |
 | Static/legal pages | 🔲 | 7 |
-| SEO + deployment | 🔲 | 8 |
+| SEO + deployment | 🟡 | 8 |
 
 Phase numbers are the current plan (see `docs/00-PROJECT-OVERVIEW.md`'s roadmap in
 chat history) — adjust here if we reorder phases later.
