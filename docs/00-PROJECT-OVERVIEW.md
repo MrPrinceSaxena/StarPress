@@ -15,11 +15,12 @@ can scale up later (more products, more traffic, more locations) without a rewri
 |---|---|
 | Brand name | Star Press |
 | Tagline | "Turning Ideas Into Print" |
-| Primary color | Navy Blue / Dark Blue |
-| Accent color | Yellow / Gold |
-| Background | White |
-| Text color | Black / Dark Gray |
-| Style | Modern, professional, clean, e-commerce focused |
+| Theme | Dark theme |
+| Primary CTA | Yellow (`#F5C518` - primary buttons, ratings, highlights) |
+| Accent colors | Magenta (`#E91E8C`) / Cyan (`#22D3EE`) gradient accents |
+| Background | Dark (`#0B0E1A` page background, `#141827` surface panels) |
+| Text color | White / Light gray on dark surfaces |
+| Style | Modern, premium dark aesthetic, high-contrast, e-commerce focused |
 
 ## Product catalog (from client brief)
 8 main categories, ~48 products total:
