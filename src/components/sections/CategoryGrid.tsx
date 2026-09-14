@@ -25,8 +25,8 @@ export default function CategoryGrid() {
           </Link>
         </div>
 
-        {/* 6 Category Tiles Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
+        {/* 8 Category Tiles Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3.5 sm:gap-4">
           {CATEGORIES.map((category) => (
             <CategoryCard key={category.id} category={category} />
           ))}

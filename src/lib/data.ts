@@ -90,51 +90,67 @@ export const TRUST_BADGES: TrustBadgeItem[] = [
 export const CATEGORIES: CategoryItem[] = [
   {
     id: "cat-1",
-    name: "Business Cards",
+    name: "Business Printing",
     color: "#17C3C0",
     bgColorClass: "bg-cat-teal",
     imageSrc: "/images/cat-business-cards.jpg",
-    href: "/shop/business-cards",
+    href: "/shop/business-printing",
   },
   {
     id: "cat-2",
-    name: "Flyers & Leaflets",
+    name: "Marketing Materials",
     color: "#F97066",
     bgColorClass: "bg-cat-coral",
     imageSrc: "/images/cat-flyers.jpg",
-    href: "/shop/flyers",
+    href: "/shop/marketing-materials",
   },
   {
     id: "cat-3",
-    name: "Brochures",
-    color: "#2E90FA",
-    bgColorClass: "bg-cat-blue",
-    imageSrc: "/images/cat-brochures.jpg",
-    href: "/shop/brochures",
-  },
-  {
-    id: "cat-4",
-    name: "Banners",
+    name: "Outdoor Advertising",
     color: "#7A5CF0",
     bgColorClass: "bg-cat-purple",
     imageSrc: "/images/cat-banners.jpg",
-    href: "/shop/banners",
+    href: "/shop/outdoor-advertising",
+  },
+  {
+    id: "cat-4",
+    name: "Stationery",
+    color: "#2E90FA",
+    bgColorClass: "bg-cat-blue",
+    imageSrc: "/images/cat-brochures.jpg",
+    href: "/shop/stationery",
   },
   {
     id: "cat-5",
-    name: "Stickers",
+    name: "Wedding & Events",
     color: "#EE4FA6",
     bgColorClass: "bg-cat-pink",
     imageSrc: "/images/cat-stickers.jpg",
-    href: "/shop/stickers",
+    href: "/shop/wedding-events",
   },
   {
     id: "cat-6",
-    name: "Custom Gifts",
+    name: "Packaging",
     color: "#F79A3E",
     bgColorClass: "bg-cat-orange",
     imageSrc: "/images/cat-gifts.jpg",
-    href: "/shop/custom-gifts",
+    href: "/shop/packaging",
+  },
+  {
+    id: "cat-7",
+    name: "Labels & Stickers",
+    color: "#FFCF1B",
+    bgColorClass: "bg-brand-yellow",
+    imageSrc: "/images/prod-stickers.jpg",
+    href: "/shop/labels-stickers",
+  },
+  {
+    id: "cat-8",
+    name: "Photo & Custom",
+    color: "#29C5F6",
+    bgColorClass: "bg-brand-cyan",
+    imageSrc: "/images/promo-banner.jpg",
+    href: "/shop/custom-printing",
   },
 ];
 
@@ -159,6 +175,15 @@ export const BEST_SELLERS: ProductItem[] = [
   },
   {
     id: "prod-3",
+    name: "Tri-Fold Brochure",
+    price: 599,
+    rating: 4.7,
+    reviewCount: 112,
+    imageSrc: "/images/cat-brochures.jpg",
+    href: "/shop/brochures",
+  },
+  {
+    id: "prod-4",
     name: "Vinyl Banner",
     price: 899,
     rating: 4.7,
@@ -167,13 +192,22 @@ export const BEST_SELLERS: ProductItem[] = [
     href: "/shop/banners",
   },
   {
-    id: "prod-4",
+    id: "prod-5",
     name: "Custom Stickers",
     price: 299,
     rating: 4.9,
     reviewCount: 140,
     imageSrc: "/images/prod-stickers.jpg",
     href: "/shop/stickers",
+  },
+  {
+    id: "prod-6",
+    name: "Custom Paper Bags",
+    price: 699,
+    rating: 4.8,
+    reviewCount: 84,
+    imageSrc: "/images/cat-gifts.jpg",
+    href: "/shop/packaging",
   },
 ];
 
@@ -268,3 +302,116 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     ],
   },
 ];
+
+export interface HowItWorksStep {
+  step: string;
+  title: string;
+  description: string;
+  iconName: "Layers" | "UploadCloud" | "CheckCircle2" | "Printer" | "Truck";
+  badgeColorClass: string;
+  accentColorClass: string;
+}
+
+export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
+  {
+    step: "01",
+    title: "Choose Product",
+    description:
+      "Browse our catalog of business cards, banners, apparel, packaging, and custom formats.",
+    iconName: "Layers",
+    badgeColorClass: "border-brand-cyan/40 text-brand-cyan bg-brand-cyan/10",
+    accentColorClass: "text-brand-cyan",
+  },
+  {
+    step: "02",
+    title: "Upload Design",
+    description:
+      "Submit your print-ready file (PDF, AI, PSD, PNG) or specify notes for our pre-press design team.",
+    iconName: "UploadCloud",
+    badgeColorClass: "border-brand-magenta/40 text-brand-magenta bg-brand-magenta/10",
+    accentColorClass: "text-brand-magenta",
+  },
+  {
+    step: "03",
+    title: "Confirm Order",
+    description:
+      "Review instant transparent pricing, select quantity slabs, and approve your digital proof.",
+    iconName: "CheckCircle2",
+    badgeColorClass: "border-brand-yellow/40 text-brand-yellow bg-brand-yellow/10",
+    accentColorClass: "text-brand-yellow",
+  },
+  {
+    step: "04",
+    title: "Precision Print",
+    description:
+      "Manufactured on high-grade commercial presses with vibrant finishes and quality control checks.",
+    iconName: "Printer",
+    badgeColorClass: "border-brand-indigo/40 text-brand-indigo bg-brand-indigo/10",
+    accentColorClass: "text-brand-indigo",
+  },
+  {
+    step: "05",
+    title: "Pan-India Delivery",
+    description:
+      "Carefully packaged with moisture-proof protection and dispatched reliably straight to your door.",
+    iconName: "Truck",
+    badgeColorClass: "border-brand-magenta/40 text-brand-magenta bg-brand-magenta/10",
+    accentColorClass: "text-brand-magenta",
+  },
+];
+
+export interface BulkOrderPerk {
+  id: string;
+  title: string;
+  desc: string;
+}
+
+export const BULK_ORDER_PERKS: BulkOrderPerk[] = [
+  {
+    id: "bulk-1",
+    title: "Tiered Volume Discounts",
+    desc: "Up to 40% wholesale pricing on 500+ units across all print categories.",
+  },
+  {
+    id: "bulk-2",
+    title: "Dedicated Print Specialist",
+    desc: "Direct single point of contact for pre-press approvals, proofing, and scheduling.",
+  },
+  {
+    id: "bulk-3",
+    title: "Free Pre-Production Proof",
+    desc: "Digital or physical sample confirmation before initiating large production runs.",
+  },
+  {
+    id: "bulk-4",
+    title: "GST Invoicing & Multi-Drop",
+    desc: "100% tax-compliant business billing and multi-location dispatch across India.",
+  },
+];
+
+export interface BulkVolumeTier {
+  range: string;
+  discount: string;
+  perks: string;
+  featured?: boolean;
+}
+
+export const BULK_VOLUME_TIERS: BulkVolumeTier[] = [
+  {
+    range: "250 – 500 Units",
+    discount: "15% Off",
+    perks: "Standard dispatch • Free digital proof",
+  },
+  {
+    range: "500 – 2,500 Units",
+    discount: "28% Off",
+    perks: "Priority queue • Dedicated manager",
+    featured: true,
+  },
+  {
+    range: "2,500+ Units",
+    discount: "Up to 40% Off",
+    perks: "Custom wholesale rates • Free shipping",
+  },
+];
+
