@@ -44,11 +44,30 @@ Scale target: **single small business, Pan-India delivery, low running cost.** N
 ## 5. Core Features (Full Scope)
 
 ### 5.1 Storefront
-- Home page (hero banner, category grid, best-selling products, why-choose-us, testimonials, newsletter signup) — matches uploaded neon design
+- Home page sections (per client's requirement sheet): Header nav → Hero → Popular Categories (8 category cards) → Best Selling Products → Why Choose Us → **How It Works** (Choose Product → Upload Design → Confirm Order → We Print → Delivery) → Bulk Order banner → Customer Reviews → CTA section → Footer — matches the approved Neon Dark design
 - Shop / Category browsing with filters (category, price range)
 - Product detail page with **dynamic pricing**: price recalculates based on selected size, quantity, and (where applicable) text/customization length
 - Search
 - Wishlist (nice-to-have, not blocking launch)
+
+### 5.1.1 Product Catalog Scope (per client requirement sheet)
+
+8 main categories, ~50 products total at launch. Exact per-product specs, size/customization options, and pricing to be finalized later (client confirmed this is a later pass) — catalog structure below is enough to build category/product data model and seed the admin panel.
+
+| Category | Example Products |
+|---|---|
+| Business Printing | Business Cards, Letterheads, Envelopes, Bill Books, Invoice Books, Company Profiles |
+| Marketing Materials | Flyers, Brochures, Leaflets, Posters, Pamphlets, Catalogues |
+| Outdoor Advertising | Flex Printing, Vinyl Printing, Banners, Hoardings, Standees, Glow Sign Boards, Neon Boards, 3D Letter Board, Name Plate, Acrylic Board |
+| Stationery | Notebooks, Diaries, Notepads, Files & Folders, Certificates, ID Cards |
+| Wedding & Events | Wedding Cards, Invitation Cards, Thank You Cards, Event Tickets, Ceremony Programs |
+| Packaging | Paper Bags, Product Boxes, Packaging Labels, Tags |
+| Labels & Stickers | Product Labels, Bottle Labels, Barcode Labels, Logo Stickers, Transparent Stickers, Custom Shape Stickers |
+| Photo & Custom Printing | Photo Prints, Canvas Prints, Photo Frames, T-Shirt Printing, Mug Printing, Keychain Printing |
+
+**Featured products for homepage "Best Selling Products":** Premium Business Cards, A4 Flyers, Tri-Fold Brochure, Vinyl Banner, Custom Stickers, Custom Paper Bags.
+
+*Note:* the client's requirement sheet's Brand Setup tab (Navy Blue/Gold/White, "modern professional") is an early/outdated draft — the **Neon Dark theme from the approved screenshots is the current, correct theme** and is what's documented in the UI/UX doc. The sheet also references "WooCommerce cart/checkout" — that's leftover from an earlier WordPress-based concept and does not apply; the custom Next.js cart/checkout (per TRD) stands.
 
 ### 5.2 Customer Account
 - Sign up / Login (email + password; NextAuth)
@@ -81,7 +100,9 @@ Scale target: **single small business, Pan-India delivery, low running cost.** N
 - Basic content: hero banner text/image, testimonials (edit or fixed for now — confirm in dev)
 
 ### 5.7 Static / Support Pages
-- About, Contact, FAQs, Shipping, Returns, Track Order (can reuse order status lookup)
+- About Us, Contact (phone/WhatsApp/email/address/enquiry form), FAQ, Track Order (reuses order status lookup)
+- My Account (order history + account details — same as 5.2)
+- Privacy Policy, Terms & Conditions (legal pages, medium priority)
 
 ## 6. Pricing Logic (Business Rule)
 
@@ -95,15 +116,22 @@ Final price = `base_price × size_factor × qty_tier_rate + customization_fee`. 
 
 ## 7. Phased Rollout
 
-| Phase | Scope |
-|---|---|
-| **Phase 0** (done) | Repo scaffold, stack setup, DB schema draft, docs |
-| **Phase 1 — MVP** | Home, Shop, Product detail w/ dynamic pricing, Cart, Auth, Checkout, Razorpay, Order confirmation |
-| **Phase 2** | Customer order history/tracking, Admin panel (products, orders, pricing rules) |
-| **Phase 3** | Custom Printing & Bulk Orders inquiry forms, static pages, newsletter |
-| **Phase 4 (future)** | Wishlist, reviews/ratings, coupons, analytics, design-upload tool, courier tracking API |
+*(Aligned to the repo's own phase numbering in `docs/04-PAGES-AND-FEATURES.md` / `docs/05-CHANGELOG.md`, so the PRD and the codebase's dev log don't drift into two different phase schemes.)*
 
-Each phase ships independently and is documented so another developer can pick up mid-way (per client's stated requirement).
+| Phase | Scope | Status |
+|---|---|---|
+| **Phase 0** | Repo scaffold, stack setup, DB schema draft, docs | ✅ Done |
+| **Phase 7 (Home)** + Hardening | Pixel-accurate Home page (10 sections) + security headers, SEO, cart/wishlist context, error pages | ✅ Done — content gaps found, see Dev Tracker |
+| **Phase 1** | Customer auth (register/login), Admin auth/role gating | 🔲 Next up |
+| **Phase 2** | Catalog (8 categories, ~50 products), pricing-rule engine, Shop/Category/Product-detail pages | 🔲 Not started |
+| **Phase 3** | Cart (full), Checkout, guest-checkout decision | 🔲 Not started |
+| **Phase 4** | Order creation + status tracking | 🔲 Not started |
+| **Phase 5** | Razorpay payment integration | 🔲 Not started — blocked on client's Razorpay account credentials |
+| **Phase 6** | Admin panel — products/categories, orders | 🔲 Not started |
+| **Phase 7 (remainder)** | Custom Printing & Bulk Orders forms, About/Contact/FAQ, legal pages, reviews | 🔲 Not started |
+| **Phase 8+ (future)** | Wishlist polish, coupons, analytics, design-upload tool, courier tracking API | 🔲 Future |
+
+Each phase ships independently and is documented (`docs/05-CHANGELOG.md` in-repo + this PRD) so another developer can pick up mid-way.
 
 ## 8. Success Criteria (Launch)
 
@@ -112,9 +140,17 @@ Each phase ships independently and is documented so another developer can pick u
 - Site matches the approved neon dark visual theme
 - Site is usable on mobile (majority of Indian traffic is mobile-first)
 
-## 9. Open Questions / To Confirm with Client
+## 9. Open Questions / Status
 
-- Exact pricing tables per category (need size/qty/price sheet)
-- Delivery/shipping partner or manual dispatch for v1
-- Whether admin edits homepage content (banner/testimonials) or these stay code-level for now
-- GST/invoice requirements
+| Item | Status |
+|---|---|
+| Delivery/shipping for v1 | ✅ **Confirmed** — manual dispatch for Phase 1; courier API (e.g., Shiprocket) integrated later |
+| Theme | ✅ **Confirmed** — Neon Dark (screenshots), not the Navy/Gold brand-sheet draft |
+| Cart/checkout platform | ✅ **Confirmed** — custom Next.js build, not WooCommerce |
+| Exact pricing tables per category (size/qty/price) | ⏳ Pending — client will provide in a later, deeper pass along with product specs and order-customization options |
+| Product specifications & customization options per product | ⏳ Pending — same later pass as above |
+| Whether admin edits homepage content (banner/testimonials) or these stay code-level | ⏳ Pending |
+| GST/invoice requirements | ⏳ Pending |
+| Guest checkout vs. forced account creation | ⏳ Pending — decide by Phase 3 |
+| Single admin (owner) login vs. multiple staff accounts | ⏳ Pending — assumed single owner login unless client asks otherwise |
+| Razorpay business account credentials | ⏳ **Blocking Phase 5** — client must provide their own Razorpay account before payment integration can start |

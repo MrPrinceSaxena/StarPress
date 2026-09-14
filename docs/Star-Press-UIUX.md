@@ -8,6 +8,8 @@
 
 ## 1. Design Theme — "Neon Dark"
 
+*(Confirmed as the authoritative theme — an earlier client requirement sheet listed Navy Blue/Gold/White as a draft brand direction; that has been superseded by this Neon Dark theme, which is what's actually built and approved.)*
+
 Bold, near-black storefront with neon pink/magenta + cyan accents and a solid yellow CTA color. Playful, energetic, print-shop-meets-nightlife feel — matches "Print Your Ideas to Life" positioning.
 
 ### 1.1 Color Palette
