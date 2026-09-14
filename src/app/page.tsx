@@ -5,46 +5,59 @@ import Hero from "@/components/sections/Hero";
 import TrustBadges from "@/components/sections/TrustBadges";
 import CategoryGrid from "@/components/sections/CategoryGrid";
 import BestSellers from "@/components/sections/BestSellers";
-import PromoBanner from "@/components/sections/PromoBanner";
 import WhyChooseUs from "@/components/sections/WhyChooseUs";
+import HowItWorks from "@/components/sections/HowItWorks";
+import BulkOrderBanner from "@/components/sections/BulkOrderBanner";
+import PromoBanner from "@/components/sections/PromoBanner";
 import Testimonials from "@/components/sections/Testimonials";
+import CTASection from "@/components/sections/CTASection";
 import Newsletter from "@/components/sections/Newsletter";
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">
-      {/* 5.1 Header */}
+      {/* 1. Header Navigation */}
       <Header />
 
-      {/* Main Content: Exact sections from Section 5 in order */}
+      {/* Main Content: Exact sequence per PRD §5.1 and 00-PROJECT-OVERVIEW */}
       <main className="flex-1">
-        {/* 5.2 Hero Section */}
+        {/* 2. Hero Section */}
         <Hero />
 
-        {/* 5.3 Trust Badges Strip */}
+        {/* 2.1 Trust Badges Strip */}
         <TrustBadges />
 
-        {/* 5.4 Shop by Category */}
+        {/* 3. Shop by Category */}
         <CategoryGrid />
 
-        {/* 5.5 Best Selling Products */}
+        {/* 4. Best Selling Products */}
         <BestSellers />
 
-        {/* 5.6 Custom Printing Promo Banner */}
-        <PromoBanner />
-
-        {/* 5.7 Why Choose STAR PRESS? */}
+        {/* 5. Why Choose STAR PRESS? */}
         <WhyChooseUs />
 
-        {/* 5.8 Testimonials — "What Our Customers Say" */}
+        {/* 6. How It Works (5-Step Process) */}
+        <HowItWorks />
+
+        {/* 7. Bulk Order Section (Corporate Lead Gen CTA) */}
+        <BulkOrderBanner />
+
+        {/* 7.1 Custom Printing Promo Banner */}
+        <PromoBanner />
+
+        {/* 8. Customer Reviews & Testimonials */}
         <Testimonials />
 
-        {/* 5.9 Newsletter CTA */}
+        {/* 9. Standalone CTA Section (Get Started / WhatsApp) */}
+        <CTASection />
+
+        {/* 9.1 Newsletter Subscription */}
         <Newsletter />
       </main>
 
-      {/* 5.10 Footer */}
+      {/* 10. Footer */}
       <Footer />
     </div>
   );
 }
+

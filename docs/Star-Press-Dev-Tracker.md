@@ -11,17 +11,17 @@
 ## Phase 0 — Scaffold ✅ Done
 Repo structure, base configs, `.env.example`, draft Prisma schema, minimal booting shell.
 
-## Phase 7 (Home) + Hardening — ✅ Built, 🔧 needs content fixes
+## Phase 7 (Home) + Hardening — ✅ Done (All Content Fixes & Sections Complete)
 
 | Task | Status | Notes |
 |---|---|---|
-| 10-section Home page (Header, Hero, TrustBadges, CategoryGrid, BestSellers, PromoBanner, WhyChooseUs, Testimonials, Newsletter, Footer) | ✅ Done | Pixel-accurate per changelog |
-| ESLint/TSConfig hardening, security headers, SEO (JSON-LD, sitemap, robots.txt), CartContext/WishlistContext, error/404/loading pages, env validation | ✅ Done | Solid — no action needed |
-| **`CategoryGrid.tsx` shows only 6 placeholder categories** | 🔧 **Fix needed** | Confirmed catalog has 8 categories (Business Printing, Marketing Materials, Outdoor Advertising, Stationery, Wedding & Events, Packaging, Labels & Stickers, Photo & Custom Printing) — component needs updating to the real 8 |
-| **`BestSellers.tsx` shows only 4 products** | 🔧 **Fix needed** | Client's featured list has 6: Premium Business Cards, A4 Flyers, Tri-Fold Brochure, Vinyl Banner, Custom Stickers, Custom Paper Bags |
-| How It Works section | 🔲 Missing | 5-step: Choose Product → Upload Design → Confirm Order → We Print → Delivery |
-| Bulk Order banner section | 🔲 Missing | Separate from PromoBanner (Custom Printing) |
-| Standalone CTA section | 🔲 Missing | "Ready to Print Your Ideas?" + Get Started / WhatsApp Us |
+| Complete Home page flow (Header, Hero, TrustBadges, CategoryGrid, BestSellers, WhyChooseUs, HowItWorks, BulkOrderBanner, PromoBanner, Testimonials, CTASection, Newsletter, Footer) | ✅ Done | Exact PRD §5.1 sequence & Neon Dark tokens |
+| ESLint/TSConfig hardening, security headers, SEO (JSON-LD, sitemap, robots.txt), CartContext/WishlistContext, error/404/loading pages, env validation | ✅ Done | Solid — production ready |
+| **`CategoryGrid.tsx` 8 categories** | ✅ Done | Updated to confirmed 8 categories in PRD §5.1.1 (Business Printing, Marketing Materials, Outdoor Advertising, Stationery, Wedding & Events, Packaging, Labels & Stickers, Photo & Custom) |
+| **`BestSellers.tsx` 6 featured products** | ✅ Done | Updated to confirmed 6 best-sellers in 3-column responsive grid |
+| How It Works section (`HowItWorks.tsx`) | ✅ Done | 5-step interactive track: Choose Product → Upload Design → Confirm Order → We Print → Delivery |
+| Bulk Order banner section (`BulkOrderBanner.tsx`) | ✅ Done | Lead gen CTA with 4 perks, volume discount slabs (15%, 28%, 40%), quote & WhatsApp actions |
+| Standalone CTA section (`CTASection.tsx`) | ✅ Done | High-impact "Ready to Turn Your Ideas Into High-Impact Prints?" with dual shop/WhatsApp CTAs |
 
 ## Phase 1 — Auth (NEXT UP)
 
@@ -96,10 +96,8 @@ Coupons, analytics, design-upload tool, courier tracking API, wishlist polish be
 
 ## Immediate Next Actions (in order)
 
-1. Fix `CategoryGrid.tsx` → real 8 categories
-2. Fix `BestSellers.tsx` → real 6 featured products
-3. Build missing Home sections: How It Works, Bulk Order banner, CTA section
-4. Start Phase 1 — customer + admin auth
+1. **Phase 1 — Auth**: Customer register/login via NextAuth credentials provider + Admin auth/role-gating middleware (`/admin/*`).
+2. **Phase 2 — Catalog & Pricing**: Seed 8 categories & ~50 products in Prisma, implement pricing-rule engine, build `/shop` and `/products/[slug]`.
 
 ## Change Log
 
@@ -107,3 +105,4 @@ Coupons, analytics, design-upload tool, courier tracking API, wishlist polish be
 |---|---|
 | 14 Sept 2026 | Tracker created; theme conflict resolved; WooCommerce reference dropped. |
 | 14 Sept 2026 | **Repo audited directly.** Found Home + hardening far more complete than assumed. Found 2 real content mismatches (6 vs 8 categories, 4 vs 6 best-sellers). Re-numbered tracker to match repo's own phase scheme. Added 3 new pending items surfaced from repo's changelog (guest checkout, admin staff accounts, Razorpay credentials). |
+| 14 Sept 2026 | **Phase 7 Content Fixes & Missing Sections Shipped.** Built `HowItWorks.tsx` (5-step connected track), `BulkOrderBanner.tsx` (corporate lead-gen banner with volume discount slabs), and `CTASection.tsx` (high-impact standalone CTA). Updated `CategoryGrid.tsx` to all confirmed 8 categories from PRD §5.1.1 and `BestSellers.tsx` to all 6 featured products in a responsive 3-column layout. Clean build & linting verified. |
