@@ -5,6 +5,31 @@ and open questions. This is the audit trail for the whole project.
 
 ---
 
+## Phase 2 — Catalog, Dynamic Pricing Engine & Storefront Browsing
+**Date:** 2026-09-14
+
+**Built & Delivered:**
+- **Product Catalog Dataset (`src/lib/catalog.ts`)**:
+  - Full data model representing all 8 confirmed categories and ~50 products from PRD §5.1.1 with starting prices, specifications, features, size options, materials, and quantity tiers.
+- **Dynamic Pricing Engine (`src/lib/pricing.ts`)**:
+  - Implemented PRD §6 dynamic pricing algorithm combining base price, size multiplier, material surcharge, bulk quantity slab discounts, and text customization fees.
+- **Shop Catalog Listing (`src/app/shop/page.tsx` & `src/components/shop/`)**:
+  - Filter bar (`ShopFilterBar.tsx`) supporting live search, category pill toggles, and sorting (Featured, Price Low/High, Rating).
+  - Rich product cards (`CatalogProductCard.tsx`) with category tags, discount banners, wishlist toggle, and quick add-to-cart.
+- **Interactive Product Detail Page (`src/app/shop/[slug]/page.tsx`)**:
+  - Pre-rendered statically with `generateStaticParams()` across all 29 routes with dynamic OpenGraph SEO metadata.
+  - Interactive multi-image gallery (`ProductGallery.tsx`).
+  - Real-time product configurator (`ProductConfigurator.tsx`) calculating unit rate, bulk savings, and total price with live reactive `CartContext` updates.
+  - Comprehensive specification tabs (`ProductTabs.tsx`) covering paper details, artwork guidelines, and shipping times.
+  - Related product recommendations row.
+- **Directory Page (`src/app/categories/page.tsx`)**:
+  - Dedicated visual directory for all 8 print lines with item counts and quick-browse links.
+- **Database Seeder (`prisma/seed.ts`)**:
+  - Idempotent Prisma seeder populating categories, products, images, and pricing rules directly from the finalized catalog dataset.
+- **Validation**: Strict TypeScript and ESLint passing with 0 errors/warnings; production `next build` static page generation verified for all 29 routes.
+
+---
+
 ## Phase 7 (Home) Content Completion & Section Parity
 **Date:** 2026-09-14
 
