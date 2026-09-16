@@ -49,15 +49,6 @@
     box-shadow: 0 0 24px rgba(240, 23, 156, 0.15);
     border-color: rgba(240, 23, 156, 0.4);
   }
-
-  /* Hide scrollbar utility */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
