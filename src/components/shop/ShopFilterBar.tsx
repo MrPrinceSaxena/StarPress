@@ -77,36 +77,46 @@ export default function ShopFilterBar({
       </div>
 
       {/* Category Pills Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        <button
-          type="button"
-          onClick={() => onSelectCategory("all")}
-          className={`shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all select-none ${
-            selectedCategory === "all"
-              ? "bg-brand-yellow text-black shadow-md shadow-brand-yellow/20 font-bold scale-[1.02]"
-              : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:border-white/30"
-          }`}
+      <div className="relative">
+        <div
+          className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none overscroll-x-contain -mx-1 px-1 touch-pan-x"
+          role="tablist"
+          aria-label="Filter products by category"
         >
-          All Categories
-        </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedCategory === "all"}
+            onClick={() => onSelectCategory("all")}
+            className={`shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all select-none min-h-[38px] flex items-center justify-center ${
+              selectedCategory === "all"
+                ? "bg-brand-yellow text-black shadow-md shadow-brand-yellow/20 font-bold scale-[1.02]"
+                : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:border-white/30 active:scale-95"
+            }`}
+          >
+            All Categories
+          </button>
 
-        {categories.map((category) => {
-          const isSelected = selectedCategory === category.slug;
-          return (
-            <button
-              key={category.id}
-              type="button"
-              onClick={() => onSelectCategory(category.slug)}
-              className={`shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all select-none ${
-                isSelected
-                  ? "bg-brand-magenta text-white shadow-md shadow-brand-magenta/30 font-bold scale-[1.02]"
-                  : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:border-white/30"
-              }`}
-            >
-              {category.name}
-            </button>
-          );
-        })}
+          {categories.map((category) => {
+            const isSelected = selectedCategory === category.slug;
+            return (
+              <button
+                key={category.id}
+                type="button"
+                role="tab"
+                aria-selected={isSelected}
+                onClick={() => onSelectCategory(category.slug)}
+                className={`shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all select-none min-h-[38px] flex items-center justify-center ${
+                  isSelected
+                    ? "bg-brand-magenta text-white shadow-md shadow-brand-magenta/30 font-bold scale-[1.02]"
+                    : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:border-white/30 active:scale-95"
+                }`}
+              >
+                {category.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

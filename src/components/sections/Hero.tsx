@@ -54,7 +54,7 @@ export default function Hero() {
               <Button
                 variant="outline"
                 size="lg"
-                href="/quote"
+                href="/bulk-orders"
                 className="!px-7 !py-3.5 !text-base font-semibold"
               >
                 Get a Quote
@@ -76,7 +76,7 @@ export default function Hero() {
                 alt="Star Press custom printed products collage with Good Ideas Print Well packaging box and mugs"
                 fill
                 priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
+                sizes="(max-width: 1024px) 100vw, 620px"
                 className="object-cover"
               />
             </div>

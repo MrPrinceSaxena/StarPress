@@ -14,6 +14,7 @@ import {
 import { CatalogProduct } from "@/lib/catalog";
 import { calculateProductPrice, formatINR } from "@/lib/pricing";
 import { useCart } from "@/context/CartContext";
+import { WHATSAPP_NUMBER } from "@/lib/data";
 import Button from "@/components/ui/Button";
 
 export interface ProductConfiguratorProps {
@@ -279,7 +280,7 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
           </Button>
 
           <a
-            href={`https://wa.me/919999999999?text=${whatsappMessage}`}
+            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-sm font-bold transition-all"

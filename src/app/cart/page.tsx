@@ -244,25 +244,25 @@ export default function CartPage() {
                       {/* Quantity Stepper & Subtotal */}
                       <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-border-subtle">
                         {/* Quantity Counter */}
-                        <div className="flex items-center border border-border-subtle rounded-lg bg-bg-surface-alt">
+                        <div className="flex items-center border border-border-subtle rounded-xl bg-bg-surface-alt">
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="p-2 text-text-secondary hover:text-white hover:bg-white/5 rounded-l-lg transition-colors"
+                            className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-white hover:bg-white/5 rounded-l-xl transition-colors active:scale-90"
                             aria-label="Decrease quantity"
                           >
-                            <Minus size={14} />
+                            <Minus size={15} />
                           </button>
-                          <span className="w-10 text-center font-mono font-bold text-sm text-white">
+                          <span className="w-10 text-center font-mono font-bold text-sm text-white select-none">
                             {item.quantity}
                           </span>
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="p-2 text-text-secondary hover:text-white hover:bg-white/5 rounded-r-lg transition-colors"
+                            className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-white hover:bg-white/5 rounded-r-xl transition-colors active:scale-90"
                             aria-label="Increase quantity"
                           >
-                            <Plus size={14} />
+                            <Plus size={15} />
                           </button>
                         </div>
 
@@ -271,14 +271,14 @@ export default function CartPage() {
                           <div className="font-mono font-bold text-base sm:text-lg text-brand-yellow">
                             ₹{itemTotal.toLocaleString("en-IN")}
                           </div>
-                          <span className="text-[11px] text-text-muted">Total</span>
+                          <span className="text-[11px] text-text-muted">Subtotal</span>
                         </div>
 
                         {/* Remove Button */}
                         <button
                           type="button"
                           onClick={() => removeItem(item.id)}
-                          className="p-2 text-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                          className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
                           aria-label={`Remove ${item.name}`}
                           title="Remove item"
                         >
@@ -356,7 +356,10 @@ export default function CartPage() {
                             type="text"
                             placeholder="e.g. STAR10"
                             value={promoCode}
-                            onChange={(e) => setPromoCode(e.target.value)}
+                            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                            autoCapitalize="characters"
+                            autoCorrect="off"
+                            spellCheck="false"
                             className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle pl-9 pr-3 py-2.5 text-xs text-white uppercase placeholder-text-muted focus:outline-none focus:border-brand-yellow font-mono"
                           />
                         </div>

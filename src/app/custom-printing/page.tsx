@@ -176,13 +176,14 @@ export default function CustomPrintingPage() {
   const subtotal = unitPrice * quantity;
   const designHelpFee = needDesignHelp ? 299 : 0;
   const totalPrice = subtotal + designHelpFee;
+  const effectiveUnitPrice = Math.max(1, Math.round(totalPrice / quantity));
 
   const handleAddToCart = () => {
     addItem(
       {
         id: `custom-${selectedProduct.id}-${Date.now()}`,
-        name: `${selectedProduct.name} [${selectedSize}]`,
-        price: unitPrice,
+        name: `${selectedProduct.name} [${selectedSize}, ${selectedFinish}]${needDesignHelp ? " + Design Service" : ""}`,
+        price: effectiveUnitPrice,
         imageSrc: selectedProduct.image,
         href: "/custom-printing",
       },

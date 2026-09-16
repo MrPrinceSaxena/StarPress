@@ -70,7 +70,7 @@ export default function BulkOrderBanner() {
                 </Button>
 
                 <a
-                  href="https://wa.me/919999999999?text=Hi%20Star%20Press%2C%20I%20have%20a%20bulk%20printing%20inquiry"
+                  href="https://wa.me/919876543210?text=Hi%20Star%20Press%2C%20I%20have%20a%20bulk%20printing%20inquiry"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-5 py-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/60 text-sm font-bold transition-all"

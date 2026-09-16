@@ -25,6 +25,28 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isShopHovered, setIsShopHovered] = useState(false);
+
+  // Close search popover on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsSearchOpen(false);
+        setIsShopHovered(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const featuredCategories = [
+    { name: "Business Stationery", slug: "business-stationery", desc: "Cards, Letterheads, Envelopes" },
+    { name: "Marketing & Promo", slug: "marketing-promo", desc: "Flyers, Brochures, Booklets" },
+    { name: "Large Format Signage", slug: "large-format", desc: "Banners, Standees, Vinyls" },
+    { name: "Custom Stickers", slug: "stickers-labels", desc: "Die-Cut, Holographic, Roll" },
+    { name: "Corporate Merchandise", slug: "merchandise-gifts", desc: "Mugs, Pens, Diaries, Kits" },
+    { name: "Custom Packaging", slug: "packaging", desc: "Boxes, Poly Mailers, Tape" },
+  ];
 
   return (
     <>
@@ -49,32 +71,107 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             className="hidden lg:flex items-center gap-1 xl:gap-2"
             aria-label="Main navigation"
           >
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5"
-              >
-                <span>{link.label}</span>
-                {link.hasDropdown && (
-                  <ChevronDown
-                    size={14}
-                    className="text-text-secondary group-hover:text-white"
-                  />
-                )}
-              </Link>
-            ))}
+            {NAV_LINKS.map((link) => {
+              if (link.hasDropdown) {
+                return (
+                  <div
+                    key={link.href}
+                    className="relative"
+                    onMouseEnter={() => setIsShopHovered(true)}
+                    onMouseLeave={() => setIsShopHovered(false)}
+                  >
+                    <Link
+                      href={link.href}
+                      className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                    >
+                      <span>{link.label}</span>
+                      <ChevronDown
+                        size={14}
+                        className={`text-text-secondary transition-transform duration-200 ${
+                          isShopHovered ? "rotate-180 text-brand-yellow" : ""
+                        }`}
+                      />
+                    </Link>
+
+                    {/* Shop Desktop Megamenu Popover */}
+                    {isShopHovered && (
+                      <div className="absolute left-0 top-full pt-2 w-[420px] z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="bg-bg-surface border border-border-subtle rounded-2xl p-4 shadow-2xl space-y-3">
+                          <div className="flex items-center justify-between px-2 pb-2 border-b border-border-subtle">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                              Popular Categories
+                            </span>
+                            <Link
+                              href="/categories"
+                              onClick={() => setIsShopHovered(false)}
+                              className="text-xs text-brand-yellow hover:underline font-semibold"
+                            >
+                              All 8 Categories →
+                            </Link>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            {featuredCategories.map((cat) => (
+                              <Link
+                                key={cat.slug}
+                                href={`/shop?category=${cat.slug}`}
+                                onClick={() => setIsShopHovered(false)}
+                                className="p-2.5 rounded-xl hover:bg-white/5 border border-transparent hover:border-border-subtle transition-all group/item"
+                              >
+                                <div className="text-xs font-bold text-white group-hover/item:text-brand-yellow transition-colors line-clamp-1">
+                                  {cat.name}
+                                </div>
+                                <div className="text-[10px] text-text-muted line-clamp-1 mt-0.5">
+                                  {cat.desc}
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+
+                          <div className="pt-2 border-t border-border-subtle flex items-center justify-between px-2 text-xs">
+                            <Link
+                              href="/custom-printing"
+                              onClick={() => setIsShopHovered(false)}
+                              className="text-brand-cyan hover:underline font-semibold"
+                            >
+                              Custom Printing Studio
+                            </Link>
+                            <Link
+                              href="/bulk-orders"
+                              onClick={() => setIsShopHovered(false)}
+                              className="text-text-secondary hover:text-white"
+                            >
+                              Bulk B2B Rates
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                >
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Search Icon Button */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsSearchOpen((prev) => !prev)}
-                aria-label="Search"
-                className="p-2.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow"
+                aria-label="Search products"
+                className="p-2.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <Search size={19} />
               </button>
@@ -85,6 +182,11 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
+                      if (searchQuery.trim()) {
+                        window.location.href = `/shop?category=all&search=${encodeURIComponent(
+                          searchQuery.trim()
+                        )}`;
+                      }
                       setIsSearchOpen(false);
                     }}
                     className="flex items-center gap-2"
@@ -95,6 +197,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       autoFocus
+                      autoComplete="off"
                       className="w-full bg-bg-surface-alt border border-border-subtle rounded-lg px-3 py-2 text-xs text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow"
                     />
                     <Button variant="primary" size="sm" type="submit">
@@ -127,7 +230,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               <Button
                 variant="primary"
                 size="md"
-                href="/quote"
+                href="/custom-printing"
                 className="!px-5 !py-2.5 !text-sm font-semibold !bg-brand-yellow !text-black hover:!bg-[#FFE04D]"
               >
                 Get a Quote
@@ -138,8 +241,9 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             <button
               type="button"
               onClick={() => setIsMobileOpen(true)}
-              aria-label="Open menu"
-              className="lg:hidden p-2.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow"
+              aria-label="Open navigation menu"
+              aria-expanded={isMobileOpen}
+              className="lg:hidden p-2.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <Menu size={22} />
             </button>

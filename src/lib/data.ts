@@ -1,3 +1,7 @@
+export const CONTACT_PHONE = "+91 98765 43210";
+export const WHATSAPP_NUMBER = "919876543210";
+export const SUPPORT_EMAIL = "support@starpress.in";
+
 export interface NavLink {
   label: string;
   href: string;
@@ -271,34 +275,34 @@ export const TESTIMONIALS: TestimonialItem[] = [
 
 export const FOOTER_COLUMNS: FooterColumn[] = [
   {
-    title: "Shop",
+    title: "Shop Catalog",
     links: [
       { label: "Business Cards", href: "/shop/business-cards" },
       { label: "Flyers & Leaflets", href: "/shop/flyers" },
-      { label: "Brochures", href: "/shop/brochures" },
-      { label: "Banners", href: "/shop/banners" },
-      { label: "Stickers", href: "/shop/stickers" },
-      { label: "Custom Gifts", href: "/shop/custom-gifts" },
+      { label: "Banners & Signage", href: "/shop/banners" },
+      { label: "Custom Stickers", href: "/shop/stickers" },
+      { label: "Corporate Drinkware", href: "/shop/custom-mugs" },
+      { label: "All Categories", href: "/categories" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "About", href: "/about" },
-      { label: "Contact", href: "/contact" },
-      { label: "Bulk Orders", href: "/bulk-orders" },
-      { label: "Blog", href: "/blog" },
-      { label: "Careers", href: "/careers" },
+      { label: "About Star Press", href: "/about" },
+      { label: "Contact Support", href: "/contact" },
+      { label: "Bulk Corporate Orders", href: "/bulk-orders" },
+      { label: "Custom Print Studio", href: "/custom-printing" },
+      { label: "Machinery & Equipment", href: "/about#equipment" },
     ],
   },
   {
-    title: "Help",
+    title: "Help & Policies",
     links: [
-      { label: "FAQs", href: "/faq" },
-      { label: "Shipping", href: "/shipping" },
-      { label: "Returns", href: "/returns" },
-      { label: "Track Order", href: "/track-order" },
-      { label: "Support", href: "/support" },
+      { label: "Frequently Asked Questions", href: "/faq" },
+      { label: "Artwork & Bleed Guidelines", href: "/faq#artwork" },
+      { label: "Shipping & Turnaround", href: "/faq#shipping" },
+      { label: "100% Reprint Guarantee", href: "/terms#guarantee" },
+      { label: "Privacy Policy", href: "/privacy" },
     ],
   },
 ];

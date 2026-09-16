@@ -112,7 +112,7 @@ export default function Footer() {
               Terms
             </Link>
             <span>·</span>
-            <Link href="/sitemap" className="hover:text-text-secondary transition-colors">
+            <Link href="/sitemap.xml" className="hover:text-text-secondary transition-colors">
               Sitemap
             </Link>
           </div>

@@ -50,7 +50,7 @@ export default function CTASection() {
               </Button>
 
               <a
-                href="https://wa.me/919999999999?text=Hi%20Star%20Press%2C%20I%20want%20to%20place%20a%20printing%20order"
+                href="https://wa.me/919876543210?text=Hi%20Star%20Press%2C%20I%20want%20to%20place%20a%20printing%20order"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/60 text-sm font-bold transition-all shadow-md"

@@ -98,6 +98,10 @@ export default function CheckoutPage() {
     if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else if (name === "gstin") {
+      setFormData((prev) => ({ ...prev, [name]: value.toUpperCase().trim() }));
+    } else if (name === "pinCode") {
+      setFormData((prev) => ({ ...prev, [name]: value.replace(/\D/g, "").slice(0, 6) }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -387,6 +391,7 @@ export default function CheckoutPage() {
                       id="phone"
                       name="phone"
                       type="tel"
+                      inputMode="tel"
                       required
                       autoComplete="tel"
                       placeholder="+91 98765 43210"
@@ -508,6 +513,7 @@ export default function CheckoutPage() {
                       id="pinCode"
                       name="pinCode"
                       type="text"
+                      inputMode="numeric"
                       required
                       pattern="^[1-9][0-9]{5}$"
                       maxLength={6}
