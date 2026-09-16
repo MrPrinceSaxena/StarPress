@@ -3,6 +3,48 @@
 Reverse-chronological log of what was actually built each phase, plus decisions made
 and open questions. This is the audit trail for the whole project.
 
+## Core Pages Build — Phase 3 (Cart & Checkout) & Phase 7 (Custom Printing, Bulk Orders & Institutional Hubs)
+**Date:** 2026-09-15
+
+**Built & Delivered:**
+- **Dedicated Cart Page (`src/app/cart/page.tsx`)**:
+  - Full-page shopping cart with dynamic item listings, thumbnail previews, and quantity increment/decrement/removal controls.
+  - Indian commercial print GST (18%) auto-calculation with B2B input tax credit notice.
+  - Interactive free shipping unlock progress bar (threshold at ₹999).
+  - Promo code / coupon engine supporting `STAR10` (10% off) and `PRESS20` (20% off on ₹1,500+).
+  - Empty cart state with quick catalog recommendations and reassurance badges.
+- **Multi-Step Checkout Page (`src/app/checkout/page.tsx`)**:
+  - Contact details (Name, Email, WhatsApp phone for delivery proofing).
+  - Pan-India shipping address form with 24 Indian states & UTs picker and 6-digit PIN code validation.
+  - Optional B2B Tax Invoicing section capturing Legal Entity Name and 15-character GSTIN.
+  - Production & dispatch priority selector (Standard Production vs Priority 24h Rush for +₹249).
+  - Payment preferences (Instant online payment preview vs Pay After Pre-Press Proof Approval).
+  - Order submission creating reference IDs (e.g. `SP-84920`), localStorage client persistence, and celebratory confirmation receipt with direct WhatsApp proofing integration.
+- **Custom Printing Studio (`src/app/custom-printing/page.tsx`)**:
+  - Bespoke custom printing hub supporting 6 product categories (Apparel, Mugs & Drinkware, Large Format Banners, Packaging Boxes, Die-Cut Stickers, Canvas Art).
+  - Interactive dimension and material finish options with live unit-rate and tiered volume calculation.
+  - Drag-and-drop artwork dropzone supporting PDF, AI, PSD, CDR, SVG, and PNG with pre-flight checklist (300 DPI, CMYK, 3mm bleed).
+  - Pre-press design proofing add-on (+₹299) and direct cart integration (`addItem`).
+- **Bulk Orders & Corporate Printing (`src/app/bulk-orders/page.tsx`)**:
+  - Corporate volume discount slabs (15% to 45% wholesale).
+  - 4 Enterprise Perks (Dedicated Print Director, Free Swatch Kit, Net Terms, Multi-hub split shipping).
+  - Interactive Request for Quote (RFQ) form with category picker, volume slabs, GSTIN, and physical sample kit checkbox.
+- **About Us Page (`src/app/about/page.tsx`)**:
+  - 15-year heritage story, milestone statistics (10M+ prints, 5,000+ corporate clients, 99.8% on-time dispatch).
+  - Industrial press fleet breakdown (Heidelberg Speedmaster XL 75, HP Indigo 7K, Scodix 3D UV/Foil, Kongsberg die-cutter).
+  - 4 Pillars of quality (FogRA 39 color standard, FSC eco papers, 24h rush capability, human prepress audits).
+- **Contact & Support Hub (`src/app/contact/page.tsx`)**:
+  - 4 contact channel cards (Facility address in Okhla, New Delhi, phone hotline, support email, operating hours).
+  - Multi-topic ticket submission form with automated reference numbers.
+  - Direct WhatsApp chat integration and corporate tax compliance info.
+- **Interactive Knowledge Base / FAQ (`src/app/faq/page.tsx`)**:
+  - Searchable FAQ with instant keyword filtering and 5 topic categories.
+  - Accessible native `<details name="starpress-faq">` exclusive accordions.
+- **Legal Policies (`src/app/privacy/page.tsx` & `src/app/terms/page.tsx`)**:
+  - Privacy policy featuring strict Non-Disclosure Guarantee for client proprietary artwork, secure PCI-DSS payment handling, and data officer contact.
+  - Terms of service detailing soft proof approval obligations, CMYK vs RGB color variation tolerance (3ΔE), ±1.5mm mechanical cutting margins, and 100% free reprint guarantee for defects.
+- **Verification**: Zero ESLint warnings or errors (`npm run lint`), all 38 routes compiling cleanly in production Next.js build (`npm run build`).
+
 ---
 
 ## Phase 2 — Catalog, Dynamic Pricing Engine & Storefront Browsing

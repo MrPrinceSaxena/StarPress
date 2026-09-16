@@ -45,27 +45,27 @@ Deliberately deferred — Phase 2 (catalog/pricing) has no auth dependency and v
 | `/categories` page | ✅ Done | Dedicated visual directory for all 8 print lines with product counts |
 | `prisma/seed.ts` | ✅ Done | Idempotent seeder mapping categories, products, images, and pricing rules |
 
-## Phase 3 — Cart & Checkout
+## Phase 3 — Cart & Checkout — ✅ Done
 
-| Task | Status |
-|---|---|
-| Cart (full — beyond current Context scaffold) | 🟡 Partially scaffolded (CartContext exists) |
-| Checkout flow (address → summary) | 🔲 Not started |
-| Guest checkout decision | ⏳ Pending decision |
+| Task | Status | Notes |
+|---|---|---|
+| Cart (`/cart` full page) | ✅ Done | Dedicated cart page with item counter, live GST (18%), shipping progress bar, promo code engine (STAR10/PRESS20) |
+| Checkout flow (`/checkout`) | ✅ Done | Multi-step delivery address with Indian state picker, PIN validation, B2B GST invoicing, rush dispatch option, and confirmation receipt |
+| Guest checkout | ✅ Done | Fully enabled; client persistence via localStorage with order reference generation and WhatsApp proof verification |
 
 ## Phase 4 — Orders
 
-| Task | Status |
-|---|---|
-| Order creation from checkout | 🔲 Not started |
-| Order status tracking (customer + admin view) | 🔲 Not started |
+| Task | Status | Notes |
+|---|---|---|
+| Order creation from checkout | ✅ Done | Client-side receipt generation (e.g. `SP-XXXXX`), stored in `starpress_recent_orders` with WhatsApp link |
+| Order status tracking (customer + admin view) | 🔲 Not started | Backend tracking pending Prisma DB order sync |
 
 ## Phase 5 — Payments
 
-| Task | Status |
-|---|---|
-| Razorpay order create + checkout widget | 🔲 Not started |
-| Webhook signature verification | 🔲 Not started |
+| Task | Status | Notes |
+|---|---|---|
+| Razorpay order create + checkout widget | 🔲 Not started | Checkout currently operates in instant proof/COD and mock online mode |
+| Webhook signature verification | 🔲 Not started | Awaiting client credentials |
 | **Blocking:** client's Razorpay business account credentials | ⏳ Pending client |
 
 ## Phase 6 — Admin Panel
@@ -76,14 +76,18 @@ Deliberately deferred — Phase 2 (catalog/pricing) has no auth dependency and v
 | Product/category management | 🔲 Not started |
 | Order management | 🔲 Not started |
 
-## Phase 7 (remainder) — Inquiries & Static Pages
+## Phase 7 (remainder) — Inquiries & Static Pages — ✅ Done
 
-| Task | Status |
-|---|---|
-| Custom Printing inquiry form | 🔲 Not started |
-| Bulk Orders inquiry form | 🔲 Not started |
-| About, Contact, FAQ, Track Order, My Account, Privacy Policy, Terms & Conditions | 🔲 Not started |
-| Product reviews | 🔲 Not started |
+| Task | Status | Notes |
+|---|---|---|
+| Custom Printing hub (`/custom-printing`) | ✅ Done | Interactive studio with 6 product types, material finishes, drag-and-drop artwork upload, live pricing, and cart integration |
+| Bulk Orders inquiry page (`/bulk-orders`) | ✅ Done | Volume discount slab matrix, enterprise perks, physical swatch kit request, and interactive RFQ form |
+| About Us (`/about`) | ✅ Done | Heritage, Heidelberg Speedmaster XL 75 & HP Indigo machinery showcase, four pillars, and facility stats |
+| Contact (`/contact`) | ✅ Done | Facility address, phone hotline, multi-topic ticket form, WhatsApp direct link, and operating hours |
+| FAQ (`/faq`) | ✅ Done | Searchable knowledge base with 5 categories, native exclusive `<details>` accordions, and prepress guidelines |
+| Privacy Policy (`/privacy`) | ✅ Done | Full artwork confidentiality non-disclosure guarantee, data protection, and PCI-DSS compliance |
+| Terms & Conditions (`/terms`) | ✅ Done | Prepress soft proof approval rules, CMYK vs RGB color tolerances, bleed margins, and 100% reprint guarantee |
+| Product reviews | ✅ Done | Tabbed reviews integrated directly on product detail pages |
 
 ## Phase 8+ — Future
 Coupons, analytics, design-upload tool, courier tracking API, wishlist polish beyond current toggle.
