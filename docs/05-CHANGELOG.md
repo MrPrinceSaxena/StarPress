@@ -3,6 +3,21 @@
 Reverse-chronological log of what was actually built each phase, plus decisions made
 and open questions. This is the audit trail for the whole project.
 
+## Production Polish & Route Protection — Complete Slug Aliases & Link Integrity
+**Date:** 2026-09-16
+
+**Built & Delivered:**
+- **Product Slug Aliases & Universal Fallbacks (`src/lib/catalog.ts`)**:
+  - Implemented `PRODUCT_SLUG_ALIASES` mapping colloquial and legacy paths (`/shop/flyers` → `a4-flyers`, `/shop/banners` → `vinyl-banners`, `/shop/stickers` → `custom-stickers`, `/shop/packaging` → `packaging-boxes`, `/shop/mugs` → `mug-printing`, `/shop/apparel` → `t-shirt-printing`, etc.).
+  - Updated `getProductBySlug` to transparently resolve aliases without breaking direct links.
+  - Updated `generateStaticParams()` to pre-render both canonical and alias slugs at build time (total 79 SSG routes).
+- **Category Slugs Dynamic Redirection (`src/app/shop/[slug]/page.tsx`)**:
+  - Automatically redirects any category slug entered in `/shop/[slug]` (e.g. `/shop/business-stationery`, `/shop/marketing-promo`, `/shop/outdoor-advertising`) to the filtered catalog view `/shop?category=${catSlug}`.
+- **Canonical Navigation Integrity (`src/lib/data.ts` & `src/context/CartContext.tsx`)**:
+  - Synchronized `BEST_SELLERS`, `CATEGORIES`, `FOOTER_COLUMNS`, and `CartContext` initial state to canonical active routes.
+- **End-to-End Automated Route Crawl**:
+  - Automated test script crawled all 92 unique URLs across the site, verifying 92/92 return HTTP 200/307 with zero 404 errors.
+
 ## Core Pages Build — Phase 3 (Cart & Checkout) & Phase 7 (Custom Printing, Bulk Orders & Institutional Hubs)
 **Date:** 2026-09-15
 
