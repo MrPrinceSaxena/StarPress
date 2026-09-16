@@ -98,7 +98,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#17C3C0",
     bgColorClass: "bg-cat-teal",
     imageSrc: "/images/cat-business-cards.jpg",
-    href: "/shop/business-printing",
+    href: "/shop?category=business-stationery",
   },
   {
     id: "cat-2",
@@ -106,7 +106,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#F97066",
     bgColorClass: "bg-cat-coral",
     imageSrc: "/images/cat-flyers.jpg",
-    href: "/shop/marketing-materials",
+    href: "/shop?category=marketing-promo",
   },
   {
     id: "cat-3",
@@ -114,7 +114,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#7A5CF0",
     bgColorClass: "bg-cat-purple",
     imageSrc: "/images/cat-banners.jpg",
-    href: "/shop/outdoor-advertising",
+    href: "/shop?category=large-format",
   },
   {
     id: "cat-4",
@@ -122,7 +122,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#2E90FA",
     bgColorClass: "bg-cat-blue",
     imageSrc: "/images/cat-brochures.jpg",
-    href: "/shop/stationery",
+    href: "/shop?category=business-stationery",
   },
   {
     id: "cat-5",
@@ -130,7 +130,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#EE4FA6",
     bgColorClass: "bg-cat-pink",
     imageSrc: "/images/cat-stickers.jpg",
-    href: "/shop/wedding-events",
+    href: "/shop?category=marketing-promo",
   },
   {
     id: "cat-6",
@@ -138,7 +138,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#F79A3E",
     bgColorClass: "bg-cat-orange",
     imageSrc: "/images/cat-gifts.jpg",
-    href: "/shop/packaging",
+    href: "/shop?category=packaging",
   },
   {
     id: "cat-7",
@@ -146,7 +146,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#FFCF1B",
     bgColorClass: "bg-brand-yellow",
     imageSrc: "/images/prod-stickers.jpg",
-    href: "/shop/labels-stickers",
+    href: "/shop?category=stickers-labels",
   },
   {
     id: "cat-8",
@@ -154,7 +154,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#29C5F6",
     bgColorClass: "bg-brand-cyan",
     imageSrc: "/images/promo-banner.jpg",
-    href: "/shop/custom-printing",
+    href: "/custom-printing",
   },
 ];
 
@@ -175,7 +175,7 @@ export const BEST_SELLERS: ProductItem[] = [
     rating: 4.6,
     reviewCount: 188,
     imageSrc: "/images/prod-flyers.jpg",
-    href: "/shop/flyers",
+    href: "/shop/a4-flyers",
   },
   {
     id: "prod-3",
@@ -193,7 +193,7 @@ export const BEST_SELLERS: ProductItem[] = [
     rating: 4.7,
     reviewCount: 96,
     imageSrc: "/images/prod-banner.jpg",
-    href: "/shop/banners",
+    href: "/shop/vinyl-banners",
   },
   {
     id: "prod-5",
@@ -202,7 +202,7 @@ export const BEST_SELLERS: ProductItem[] = [
     rating: 4.9,
     reviewCount: 140,
     imageSrc: "/images/prod-stickers.jpg",
-    href: "/shop/stickers",
+    href: "/shop/custom-stickers",
   },
   {
     id: "prod-6",
@@ -211,7 +211,7 @@ export const BEST_SELLERS: ProductItem[] = [
     rating: 4.8,
     reviewCount: 84,
     imageSrc: "/images/cat-gifts.jpg",
-    href: "/shop/packaging",
+    href: "/shop/custom-paper-bags",
   },
 ];
 

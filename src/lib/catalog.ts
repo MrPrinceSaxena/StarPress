@@ -884,13 +884,92 @@ export const CATALOG_PRODUCTS: CatalogProduct[] = [
   },
 ];
 
+export const PRODUCT_SLUG_ALIASES: Record<string, string> = {
+  // Flyers & Leaflets
+  "flyers": "a4-flyers",
+  "flyer": "a4-flyers",
+  "leaflets": "a4-flyers",
+  "leaflet": "a4-flyers",
+  // Banners & Signage
+  "banners": "vinyl-banners",
+  "banner": "vinyl-banners",
+  "flex-banners": "vinyl-banners",
+  // Stickers & Labels
+  "stickers": "custom-stickers",
+  "sticker": "custom-stickers",
+  "die-cut-stickers": "custom-stickers",
+  "labels": "bottle-labels",
+  "label": "bottle-labels",
+  // Mugs & Drinkware
+  "custom-mugs": "mug-printing",
+  "mugs": "mug-printing",
+  "mug": "mug-printing",
+  "custom-gifts": "mug-printing",
+  // Packaging & Bags
+  "packaging": "packaging-boxes",
+  "packaging-box": "packaging-boxes",
+  "boxes": "packaging-boxes",
+  "box": "packaging-boxes",
+  "paper-bags": "custom-paper-bags",
+  "paper-bag": "custom-paper-bags",
+  "bags": "custom-paper-bags",
+  // Apparel
+  "t-shirts": "t-shirt-printing",
+  "t-shirt": "t-shirt-printing",
+  "tshirts": "t-shirt-printing",
+  "tshirt": "t-shirt-printing",
+  "apparel": "t-shirt-printing",
+  // Stationery & Cards
+  "cards": "business-cards",
+  "card": "business-cards",
+  "business-card": "business-cards",
+  "letterhead": "letterheads",
+  "envelope": "envelopes",
+  "brochure": "brochures",
+  "tri-fold-brochure": "brochures",
+  "poster": "posters",
+  "standee": "standees",
+  "canvas": "canvas-prints",
+  "canvas-art": "canvas-prints",
+  "id-card": "id-cards",
+  "wedding-card": "wedding-cards",
+};
+
+export const CATEGORY_SLUG_ALIASES: Record<string, string> = {
+  "business-stationery": "business-stationery",
+  "business-printing": "business-stationery",
+  "stationery": "business-stationery",
+  "marketing-promo": "marketing-promo",
+  "marketing-materials": "marketing-promo",
+  "large-format": "large-format",
+  "outdoor-advertising": "large-format",
+  "stickers-labels": "stickers-labels",
+  "labels-stickers": "stickers-labels",
+  "merchandise-gifts": "merchandise-gifts",
+  "corporate-gifts": "merchandise-gifts",
+  "gifts": "merchandise-gifts",
+  "apparel": "apparel",
+  "art-prints": "art-prints",
+  "photo-custom": "art-prints",
+  "wedding-events": "marketing-promo",
+};
+
 // Helper queries
 export function getAllProducts(): CatalogProduct[] {
   return CATALOG_PRODUCTS;
 }
 
 export function getProductBySlug(slug: string): CatalogProduct | undefined {
-  return CATALOG_PRODUCTS.find((p) => p.slug === slug);
+  if (!slug) return undefined;
+  const normalized = slug.toLowerCase().trim();
+  const targetSlug = PRODUCT_SLUG_ALIASES[normalized] || normalized;
+  return CATALOG_PRODUCTS.find((p) => p.slug === targetSlug);
+}
+
+export function getCategoryRedirect(slug: string): string | undefined {
+  if (!slug) return undefined;
+  const normalized = slug.toLowerCase().trim();
+  return CATEGORY_SLUG_ALIASES[normalized];
 }
 
 export function getProductsByCategory(categorySlug: string): CatalogProduct[] {
@@ -907,5 +986,8 @@ export function getAllCategories(): CatalogCategory[] {
 }
 
 export function getCategoryBySlug(slug: string): CatalogCategory | undefined {
-  return CATALOG_CATEGORIES.find((c) => c.slug === slug);
+  if (!slug) return undefined;
+  const normalized = slug.toLowerCase().trim();
+  const targetSlug = CATEGORY_SLUG_ALIASES[normalized] || normalized;
+  return CATALOG_CATEGORIES.find((c) => c.slug === targetSlug);
 }

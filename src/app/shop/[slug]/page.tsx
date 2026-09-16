@@ -1,7 +1,7 @@
 import React from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, ArrowLeft } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Metadata } from "next";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -14,6 +14,8 @@ import {
   getAllProducts,
   getProductBySlug,
   getProductsByCategory,
+  PRODUCT_SLUG_ALIASES,
+  getCategoryRedirect,
 } from "@/lib/catalog";
 
 interface PageProps {
@@ -24,14 +26,20 @@ interface PageProps {
 
 export async function generateStaticParams() {
   const products = getAllProducts();
-  return products.map((product) => ({
-    slug: product.slug,
-  }));
+  const directSlugs = products.map((product) => ({ slug: product.slug }));
+  const aliasSlugs = Object.keys(PRODUCT_SLUG_ALIASES).map((alias) => ({ slug: alias }));
+  return [...directSlugs, ...aliasSlugs];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const product = getProductBySlug(params.slug);
   if (!product) {
+    const cat = getCategoryRedirect(params.slug);
+    if (cat) {
+      return {
+        title: "Category Catalog | Star Press",
+      };
+    }
     return {
       title: "Product Not Found | Star Press",
     };
@@ -56,6 +64,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default function ProductDetailPage({ params }: PageProps) {
+  // If the user entered a category slug in /shop/[slug], redirect to the category filter
+  const categoryRedirect = getCategoryRedirect(params.slug);
+  if (categoryRedirect) {
+    redirect(`/shop?category=${categoryRedirect}`);
+  }
+
   const product = getProductBySlug(params.slug);
 
   if (!product) {

@@ -62,7 +62,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             price: 499,
             quantity: 1,
             imageSrc: "/images/prod-flyers.jpg",
-            href: "/shop/flyers",
+            href: "/shop/a4-flyers",
           },
           {
             id: "prod-4",
@@ -70,7 +70,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             price: 299,
             quantity: 1,
             imageSrc: "/images/prod-stickers.jpg",
-            href: "/shop/stickers",
+            href: "/shop/custom-stickers",
           },
         ]);
       }
