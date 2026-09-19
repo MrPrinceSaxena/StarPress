@@ -25,25 +25,28 @@ Repo structure, base configs, `.env.example`, draft Prisma schema, minimal booti
 | Full Home sequencing | ✅ Done | `src/app/page.tsx` reordered to the confirmed 12-section flow |
 | Lint / build verification | ✅ Done | `npm run lint` 0 errors, `npm run build` passes |
 
-## Phase 1 — Auth (DEFERRED)
+## Phase 1 — Auth & Access Control — ✅ Done
 
-Deliberately deferred — Phase 2 (catalog/pricing) has no auth dependency and validates the harder pricing logic first.
+Role-based access control, credentials authentication with bcrypt password hashing, NextAuth JWT sessions, protected route middleware, customer dashboard (`/account`), and header/mobile integration.
 
-| Task | Status |
-|---|---|
-| Customer register/login (NextAuth credentials) | 🔲 Not started — deferred |
-| Admin auth / role gating (`/admin/*` middleware) | 🔲 Not started — deferred |
+| Task | Status | Notes |
+|---|---|---|
+| Customer register & login (NextAuth credentials) | ✅ Done | `/login` & `/register` Neon Dark pages, Zod validation, bcrypt password hashing, dev fallback |
+| Admin auth & role-gating middleware | ✅ Done | `src/middleware.ts` protecting `/admin/*` (ADMIN only) and `/account/*` (authenticated) |
+| Customer Account Dashboard (`/account`) | ✅ Done | Orders tracking with status badges & Shiprocket links, saved shipping addresses manager, profile editor, security/password update |
+| Session Provider & Navigation Integration | ✅ Done | `AuthProvider.tsx` wrapping app, Header user avatar & menu, MobileNavDrawer profile/sign-in sheet |
+| Initial User Seeding | ✅ Done | `prisma/seed.ts` seeds admin (`admin@starpress.in`) and sample customer (`customer@starpress.in`) |
 
 ## Phase 2 — Catalog, Pricing & Storefront — ✅ Done
 
 | Task | Status | Notes |
 |---|---|---|
-| `src/lib/catalog.ts` — 8 categories, ~50 products, placeholder prices/sizes/materials/qty slabs | ✅ Done | Comprehensive dataset matching PRD §5.1.1 categories & specs |
-| `src/lib/pricing.ts` — pricing engine (base × size × qty tier + customization fee) | ✅ Done | Formula matches PRD §6; live multi-attribute calculator |
-| `/shop` listing page (filters, search, sort, grid) | ✅ Done | Category pills, live search, sort dropdown, CatalogProductCard |
-| `/shop/[slug]` product detail (gallery, configurator, live price, cart wiring, tabs, related products) | ✅ Done | SSG pre-rendered all 29 routes, live price configurator, reactive CartContext |
+| `src/lib/catalog.ts` — 8 categories, 49 commercial products, modularized by category under `src/lib/catalog-data/` | ✅ Done | Production-grade dataset matching PRD §5.1.1 categories & specs |
+| `src/lib/pricing.ts` — pricing engine (base × size × qty tier + customization fee) | ✅ Done | Formula matches PRD §6; batch vs unit models; live multi-attribute calculator |
+| `/shop` listing page (filters, search, sort, grid) | ✅ Done | Server component with SSR markup, category pills, live search, sort dropdown, CatalogProductCard |
+| `/shop/[slug]` product detail (gallery, configurator, live price, cart wiring, tabs, related products) | ✅ Done | SSG pre-rendered all 194 routes (canonical + aliases), live price configurator, reactive CartContext |
 | `/categories` page | ✅ Done | Dedicated visual directory for all 8 print lines with product counts |
-| `prisma/seed.ts` | ✅ Done | Idempotent seeder mapping categories, products, images, and pricing rules |
+| `prisma/seed.ts` | ✅ Done | Idempotent seeder mapping categories, products, images, and pricing rules with batch/unit unit-rate logic |
 
 ## Phase 3 — Cart & Checkout — ✅ Done
 
@@ -53,12 +56,16 @@ Deliberately deferred — Phase 2 (catalog/pricing) has no auth dependency and v
 | Checkout flow (`/checkout`) | ✅ Done | Multi-step delivery address with Indian state picker, PIN validation, B2B GST invoicing, rush dispatch option, and confirmation receipt |
 | Guest checkout | ✅ Done | Fully enabled; client persistence via localStorage with order reference generation and WhatsApp proof verification |
 
-## Phase 4 — Orders
+## Phase 4 — Orders & Database Persistence — ✅ Done
 
 | Task | Status | Notes |
 |---|---|---|
-| Order creation from checkout | ✅ Done | Client-side receipt generation (e.g. `SP-XXXXX`), stored in `starpress_recent_orders` with WhatsApp link |
-| Order status tracking (customer + admin view) | 🔲 Not started | Backend tracking pending Prisma DB order sync |
+| Order creation API (`/api/orders`) | ✅ Done | Server-side validation, immutable JSON address snapshots, itemized totals, generates `SP-YYYY-XXXXX` |
+| Order status tracking (`/api/orders/track` & `/api/orders/[id]`) | ✅ Done | Secure customer & guest lookup by Order Number + Phone/Email |
+| Inquiry & Lead APIs (`/api/inquiries/*`) | ✅ Done | Custom printing (`INQ-`), Bulk orders (`BLK-`), Contact (`CNT-`) with DB persistence |
+| Razorpay Gateway & Webhook layer | ✅ Done | `/api/payments/razorpay/create-order` & `/api/payments/razorpay/webhook` with HMAC SHA-256 validation |
+| Admin Order Management API | ✅ Done | `/api/admin/orders` & `/api/admin/orders/[id]/status` for stage updates & AWB courier tracking |
+| Storefront wiring | ✅ Done | Checkout, bulk orders, and contact forms wired to live API endpoints |
 
 ## Phase 5 — Payments
 

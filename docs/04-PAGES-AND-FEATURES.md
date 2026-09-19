@@ -19,7 +19,9 @@ for a new developer (or future-you) to see what actually exists vs. what's still
 | FAQ | Medium | ✅ | 7 |
 | Cart | High | ✅ | 3 |
 | Checkout | High | ✅ | 3/5 |
-| My Account | Medium | 🔲 | 1/4 |
+| My Account (`/account`) | Medium | ✅ | 1/4 |
+| Login (`/login`) | High | ✅ | 1 |
+| Register (`/register`) | High | ✅ | 1 |
 | Privacy Policy | Medium | ✅ | 7 |
 | Terms & Conditions | Medium | ✅ | 7 |
 | Admin: dashboard | — | 🔲 | 6 |
@@ -31,13 +33,13 @@ for a new developer (or future-you) to see what actually exists vs. what's still
 |---|---|---|
 | Project scaffold + docs | ✅ | 0 |
 | Database schema (draft) | ✅ | 0 |
-| Customer auth (register/login) | 🔲 | 1 (deferred) |
-| Admin auth/role gating | 🔲 | 1 (deferred) |
+| Customer auth (register/login) | ✅ | 1 |
+| Admin auth/role gating (`/admin/*`) | ✅ | 1 |
 | Product catalog (categories, products, images) | ✅ | 2 |
 | Size/quantity/text-based pricing engine | ✅ | 2 |
 | Cart | ✅ | 3 |
 | Checkout | ✅ | 3 |
-| Order creation + status tracking | 🟡 | 4 (localStorage client tracking active) |
+| Order creation + status tracking | ✅ | 4 |
 | Razorpay payment integration | 🔲 | 5 (pending client credentials) |
 | Admin panel — product/category management | 🔲 | 6 |
 | Admin panel — order management | 🔲 | 6 |

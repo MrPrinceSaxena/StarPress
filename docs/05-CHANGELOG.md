@@ -3,6 +3,150 @@
 Reverse-chronological log of what was actually built each phase, plus decisions made
 and open questions. This is the audit trail for the whole project.
 
+## Phase 1: Authentication & Customer Dashboard (Phase 1 of PRD & TRD)
+**Date:** 2026-09-19
+
+**Built & Delivered:**
+- **NextAuth.js Full Implementation (`src/lib/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`)**:
+  - JWT session strategy with 30-day persistence.
+  - Credentials provider authenticating against Prisma `User` table using `bcryptjs.compare`.
+  - Type-safe custom session attributes (`id`, `role`, `phone`) extended via `src/types/next-auth.d.ts`.
+  - Offline / dev fallback enabling immediate testing with default credentials (`admin@starpress.in` / `Admin@StarPress2026`).
+- **Registration API & Validation (`src/app/api/auth/register/route.ts`)**:
+  - Validates user input via Zod (name, email, password min 6 chars, optional phone).
+  - Enforces email uniqueness and securely hashes passwords with `bcryptjs.hash(password, 10)`.
+  - Assigns default `Role.CUSTOMER`.
+- **Role-Based Edge Middleware (`src/middleware.ts`)**:
+  - Configured NextAuth JWT middleware matching `/admin/:path*` and `/account/:path*`.
+  - Restricts `/admin/*` strictly to users with `role: "ADMIN"`, redirecting unauthorized users to `/login` with flash alerts.
+  - Secures `/account/*` to authenticated users with seamless `callbackUrl` handling.
+- **Neon Dark Auth Pages**:
+  - `/login`: Sleek dark interface with error banners, password visibility toggle, redirect callbacks, and a quick-fill demo button for testing.
+  - `/register`: Complete onboarding flow with password confirmation and direct redirection to login.
+- **Customer Account Dashboard (`/account`)**:
+  - 3-tab modern portal:
+    1. **Orders & Tracking**: Shows past order history, line items, status pills (`PENDING`, `CONFIRMED`, `IN_PRODUCTION`, `DISPATCHED`, `DELIVERED`), and Shiprocket tracking links.
+    2. **Saved Addresses**: Manage multiple shipping addresses with default badge flags and "Add New Address" modal/form.
+    3. **Profile & Security**: Edit contact info and securely change passwords requiring current password verification.
+  - Special Admin quick-access card linking directly to `/admin/orders` for admin accounts.
+- **Account API Handlers (`src/app/api/account/**`)**:
+  - `GET`, `PATCH /api/account/profile`: Retrieve profile & update credentials.
+  - `GET`, `POST /api/account/addresses`: Retrieve addresses & save new default address.
+  - `GET /api/account/orders`: Fetch user orders with line items.
+- **App-Wide Session & Navigation Integration**:
+  - `src/components/providers/AuthProvider.tsx`: Wrapped `SessionProvider` inside `AppProviders.tsx`.
+  - `src/components/layout/Header.tsx`: Integrated session state, dynamic user avatar circle showing initial, and direct links to Account/Sign In.
+  - `src/components/layout/MobileNavDrawer.tsx`: Added session card with user email, role badges, Admin Console shortcut, and Sign Out button.
+- **Database Seeder (`prisma/seed.ts`)**:
+  - Updated to seed initial admin user (`admin@starpress.in`) and sample customer (`customer@starpress.in`) with bcrypt hashes.
+- **Build & Quality Assurance**:
+  - `npx tsc --noEmit` passed with 0 errors.
+  - `npm run lint` passed with 0 errors.
+  - `npm run build` compiled all 205 static and dynamic pages with 0 errors.
+
+## Phase C: Backend & Database Persistence (Phase 4 of Roadmap)
+**Date:** 2026-09-19
+
+**Built & Delivered:**
+- **Production-Grade Database Schema (`prisma/schema.prisma`)**:
+  - Expanded Prisma models for `Order`, `OrderItem`, `PaymentTransaction`, `CustomizationRequest`, `BulkOrderInquiry`, `ContactInquiry`, and `Review`.
+  - Configured PostgreSQL datasource with standard `DATABASE_URL` for Supabase deployment without vendor lock-in.
+  - Generates human-readable reference numbers: `SP-YYYY-XXXXX` for Orders, `INQ-YYYY-XXXXX` for Custom Printing, `BLK-YYYY-XXXXX` for Bulk Orders, and `CNT-YYYY-XXXXX` for Contact inquiries.
+  - Designed with graceful offline/dev fallback so storefront features and test suites function seamlessly even before database provisioning.
+- **Server Business Logic Layer (`src/server/`)**:
+  - `src/server/orders.ts`: Handles atomic order creation, line item persistence, server-side pricing snapshots, order tracking queries, and admin status updates with AWB numbers.
+  - `src/server/inquiries.ts`: Handles lead ingestion for custom printing, volume RFQs, and contact support tickets.
+  - `src/server/payments.ts`: Prepares Razorpay orders in paise and verifies webhook signatures via HMAC SHA-256.
+- **10 Production API Route Handlers (`src/app/api/**`)**:
+  - `POST /api/orders`: Order creation and validation.
+  - `GET /api/orders/[id]`: Full order details query.
+  - `POST /api/orders/track`: Customer and guest order tracking lookup by Order Number + Phone/Email.
+  - `POST /api/inquiries/custom-print`: Custom print studio quote requests.
+  - `POST /api/inquiries/bulk`: High-volume RFQ and physical swatch kit requests.
+  - `POST /api/inquiries/contact`: Contact form submissions.
+  - `POST /api/payments/razorpay/create-order`: Gateway order initialization.
+  - `POST /api/payments/razorpay/webhook`: Verified payment capture and automatic `CONFIRMED` transition.
+  - `GET /api/admin/orders`: Filtered, paginated order list.
+  - `PATCH /api/admin/orders/[id]/status`: Stage updates (`IN_PRODUCTION`, `DISPATCHED`, `DELIVERED`).
+- **Storefront Form Integration**:
+  - Connected Checkout page (`/checkout`) directly to `/api/orders`.
+  - Connected Bulk Orders page (`/bulk-orders`) directly to `/api/inquiries/bulk`.
+  - Connected Contact page (`/contact`) directly to `/api/inquiries/contact`.
+- **Environment & Build Verification**:
+  - Updated `.env.example` and `src/lib/env.ts` with Supabase, Razorpay, and Resend specifications.
+  - `npx tsc --noEmit` passing with 0 errors.
+  - `npm run lint` passing with 0 errors.
+  - `npm run build` passing with all 201 pages and dynamic API routes compiled cleanly.
+
+## Phase B: Full Catalog Completion (49 Commercial Products per PRD §5.1.1)
+**Date:** 2026-09-19
+
+**Built & Delivered:**
+- **Full Catalog Expansion to 49 Products**:
+  - Expanded product scope from 21 items to all 49 distinct commercial products spanning all 8 core print categories specified in PRD §5.1.1.
+  - Implemented modular catalog data architecture under `src/lib/catalog-data/*.ts` separating data models cleanly by vertical:
+    1. `business-printing.ts`: 6 products (Business Cards, Letterheads, Envelopes, Bill Books, Invoice Books, Company Profiles).
+    2. `marketing-materials.ts`: 6 products (A4 Flyers, Tri-Fold Brochures, Leaflets, Posters, Pamphlets, Product Catalogues).
+    3. `outdoor-advertising.ts`: 10 products (Flex Printing, Vinyl Banners, Hanging Banners, Billboards/Hoardings, Retractable Standees, Glow Signboards, LED Neon Boards, 3D Channel Letters, Nameplates, Acrylic Boards).
+    4. `stationery.ts`: 6 products (Hardcover Notebooks, Executive Diaries, Desk Notepads, Presentation Folders, Foil Certificates, PVC ID Cards).
+    5. `wedding-events.ts`: 5 products (Royal Wedding Cards, Event Invitations, Thank You Cards, Perforated Tickets, Ceremony Programs).
+    6. `packaging.ts`: 4 products (Custom Paper Bags, Shipping Corrugated Boxes, Packaging Labels, Garment Hang Tags).
+    7. `labels-stickers.ts`: 6 products (Die-Cut Vinyl Stickers, Bottle/Jar Labels, Barcode Labels, Clear Stickers, Custom Shape Sticker Sheets, Security Holograms).
+    8. `photo-custom.ts`: 6 products (Archival Photo Prints, Gallery Canvas Prints, Photo Frames, Custom T-Shirts, Sublimation Mugs, Photo Keychains).
+- **Industrial Real-World Specifications**:
+  - Configured accurate paper weights (70–120 GSM bond/maplitho, 130–250 GSM art paper, 350–400 GSM board, 240–510 GSM outdoor flex/vinyl, 30 Mil PVC).
+  - Defined commercial Indian print dimensions (mm / inches / feet), bleed allowances (3mm), turnaround times, and realistic pricing based on current offset and digital Indian market rates.
+  - Differentiated `"batch"` vs `"unit"` pricing models with tiered volume discount slabs up to 48% savings.
+- **Pre-Rendered Static Generation & Route Coverage**:
+  - `generateStaticParams()` dynamically maps all 49 canonical slugs and dozens of aliases, successfully generating 194 static HTML pages at build time with 0 errors.
+  - Full sitemap at `sitemap.xml` automatically indexes all products, categories, and static pages.
+- **Prisma Seeder Synchronization (`prisma/seed.ts`)**:
+  - Synchronized database seeder logic to account for batch vs unit rates when computing sample `pricingRule` pricing.
+
+## Performance, Core Web Vitals & SEO Hardening — Image Optimization, Favicons & SSR
+**Date:** 2026-09-19
+
+**Built & Delivered:**
+- **Enabled Next.js Image Optimization**:
+  - Removed `images: { unoptimized: true }` in `next.config.js` and enabled modern format conversion (`AVIF` and `WebP`) alongside responsive `deviceSizes` and `imageSizes`.
+  - Re-compressed all local photography in `public/images/` using standard high-efficiency compression, reducing original raw asset sizes by over 60%.
+- **Complete Favicon & PWA Web Manifest**:
+  - Created brand vector icon `public/favicon.svg`, high-resolution `public/apple-touch-icon.png` (180x180), and `public/favicon.ico`.
+  - Added Next.js metadata route `src/app/manifest.ts` generating `/manifest.webmanifest` with Star Press branding, dark theme metadata (`#0B0C10`), and icons.
+  - Linked icon assets and manifest in `src/app/layout.tsx` metadata.
+- **Dynamic Full-Catalog Sitemap (`src/app/sitemap.ts`)**:
+  - Expanded `sitemap.ts` from 8 URLs to dynamically include all static routes, all 8 category views (`/shop?category=${slug}`), all 21 product detail pages (`/shop/${slug}`), and legal policies with proper priorities and change frequencies.
+- **Server Component Architecture for `/shop`**:
+  - Refactored `src/app/shop/page.tsx` from a client-only component to a **Server Component** with full OpenGraph and title metadata.
+  - Pre-renders `<h1>` headings, hero copy, and a `<noscript>` crawlable product directory for search engine indexing.
+  - Isolated reactive search/filter controls to client component `ShopClientView.tsx` inside a `<Suspense>` boundary.
+
+## Critical Bugs & Discrepancies Resolution — Production Hardening & Pricing Fix
+**Date:** 2026-09-19
+
+**Built & Delivered:**
+- **Canonical Category Slugs & Megamenu Synchronization**:
+  - Updated `Header.tsx` megamenu and `data.ts` `CATEGORIES` array to reference the 8 confirmed canonical slugs (`business-printing`, `marketing-materials`, `outdoor-advertising`, `stationery`, `wedding-events`, `packaging`, `labels-stickers`, `photo-custom-printing`).
+  - Fixed `CATEGORY_SLUG_ALIASES` in `catalog.ts` so colloquial/legacy slugs map to their canonical counterpart, resolving the issue where `/shop/business-printing` previously redirected to an empty category.
+  - Added query normalization in `src/app/shop/page.tsx` so alias URLs automatically resolve to their canonical catalog category.
+- **Pricing Calculation Engine Overhaul**:
+  - Resolved the raw unit multiplication bug where starter batch prices (e.g. ₹299 for 100 cards) were incorrectly multiplied by total quantity, resulting in ₹29,900.
+  - Configured batch vs. unit product pricing models: batch products (cards, flyers, brochures, stickers) derive unit base rate from starter pack quantity, accurately computing ₹299 for 100 cards, and ~₹1,944 for 1,000 cards with bulk savings.
+  - Enhanced currency formatting (`formatINR`) to cleanly display fractional unit rates (e.g. `₹2.99 / unit`) while formatting whole rupee subtotals and totals without decimal clutter.
+- **Custom Printing Studio Asset Fix**:
+  - Replaced 5 missing image paths in `CUSTOM_PRODUCT_TYPES` (`/images/prod-apparel.jpg`, `/images/prod-mugs.jpg`, `/images/prod-flex-banner.jpg`, `/images/prod-packaging-boxes.jpg`, `/images/prod-photo-prints.jpg`) with verified high-resolution photography.
+- **Header Search Bar Wiring**:
+  - Converted Header search form submission from `window.location.href` to Next.js `useRouter.push()`.
+  - Updated `ShopContent` in `src/app/shop/page.tsx` to read and react to `?search=` and `?q=` query parameters, syncing query state automatically.
+- **Section Anchor IDs in Footer Target Pages**:
+  - Added `id="equipment"` with scroll offsets to Machinery & Technology Fleet in `/about`.
+  - Added `id="artwork"` and `id="shipping"` to category tabs with hash detection in `/faq`.
+  - Added `id="guarantee"` to Section 5 (100% Quality & Reprint Guarantee) in `/terms`.
+- **Clean Initial Cart State**:
+  - Replaced default hardcoded demo items (`prod-1`, `prod-2`, `prod-4`) in `CartContext.tsx` with an empty array `[]` for new visitors.
+- **Header & Mobile Navigation**:
+  - Added `{ label: "Contact", href: "/contact" }` to `NAV_LINKS` in `data.ts`.
+
 ## Production Polish & Route Protection — Complete Slug Aliases & Link Integrity
 **Date:** 2026-09-16
 
