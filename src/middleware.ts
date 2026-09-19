@@ -1,40 +1,42 @@
-import { withAuth } from "next-auth/middleware";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default withAuth(
-  function middleware(req) {
-    const pathname = req.nextUrl.pathname;
-    const token = req.nextauth.token;
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-    // Admin routes protection: must have role === "ADMIN"
-    if (pathname.startsWith("/admin")) {
-      if (token?.role !== "ADMIN") {
+  // Protect /admin and /account routes
+  if (pathname.startsWith("/admin") || pathname.startsWith("/account")) {
+    try {
+      const secret = process.env.NEXTAUTH_SECRET || "development-secret-key-32-chars-min";
+      const token = await getToken({
+        req,
+        secret,
+      });
+
+      if (!token) {
+        const loginUrl = new URL("/login", req.url);
+        loginUrl.searchParams.set("callbackUrl", pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      // Admin routes require ADMIN role
+      if (pathname.startsWith("/admin") && token.role !== "ADMIN") {
         const loginUrl = new URL("/login", req.url);
         loginUrl.searchParams.set("error", "AccessDenied");
         loginUrl.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(loginUrl);
       }
+    } catch (error) {
+      console.error("[middleware] Auth verification error:", error);
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
     }
-
-    return NextResponse.next();
-  },
-  {
-    secret: process.env.NEXTAUTH_SECRET || "development-secret-key-32-chars-min",
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const pathname = req.nextUrl.pathname;
-        // Require auth for /admin and /account
-        if (pathname.startsWith("/admin") || pathname.startsWith("/account")) {
-          return !!token;
-        }
-        return true;
-      },
-    },
-    pages: {
-      signIn: "/login",
-    },
   }
-);
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ["/admin/:path*", "/account/:path*"],
