@@ -49,7 +49,7 @@ export default function CatalogProductCard({ product }: CatalogProductCardProps)
   const maxDiscount = Math.max(...product.quantityTiers.map((t) => t.discountPercent), 0);
 
   return (
-    <div className="group relative flex flex-col bg-bg-surface rounded-2xl border border-border-subtle p-4 transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-magenta/40 hover:shadow-[0_8px_30px_rgba(240,23,156,0.15)]">
+    <div className="group relative flex flex-col bg-bg-surface rounded-2xl border border-border-subtle p-4 transition-all duration-300 hover:-translate-y-1.5 hover:border-white/20 hover:shadow-xl hover:shadow-black/50">
       {/* Product Image Container */}
       <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-bg-surface-alt mb-3.5">
         <Link href={`/shop/${product.slug}`} className="block w-full h-full relative">
@@ -63,13 +63,13 @@ export default function CatalogProductCard({ product }: CatalogProductCardProps)
         </Link>
 
         {/* Category Pill */}
-        <span className="absolute top-2.5 left-2.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-brand-cyan uppercase tracking-wider">
+        <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-slate-300 uppercase tracking-wider">
           {product.categoryName}
         </span>
 
         {/* Bulk discount tag */}
         {maxDiscount > 0 && (
-          <span className="absolute bottom-2.5 left-2.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-magenta text-white shadow-md">
+          <span className="absolute bottom-2.5 left-2.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/90 text-white shadow-sm">
             Save up to {maxDiscount}%
           </span>
         )}
@@ -85,8 +85,8 @@ export default function CatalogProductCard({ product }: CatalogProductCardProps)
           }
           className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand-yellow ${
             isWishlisted
-              ? "bg-brand-magenta text-white scale-110 shadow-lg shadow-brand-magenta/30"
-              : "bg-black/50 text-white hover:bg-black/80 hover:text-brand-magenta"
+              ? "bg-rose-600 text-white scale-110 shadow-md shadow-rose-950/40"
+              : "bg-black/50 text-white hover:bg-black/80 hover:text-rose-400"
           }`}
         >
           <Heart

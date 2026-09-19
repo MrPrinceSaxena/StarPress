@@ -115,9 +115,9 @@ export default function ProductDetailPage({ params }: PageProps) {
           <div className="lg:col-span-6 space-y-6 lg:sticky lg:top-28">
             <ProductGallery images={product.images} productName={product.name} />
 
-            <div className="space-y-3 pt-2">
+              <div className="space-y-3 pt-2">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-brand-cyan/10 border border-brand-cyan/30 text-brand-cyan uppercase tracking-wider">
+                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 uppercase tracking-wider">
                   {product.categoryName}
                 </span>
                 <StarRating rating={product.rating} reviewCount={product.reviewCount} />
@@ -157,7 +157,7 @@ export default function ProductDetailPage({ params }: PageProps) {
 
               <Link
                 href={`/shop?category=${product.categorySlug}`}
-                className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-brand-cyan hover:underline"
+                className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
               >
                 <span>View all category items</span>
                 <ChevronRight size={14} />

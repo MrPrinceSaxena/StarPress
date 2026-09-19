@@ -22,20 +22,10 @@ export default function CategoriesPage() {
 
       <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 lg:px-10 py-10 md:py-14">
         {/* Banner */}
-        <div className="relative rounded-[28px] border border-border-subtle bg-gradient-to-r from-bg-surface via-[#181226] to-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-2xl text-center md:text-left">
-          {/* Ambient Glows */}
-          <div
-            className="absolute top-0 right-1/4 w-80 h-80 bg-brand-magenta/15 rounded-full blur-[110px] pointer-events-none"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute bottom-0 left-10 w-80 h-80 bg-brand-cyan/15 rounded-full blur-[110px] pointer-events-none"
-            aria-hidden="true"
-          />
-
+        <div className="relative rounded-[28px] border border-border-subtle bg-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-xl text-center md:text-left">
           <div className="relative z-10 max-w-2xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-yellow/40 bg-brand-yellow/10 text-brand-yellow text-xs font-bold uppercase tracking-wider">
-              <Sparkles size={13} />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+              <Sparkles size={13} className="text-brand-yellow" />
               <span>Full Printing Solutions</span>
             </div>
 
@@ -57,7 +47,7 @@ export default function CategoriesPage() {
             return (
               <div
                 key={category.id}
-                className="group relative rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8 flex flex-col justify-between overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-magenta/40 hover:shadow-[0_8px_30px_rgba(240,23,156,0.15)]"
+                className="group relative rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8 flex flex-col justify-between overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:border-white/20 hover:shadow-xl hover:shadow-black/50"
               >
                 <div>
                   <div className="flex items-start justify-between gap-4 mb-5">
@@ -80,7 +70,7 @@ export default function CategoriesPage() {
                     {category.name}
                   </h2>
 
-                  <p className="text-xs font-semibold text-brand-cyan mb-2">
+                  <p className="text-xs font-semibold text-slate-400 mb-2">
                     {category.tagline}
                   </p>
 
