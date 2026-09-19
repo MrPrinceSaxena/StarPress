@@ -70,3 +70,38 @@ Run the automated security test suite anytime auth changes are committed:
 npm run test:security
 ```
 This verifies 16 assertions across password policy, rate limiting, lockout timing, and credentials.
+
+---
+
+## 5. Weekly Security Audit Procedure
+
+Run every Friday or following production releases:
+
+```bash
+# 1. Automated test suite execution
+npm run test:security
+
+# 2. Inspect active security headers on live production
+curl -sI https://star-press.vercel.app/login | grep -i -E "security|x-frame|x-content|permissions|referrer"
+
+# 3. Review AuthAuditLog for suspicious brute-force or credential stuffing patterns:
+# (Failed logins by IP in the last 7 days)
+SELECT "ipAddress", COUNT(*) as failed_count
+FROM "AuthAuditLog"
+WHERE "action" = 'LOGIN_FAILURE'
+  AND "createdAt" > NOW() - INTERVAL '7 days'
+GROUP BY "ipAddress"
+ORDER BY failed_count DESC
+LIMIT 20;
+```
+
+---
+
+## 6. Deployment Log
+
+### Phase 1: Zero-Trust Security Hardening
+- **Date:** 2026-09-19
+- **Phase:** 1 (Zero-Trust Security & Authentication Hardening)
+- **Changes:** Hardcoded credentials removed, 12-char complex password policy, 15-min account lockout after 5 failures, sliding-window rate limiting, enterprise security headers, automated test suite, operational manuals.
+- **Status:** ✅ Live on Vercel (`https://star-press.vercel.app/`)
+- **Monitoring:** `AuthAuditLog` queries setup in PostgreSQL.

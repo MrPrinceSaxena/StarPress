@@ -3,6 +3,33 @@
 Reverse-chronological log of what was actually built each phase, plus decisions made
 and open questions. This is the audit trail for the whole project.
 
+## Phase 1.1: Zero-Trust Security Hardening & Authentication Upgrades
+**Date:** 2026-09-19
+
+**Built & Delivered:**
+- **Zero Hardcoded Credentials & Timing Attack Defense (`src/lib/auth.ts`)**:
+  - Removed all mock credentials and bypass paths. Authentications strictly validate against database users.
+  - Added constant-time dummy hashing for non-existent users to prevent user-enumeration timing vectors.
+  - Implemented 1-hour JWT token rotation (`iat` and `jti` refresh cycles).
+- **Enterprise Password Policy (`src/lib/validation/auth.ts`, `src/app/api/auth/register/route.ts`)**:
+  - Minimum 12 characters, requiring uppercase, lowercase, numbers, and special symbols.
+  - Password hashing upgraded to 12 bcrypt salt rounds across registration and database seeders.
+  - Client-side real-time 4-bar strength meter and requirement checklist in `/register`.
+- **Brute-Force & Account Lockout Defense (`prisma/schema.prisma`, `src/lib/auth.ts`)**:
+  - Automatic 15-minute temporary lockout after 5 consecutive failed login attempts on an email.
+  - Lockout countdown feedback preventing repeated attack vectors.
+- **Sliding-Window Rate Limiting Engine (`src/lib/rate-limit.ts`)**:
+  - Implemented millisecond-accurate sliding-window limiter with automated garbage collection.
+  - Applied to `/api/auth/register` (5 requests / 15 minutes per IP) with standard HTTP 429 and `Retry-After`.
+- **Enterprise HTTP Security Headers (`src/middleware.ts`)**:
+  - Injected HSTS (`max-age=63072000; includeSubDomains; preload`), `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`.
+- **Security Audit Logging & Session Models (`prisma/schema.prisma`, `src/lib/audit.ts`)**:
+  - Added `AuthAuditLog` and `Session` models. Asynchronous logging of `LOGIN_SUCCESS`, `LOGIN_FAILURE`, `ACCOUNT_LOCKED`, `REGISTER`.
+- **Automated Security Verification Suite (`scripts/test-security.ts`)**:
+  - Added `npm run test:security` verifying 16 test assertions across password policy, rate limiting, and lockout calculations.
+- **Operational Documentation**:
+  - Created `docs/SECURITY.md`, `docs/OPERATIONS.md`, and `docs/INCIDENT-RESPONSE.md`.
+
 ## Phase 1: Authentication & Customer Dashboard (Phase 1 of PRD & TRD)
 **Date:** 2026-09-19
 
