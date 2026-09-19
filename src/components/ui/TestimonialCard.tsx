@@ -11,7 +11,7 @@ export default function TestimonialCard({
   testimonial,
 }: TestimonialCardProps) {
   return (
-    <div className="flex flex-col justify-between bg-bg-surface rounded-2xl border border-border-subtle p-6 transition-all duration-200 hover:-translate-y-1 hover:border-brand-magenta/30 hover:shadow-[0_0_24px_rgba(240,23,156,0.12)]">
+    <div className="flex flex-col justify-between bg-bg-surface rounded-2xl border border-border-subtle p-6 transition-all duration-200 hover:-translate-y-1 hover:border-white/20 hover:shadow-xl hover:shadow-black/40">
       <div>
         {/* Header: Avatar + Info */}
         <div className="flex items-center gap-3.5 mb-4">

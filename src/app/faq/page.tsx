@@ -149,6 +149,18 @@ export default function FAQPage() {
   const [selectedCategory, setSelectedCategory] = useState("All Questions");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Respond to anchor navigation like #artwork or #shipping
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === "#artwork") {
+        setSelectedCategory("Artwork & Design Files");
+      } else if (hash === "#shipping") {
+        setSelectedCategory("Shipping & Delivery");
+      }
+    }
+  }, []);
+
   const filteredFAQs = useMemo(() => {
     return FAQ_DATA.filter((item) => {
       const matchesCat =
@@ -169,15 +181,10 @@ export default function FAQPage() {
 
       <main className="flex-1 max-w-[1080px] w-full mx-auto px-6 lg:px-10 py-10 md:py-14">
         {/* Page Hero */}
-        <div className="relative rounded-[28px] border border-border-subtle bg-gradient-to-r from-bg-surface via-[#181324] to-bg-surface p-8 sm:p-14 mb-10 overflow-hidden shadow-2xl text-center">
-          <div
-            className="absolute top-0 left-1/3 w-80 h-80 bg-brand-yellow/15 rounded-full blur-[110px] pointer-events-none"
-            aria-hidden="true"
-          />
-
+        <div className="relative rounded-[28px] border border-border-subtle bg-bg-surface p-8 sm:p-14 mb-10 overflow-hidden shadow-xl text-center">
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-yellow/40 bg-brand-yellow/10 text-brand-yellow text-xs font-bold uppercase tracking-wider">
-              <HelpCircle size={13} />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+              <HelpCircle size={13} className="text-brand-yellow" />
               <span>Knowledge Base & Pre-Press Help</span>
             </div>
 
@@ -209,20 +216,29 @@ export default function FAQPage() {
 
         {/* Category Filter Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                selectedCategory === cat
-                  ? "bg-brand-yellow text-black font-bold shadow-[0_0_15px_rgba(255,230,0,0.25)]"
-                  : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:bg-bg-surface-alt"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          {CATEGORIES.map((cat) => {
+            const anchorId =
+              cat === "Artwork & Design Files"
+                ? "artwork"
+                : cat === "Shipping & Delivery"
+                ? "shipping"
+                : undefined;
+            return (
+              <button
+                key={cat}
+                id={anchorId}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`scroll-mt-28 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                  selectedCategory === cat
+                    ? "bg-brand-yellow text-black font-bold shadow-md"
+                    : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:bg-bg-surface-alt"
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
 
         {/* FAQ Accordions List */}
@@ -253,18 +269,18 @@ export default function FAQPage() {
               <details
                 key={faq.id}
                 name="starpress-faq"
-                className="group rounded-2xl border border-border-subtle bg-bg-surface transition-colors open:border-brand-magenta/40 overflow-hidden"
+                className="group rounded-2xl border border-border-subtle bg-bg-surface transition-colors open:border-border-strong overflow-hidden"
               >
                 <summary className="p-6 cursor-pointer list-none flex items-center justify-between gap-4 select-none">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-cyan">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       {faq.category}
                     </span>
                     <h2 className="font-display font-bold text-base sm:text-lg text-white group-hover:text-brand-yellow transition-colors">
                       {faq.question}
                     </h2>
                   </div>
-                  <div className="w-8 h-8 rounded-lg bg-bg-surface-alt border border-border-subtle flex items-center justify-center text-text-secondary group-open:rotate-180 group-open:text-brand-magenta transition-transform duration-200 shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-bg-surface-alt border border-border-subtle flex items-center justify-center text-text-secondary group-open:rotate-180 group-open:text-brand-yellow transition-transform duration-200 shrink-0">
                     <ChevronDown size={18} />
                   </div>
                 </summary>

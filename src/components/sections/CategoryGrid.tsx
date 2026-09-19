@@ -33,22 +33,12 @@ export default function CategoryGrid() {
 
   return (
     <section className="py-16 md:py-24 relative overflow-hidden bg-bg-base">
-      {/* Ambient background glows */}
-      <div
-        className="absolute top-1/3 -left-32 w-96 h-96 bg-brand-magenta/10 rounded-full blur-[140px] pointer-events-none"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute bottom-10 -right-32 w-96 h-96 bg-brand-cyan/10 rounded-full blur-[140px] pointer-events-none"
-        aria-hidden="true"
-      />
-
       <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8 md:mb-10">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-yellow/40 bg-brand-yellow/10 text-brand-yellow text-xs font-bold uppercase tracking-wider">
-              <Sparkles size={13} />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+              <Sparkles size={13} className="text-brand-yellow" />
               <span>Interactive Collection Rail</span>
             </div>
 
@@ -64,7 +54,7 @@ export default function CategoryGrid() {
 
           <Link
             href="/categories"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-brand-cyan hover:text-white bg-brand-cyan/10 hover:bg-brand-cyan/20 border border-brand-cyan/30 transition-all group shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all group shrink-0"
           >
             <span>View All Categories</span>
             <ArrowRight
@@ -90,7 +80,7 @@ export default function CategoryGrid() {
                 onFocus={() => setActiveId(cat.id)}
                 className={`relative rounded-2xl overflow-hidden cursor-pointer select-none transition-[flex,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col justify-between border ${
                   isExpanded
-                    ? "flex-[3.8] border-brand-yellow/60 shadow-[0_12px_40px_rgba(0,0,0,0.8),0_0_30px_rgba(255,230,0,0.12)] ring-1 ring-brand-yellow/40"
+                    ? "flex-[3.8] border-brand-yellow/80 shadow-[0_16px_40px_rgba(0,0,0,0.8)] ring-1 ring-brand-yellow/40"
                     : "flex-1 border-white/5 bg-bg-surface-alt hover:border-white/20"
                 }`}
                 style={{
@@ -117,20 +107,9 @@ export default function CategoryGrid() {
                 <div
                   className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${
                     isExpanded
-                      ? "bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/70 to-black/60"
-                      : "bg-[#0A0A0F]/80 group-hover:bg-[#0A0A0F]/60"
+                      ? "bg-gradient-to-t from-[#0B0C10] via-[#0B0C10]/70 to-black/60"
+                      : "bg-[#0B0C10]/80 group-hover:bg-[#0B0C10]/60"
                   }`}
-                  aria-hidden="true"
-                />
-
-                {/* Accent Color Ambient Bloom at Bottom */}
-                <div
-                  className={`absolute -bottom-8 inset-x-0 h-36 transition-opacity duration-500 blur-2xl pointer-events-none ${
-                    isExpanded ? "opacity-35" : "opacity-0"
-                  }`}
-                  style={{
-                    background: cat.accentColor || "#FFCF1B",
-                  }}
                   aria-hidden="true"
                 />
 
@@ -191,7 +170,7 @@ export default function CategoryGrid() {
                           </div>
                         </div>
 
-                        <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-black bg-brand-yellow hover:bg-yellow-300 transition-all shadow-[0_0_20px_rgba(255,230,0,0.3)]">
+                        <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-black bg-brand-yellow hover:bg-yellow-400 transition-all shadow-md shadow-black/40">
                           <span>Explore Line</span>
                           <ArrowUpRight size={15} />
                         </div>
@@ -243,7 +222,7 @@ export default function CategoryGrid() {
 
                 {/* Dark Vignette */}
                 <div
-                  className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/70 to-black/50 pointer-events-none"
+                  className="absolute inset-0 bg-gradient-to-t from-[#0B0C10] via-[#0B0C10]/70 to-black/50 pointer-events-none"
                   aria-hidden="true"
                 />
 
@@ -260,7 +239,7 @@ export default function CategoryGrid() {
                 {/* Bottom Content */}
                 <div className="relative z-10 space-y-2">
                   {cat.sampleProducts && cat.sampleProducts.length > 0 && (
-                    <p className="text-[10px] font-medium text-brand-cyan tracking-wide truncate">
+                    <p className="text-[10px] font-medium text-slate-400 tracking-wide truncate">
                       {cat.sampleProducts.join(" • ")}
                     </p>
                   )}

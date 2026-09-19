@@ -114,7 +114,7 @@ export default function TermsPage() {
           </section>
 
           {/* Section 5 */}
-          <section className="space-y-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6">
+          <section id="guarantee" className="space-y-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 scroll-mt-28">
             <h2 className="font-display font-bold text-lg text-emerald-400 uppercase">
               5. 100% Quality Assurance & Free Reprint Policy
             </h2>

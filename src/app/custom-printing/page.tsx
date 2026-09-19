@@ -39,7 +39,7 @@ const CUSTOM_PRODUCT_TYPES: CustomProductType[] = [
     name: "Custom Bio-Washed Cotton T-Shirt",
     category: "Apparel",
     basePrice: 399,
-    image: "/images/prod-apparel.jpg",
+    image: "/images/promo-banner.jpg",
     sizes: ["S (38\")", "M (40\")", "L (42\")", "XL (44\")", "XXL (46\")"],
     finishes: ["DTF Full Color", "Screen Print", "HD Embroidery Badge"],
     minQty: 5,
@@ -49,7 +49,7 @@ const CUSTOM_PRODUCT_TYPES: CustomProductType[] = [
     name: "Custom Glossy Ceramic Mug (11oz)",
     category: "Drinkware",
     basePrice: 199,
-    image: "/images/prod-mugs.jpg",
+    image: "/images/cat-gifts.jpg",
     sizes: ["Standard 11 oz", "Jumbo 15 oz (+₹50)", "Magic Heat Sensitive (+₹100)"],
     finishes: ["Full Sublimation Wrap", "Single Side Logo", "Dual Side Print"],
     minQty: 1,
@@ -59,7 +59,7 @@ const CUSTOM_PRODUCT_TYPES: CustomProductType[] = [
     name: "High-Resolution Vinyl Star Flex Banner",
     category: "Large Format",
     basePrice: 450,
-    image: "/images/prod-flex-banner.jpg",
+    image: "/images/prod-banner.jpg",
     sizes: ["4 ft × 2 ft", "6 ft × 3 ft (+₹300)", "8 ft × 4 ft (+₹650)", "10 ft × 6 ft (+₹1200)"],
     finishes: ["Heavy Duty Star Flex (340 GSM)", "Blackout Flex (440 GSM)", "Vinyl Sunboard Mount"],
     minQty: 1,
@@ -69,7 +69,7 @@ const CUSTOM_PRODUCT_TYPES: CustomProductType[] = [
     name: "Custom Corrugated Shipping Box",
     category: "Packaging",
     basePrice: 45,
-    image: "/images/prod-packaging-boxes.jpg",
+    image: "/images/cat-gifts.jpg",
     sizes: ["Small (8\"×6\"×3\")", "Medium (10\"×8\"×4\")", "Large (12\"×10\"×5\")"],
     finishes: ["Kraft Natural Brown", "White Coated Top", "Full CMYK External Print"],
     minQty: 25,
@@ -89,7 +89,7 @@ const CUSTOM_PRODUCT_TYPES: CustomProductType[] = [
     name: "Gallery-Wrapped Cotton Canvas Art",
     category: "Digital Art",
     basePrice: 699,
-    image: "/images/prod-photo-prints.jpg",
+    image: "/images/promo-banner.jpg",
     sizes: ["12\" × 12\" Square", "16\" × 20\" Gallery", "24\" × 36\" Grand Living"],
     finishes: ["Pine Wood Stretcher Frame (0.75\")", "Deep Gallery Frame (1.5\")", "Textured UV Gloss Varnish"],
     minQty: 1,
@@ -207,20 +207,10 @@ export default function CustomPrintingPage() {
 
       <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 lg:px-10 py-10 md:py-14">
         {/* Page Hero Banner */}
-        <div className="relative rounded-3xl border border-border-subtle bg-gradient-to-r from-bg-surface via-[#1c142b] to-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-2xl">
-          {/* Ambient Glows */}
-          <div
-            className="absolute top-0 right-10 w-96 h-96 bg-brand-magenta/15 rounded-full blur-[120px] pointer-events-none"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute bottom-0 left-10 w-96 h-96 bg-brand-cyan/15 rounded-full blur-[120px] pointer-events-none"
-            aria-hidden="true"
-          />
-
+        <div className="relative rounded-3xl border border-border-subtle bg-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-xl">
           <div className="relative z-10 max-w-2xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-yellow/40 bg-brand-yellow/10 text-brand-yellow text-xs font-bold uppercase tracking-wider">
-              <Sparkles size={13} />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+              <Sparkles size={13} className="text-brand-yellow" />
               <span>Bespoke Pre-Press & Fabrication Studio</span>
             </div>
 
@@ -244,7 +234,7 @@ export default function CustomPrintingPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-display font-bold text-lg text-white uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-brand-cyan text-black font-black text-xs flex items-center justify-center">
+                  <span className="w-6 h-6 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center shrink-0">
                     1
                   </span>
                   <span>Select Product Type</span>
@@ -265,8 +255,8 @@ export default function CustomPrintingPage() {
                       onClick={() => handleProductChange(prod)}
                       className={`text-left p-3.5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-3 group ${
                         isSelected
-                          ? "border-brand-yellow bg-brand-yellow/10 shadow-[0_0_20px_rgba(255,230,0,0.15)]"
-                          : "border-border-subtle bg-bg-surface hover:border-brand-magenta/40 hover:bg-bg-surface-alt"
+                          ? "border-brand-yellow/90 bg-brand-yellow/[0.08] shadow-md shadow-black/40 ring-1 ring-brand-yellow/30"
+                          : "border-border-subtle bg-bg-surface hover:border-white/20 hover:bg-bg-surface-alt"
                       }`}
                     >
                       <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-bg-surface-alt border border-border-subtle">
@@ -279,7 +269,7 @@ export default function CustomPrintingPage() {
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-brand-cyan uppercase tracking-wider block mb-0.5">
+                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">
                           {prod.category}
                         </span>
                         <div className="text-xs sm:text-sm font-bold text-white line-clamp-1 group-hover:text-brand-yellow transition-colors">
@@ -298,7 +288,7 @@ export default function CustomPrintingPage() {
             {/* 2. Configure Sizes & Materials */}
             <div className="space-y-6 rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8">
               <h2 className="font-display font-bold text-lg text-white uppercase tracking-wider flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-brand-magenta text-white font-black text-xs flex items-center justify-center">
+                <span className="w-6 h-6 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center shrink-0">
                   2
                 </span>
                 <span>Configure Specifications</span>
@@ -315,10 +305,10 @@ export default function CustomPrintingPage() {
                       key={sz}
                       type="button"
                       onClick={() => setSelectedSize(sz)}
-                      className={`px-3 py-2.5 rounded-xl border text-xs font-medium text-center transition-all ${
+                      className={`px-3 py-2.5 rounded-xl border text-xs text-center transition-all ${
                         selectedSize === sz
-                          ? "border-brand-yellow bg-brand-yellow/10 text-brand-yellow font-bold"
-                          : "border-border-subtle bg-bg-surface-alt text-text-secondary hover:text-white"
+                          ? "border-brand-yellow/90 bg-brand-yellow/[0.08] text-white font-semibold ring-1 ring-brand-yellow/40 shadow-sm"
+                          : "border-border-subtle bg-bg-surface-alt text-text-secondary hover:border-white/20 hover:text-white font-medium"
                       }`}
                     >
                       {sz}
@@ -338,10 +328,10 @@ export default function CustomPrintingPage() {
                       key={fn}
                       type="button"
                       onClick={() => setSelectedFinish(fn)}
-                      className={`px-3 py-2.5 rounded-xl border text-xs font-medium text-center transition-all ${
+                      className={`px-3 py-2.5 rounded-xl border text-xs text-center transition-all ${
                         selectedFinish === fn
-                          ? "border-brand-cyan bg-brand-cyan/10 text-brand-cyan font-bold"
-                          : "border-border-subtle bg-bg-surface-alt text-text-secondary hover:text-white"
+                          ? "border-brand-yellow/90 bg-brand-yellow/[0.08] text-white font-semibold ring-1 ring-brand-yellow/40 shadow-sm"
+                          : "border-border-subtle bg-bg-surface-alt text-text-secondary hover:border-white/20 hover:text-white font-medium"
                       }`}
                     >
                       {fn}
@@ -432,14 +422,14 @@ export default function CustomPrintingPage() {
                 </div>
               ) : (
                 /* Dropzone */
-                <label className="relative border-2 border-dashed border-border-subtle hover:border-brand-magenta/60 bg-bg-surface-alt rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors group">
+                <label className="relative border-2 border-dashed border-border-subtle hover:border-brand-yellow/50 bg-bg-surface-alt rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors group">
                   <input
                     type="file"
                     accept=".pdf,.ai,.psd,.cdr,.svg,.png,.jpg,.jpeg"
                     onChange={handleFileUpload}
                     className="sr-only"
                   />
-                  <div className="w-14 h-14 rounded-2xl bg-white/5 border border-border-subtle flex items-center justify-center text-text-secondary group-hover:text-brand-magenta group-hover:scale-105 transition-all mb-3">
+                  <div className="w-14 h-14 rounded-2xl bg-white/5 border border-border-subtle flex items-center justify-center text-text-secondary group-hover:text-brand-yellow group-hover:scale-105 transition-all mb-3">
                     <UploadCloud size={28} />
                   </div>
                   <div className="font-bold text-white text-sm mb-1">
@@ -482,10 +472,10 @@ export default function CustomPrintingPage() {
 
           {/* Right Column: Live Quote & Cart Summary */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-7 space-y-6 shadow-2xl sticky top-24">
+            <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-7 space-y-6 shadow-xl sticky top-24">
               <div className="flex items-center justify-between pb-4 border-b border-border-subtle">
                 <div>
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-brand-cyan">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
                     Live Calculation
                   </span>
                   <h3 className="font-display font-black text-xl text-white uppercase tracking-tight">
@@ -513,7 +503,7 @@ export default function CustomPrintingPage() {
 
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>Print Finish</span>
-                  <span className="text-brand-cyan font-medium text-right max-w-[180px] truncate">
+                  <span className="text-white font-medium text-right max-w-[180px] truncate">
                     {selectedFinish}
                   </span>
                 </div>
@@ -585,13 +575,13 @@ export default function CustomPrintingPage() {
               </div>
 
               {/* Guarantees */}
-              <div className="pt-3 border-t border-border-subtle space-y-2 text-xs text-text-muted">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck size={14} className="text-brand-magenta shrink-0" />
+              <div className="pt-3 border-t border-border-subtle space-y-2.5 text-xs text-text-secondary">
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck size={14} className="text-emerald-400/90 shrink-0" />
                   <span>Color match accuracy within 3ΔE tolerance</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-brand-cyan shrink-0" />
+                <div className="flex items-center gap-2.5">
+                  <Clock size={14} className="text-emerald-400/90 shrink-0" />
                   <span>Digital 3D soft proof within 4 hours</span>
                 </div>
               </div>

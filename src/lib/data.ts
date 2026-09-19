@@ -62,6 +62,7 @@ export const NAV_LINKS: NavLink[] = [
   { label: "Custom Printing", href: "/custom-printing" },
   { label: "Bulk Orders", href: "/bulk-orders" },
   { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export const TRUST_BADGES: TrustBadgeItem[] = [
@@ -98,7 +99,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#17C3C0",
     bgColorClass: "bg-cat-teal",
     imageSrc: "/images/cat-business-cards.jpg",
-    href: "/shop?category=business-stationery",
+    href: "/shop?category=business-printing",
   },
   {
     id: "cat-2",
@@ -106,7 +107,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#F97066",
     bgColorClass: "bg-cat-coral",
     imageSrc: "/images/cat-flyers.jpg",
-    href: "/shop?category=marketing-promo",
+    href: "/shop?category=marketing-materials",
   },
   {
     id: "cat-3",
@@ -114,7 +115,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#7A5CF0",
     bgColorClass: "bg-cat-purple",
     imageSrc: "/images/cat-banners.jpg",
-    href: "/shop?category=large-format",
+    href: "/shop?category=outdoor-advertising",
   },
   {
     id: "cat-4",
@@ -122,7 +123,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#2E90FA",
     bgColorClass: "bg-cat-blue",
     imageSrc: "/images/cat-brochures.jpg",
-    href: "/shop?category=business-stationery",
+    href: "/shop?category=stationery",
   },
   {
     id: "cat-5",
@@ -130,7 +131,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#EE4FA6",
     bgColorClass: "bg-cat-pink",
     imageSrc: "/images/cat-stickers.jpg",
-    href: "/shop?category=marketing-promo",
+    href: "/shop?category=wedding-events",
   },
   {
     id: "cat-6",
@@ -146,7 +147,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#FFCF1B",
     bgColorClass: "bg-brand-yellow",
     imageSrc: "/images/prod-stickers.jpg",
-    href: "/shop?category=stickers-labels",
+    href: "/shop?category=labels-stickers",
   },
   {
     id: "cat-8",
@@ -154,7 +155,7 @@ export const CATEGORIES: CategoryItem[] = [
     color: "#29C5F6",
     bgColorClass: "bg-brand-cyan",
     imageSrc: "/images/promo-banner.jpg",
-    href: "/custom-printing",
+    href: "/shop?category=photo-custom-printing",
   },
 ];
 
@@ -220,28 +221,28 @@ export const WHY_CHOOSE_US: BenefitItem[] = [
     id: "benefit-1",
     title: "High Quality Prints",
     subtitle: "Vibrant & Durable",
-    circleColor: "bg-brand-indigo",
+    circleColor: "bg-bg-surface-alt border border-border-subtle text-brand-yellow",
     iconName: "Diamond",
   },
   {
     id: "benefit-2",
     title: "Affordable Pricing",
     subtitle: "Value for Everyone",
-    circleColor: "bg-brand-magenta",
+    circleColor: "bg-bg-surface-alt border border-border-subtle text-brand-yellow",
     iconName: "Tag",
   },
   {
     id: "benefit-3",
     title: "Fast & Reliable",
     subtitle: "Delivery",
-    circleColor: "bg-brand-cyan",
+    circleColor: "bg-bg-surface-alt border border-border-subtle text-brand-yellow",
     iconName: "Truck",
   },
   {
     id: "benefit-4",
     title: "Easy Customization",
     subtitle: "Design Your Way",
-    circleColor: "bg-cat-pink",
+    circleColor: "bg-bg-surface-alt border border-border-subtle text-brand-yellow",
     iconName: "Palette",
   },
 ];
@@ -323,8 +324,8 @@ export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
     description:
       "Browse our catalog of business cards, banners, apparel, packaging, and custom formats.",
     iconName: "Layers",
-    badgeColorClass: "border-brand-cyan/40 text-brand-cyan bg-brand-cyan/10",
-    accentColorClass: "text-brand-cyan",
+    badgeColorClass: "border-white/10 text-brand-yellow bg-white/5 font-mono",
+    accentColorClass: "text-slate-300 group-hover:text-brand-yellow",
   },
   {
     step: "02",
@@ -332,8 +333,8 @@ export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
     description:
       "Submit your print-ready file (PDF, AI, PSD, PNG) or specify notes for our pre-press design team.",
     iconName: "UploadCloud",
-    badgeColorClass: "border-brand-magenta/40 text-brand-magenta bg-brand-magenta/10",
-    accentColorClass: "text-brand-magenta",
+    badgeColorClass: "border-white/10 text-brand-yellow bg-white/5 font-mono",
+    accentColorClass: "text-slate-300 group-hover:text-brand-yellow",
   },
   {
     step: "03",
@@ -341,8 +342,8 @@ export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
     description:
       "Review instant transparent pricing, select quantity slabs, and approve your digital proof.",
     iconName: "CheckCircle2",
-    badgeColorClass: "border-brand-yellow/40 text-brand-yellow bg-brand-yellow/10",
-    accentColorClass: "text-brand-yellow",
+    badgeColorClass: "border-white/10 text-brand-yellow bg-white/5 font-mono",
+    accentColorClass: "text-slate-300 group-hover:text-brand-yellow",
   },
   {
     step: "04",
@@ -350,8 +351,8 @@ export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
     description:
       "Manufactured on high-grade commercial presses with vibrant finishes and quality control checks.",
     iconName: "Printer",
-    badgeColorClass: "border-brand-indigo/40 text-brand-indigo bg-brand-indigo/10",
-    accentColorClass: "text-brand-indigo",
+    badgeColorClass: "border-white/10 text-brand-yellow bg-white/5 font-mono",
+    accentColorClass: "text-slate-300 group-hover:text-brand-yellow",
   },
   {
     step: "05",
@@ -359,8 +360,8 @@ export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
     description:
       "Carefully packaged with moisture-proof protection and dispatched reliably straight to your door.",
     iconName: "Truck",
-    badgeColorClass: "border-brand-magenta/40 text-brand-magenta bg-brand-magenta/10",
-    accentColorClass: "text-brand-magenta",
+    badgeColorClass: "border-white/10 text-brand-yellow bg-white/5 font-mono",
+    accentColorClass: "text-slate-300 group-hover:text-brand-yellow",
   },
 ];
 

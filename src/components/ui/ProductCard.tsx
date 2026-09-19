@@ -43,7 +43,7 @@ export default function ProductCard({
   };
 
   return (
-    <div className="group relative flex flex-col justify-between bg-bg-surface rounded-2xl border border-border-subtle p-3 sm:p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-magenta/50 hover:shadow-[0_8px_30px_rgba(240,23,156,0.15)] select-none">
+    <div className="group relative flex flex-col justify-between bg-bg-surface rounded-2xl border border-border-subtle p-3 sm:p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-xl hover:shadow-black/50 select-none">
       {/* 1. Compact Product Image (4:3 Aspect Ratio for Space-Efficiency) */}
       <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-bg-surface-alt mb-3">
         <Link href={product.href} className="block w-full h-full relative">
@@ -79,8 +79,8 @@ export default function ProductCard({
           }
           className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand-yellow ${
             isWishlisted
-              ? "bg-brand-magenta text-white scale-110 shadow-lg shadow-brand-magenta/30"
-              : "bg-black/50 text-white hover:bg-black/80 hover:text-brand-magenta"
+              ? "bg-rose-600 text-white scale-110 shadow-md shadow-rose-950/40"
+              : "bg-black/50 text-white hover:bg-black/80 hover:text-rose-400"
           }`}
         >
           <Heart

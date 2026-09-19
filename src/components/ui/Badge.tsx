@@ -14,7 +14,7 @@ export default function Badge({
   if (variant === "notification") {
     return (
       <span
-        className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[11px] font-bold rounded-full bg-brand-magenta text-white leading-none ${className}`}
+        className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[11px] font-bold rounded-full bg-brand-yellow text-black leading-none ${className}`}
       >
         {children}
       </span>
@@ -34,7 +34,7 @@ export default function Badge({
   // Pill variant (Hero top badge)
   return (
     <span
-      className={`inline-flex items-center gap-2 border border-brand-magenta/50 bg-bg-surface/60 backdrop-blur-sm rounded-full px-4 py-1.5 text-xs font-medium text-white/90 shadow-sm ${className}`}
+      className={`inline-flex items-center gap-2 border border-white/10 bg-white/5 backdrop-blur-sm rounded-full px-4 py-1.5 text-xs font-medium text-slate-300 shadow-sm ${className}`}
     >
       {children}
     </span>

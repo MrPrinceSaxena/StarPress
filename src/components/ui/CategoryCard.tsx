@@ -15,7 +15,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
     >
       {/* Tile Container */}
       <div
-        className={`relative w-full aspect-square rounded-2xl p-4 flex items-center justify-center overflow-hidden transition-all duration-200 group-hover:-translate-y-1.5 group-hover:shadow-[0_0_24px_rgba(240,23,156,0.25)] ${category.bgColorClass}`}
+        className={`relative w-full aspect-square rounded-2xl p-4 flex items-center justify-center overflow-hidden transition-all duration-200 group-hover:-translate-y-1.5 group-hover:shadow-xl group-hover:shadow-black/60 ${category.bgColorClass}`}
       >
         <div className="relative w-full h-full flex items-center justify-center">
           <Image

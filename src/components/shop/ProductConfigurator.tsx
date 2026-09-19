@@ -80,7 +80,7 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
               1. Choose Size
             </label>
             {selectedSize?.dimensions && (
-              <span className="text-xs text-brand-cyan font-mono">
+              <span className="text-xs text-slate-400 font-mono">
                 {selectedSize.dimensions}
               </span>
             )}
@@ -96,13 +96,13 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
                   onClick={() => setSizeId(size.id)}
                   className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all ${
                     isSelected
-                      ? "bg-bg-surface-alt border-brand-cyan shadow-md shadow-brand-cyan/15 text-white"
-                      : "bg-bg-surface border-border-subtle hover:border-white/30 text-text-secondary hover:text-white"
+                      ? "bg-bg-surface-alt border-brand-yellow/90 ring-1 ring-brand-yellow/30 text-white font-semibold shadow-sm"
+                      : "bg-bg-surface border-border-subtle hover:border-white/20 text-text-secondary hover:text-white"
                   }`}
                 >
-                  <span className="text-xs sm:text-sm font-semibold">{size.label}</span>
+                  <span className="text-xs sm:text-sm font-medium">{size.label}</span>
                   {size.multiplier > 1 && (
-                    <span className="text-[11px] font-mono text-brand-cyan bg-brand-cyan/10 px-1.5 py-0.5 rounded">
+                    <span className="text-[11px] font-mono text-brand-yellow bg-brand-yellow/10 px-1.5 py-0.5 rounded">
                       +{Math.round((size.multiplier - 1) * 100)}%
                     </span>
                   )}
@@ -113,7 +113,7 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
         </div>
       )}
 
-      {/* 2. Material / Paper Selection */}
+      {/* 2. Choose Paper Stock & Finish */}
       {product.materialOptions.length > 0 && (
         <div className="space-y-3">
           <label className="font-display font-bold text-sm text-text-primary uppercase tracking-wider">
@@ -130,12 +130,12 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
                   onClick={() => setMaterialId(mat.id)}
                   className={`w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-all ${
                     isSelected
-                      ? "bg-bg-surface-alt border-brand-magenta shadow-md shadow-brand-magenta/15 text-white"
-                      : "bg-bg-surface border-border-subtle hover:border-white/30 text-text-secondary hover:text-white"
+                      ? "bg-bg-surface-alt border-brand-yellow/90 ring-1 ring-brand-yellow/30 text-white font-semibold shadow-sm"
+                      : "bg-bg-surface border-border-subtle hover:border-white/20 text-text-secondary hover:text-white"
                   }`}
                 >
                   <div>
-                    <div className="text-xs sm:text-sm font-semibold text-white">
+                    <div className="text-xs sm:text-sm font-medium text-white">
                       {mat.label}
                     </div>
                     {mat.description && (
@@ -146,7 +146,7 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
                   </div>
 
                   {mat.extraPricePerUnit > 0 ? (
-                    <span className="text-xs font-mono text-brand-magenta bg-brand-magenta/10 px-2 py-0.5 rounded">
+                    <span className="text-xs font-mono text-brand-yellow bg-brand-yellow/10 px-2 py-0.5 rounded">
                       +₹{mat.extraPricePerUnit}/unit
                     </span>
                   ) : (
@@ -179,12 +179,12 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
                   onClick={() => setQuantity(tier.quantity)}
                   className={`relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
                     isSelected
-                      ? "bg-bg-surface-alt border-brand-yellow shadow-md shadow-brand-yellow/15 text-white scale-[1.02]"
-                      : "bg-bg-surface border-border-subtle hover:border-white/30 text-text-secondary hover:text-white"
+                      ? "bg-bg-surface-alt border-brand-yellow/90 ring-1 ring-brand-yellow/30 text-white scale-[1.02] shadow-sm font-semibold"
+                      : "bg-bg-surface border-border-subtle hover:border-white/20 text-text-secondary hover:text-white"
                   }`}
                 >
                   {tier.discountPercent > 0 && (
-                    <span className="absolute -top-2 text-[10px] font-black px-1.5 py-0.2 rounded-full bg-brand-magenta text-white shadow">
+                    <span className="absolute -top-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/90 text-white shadow-sm">
                       -{tier.discountPercent}%
                     </span>
                   )}
@@ -293,19 +293,19 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
         {/* Confidence micro-badges */}
         <div className="pt-2 grid grid-cols-2 gap-2 text-xs text-text-secondary">
           <div className="flex items-center gap-1.5">
-            <Zap size={14} className="text-brand-yellow shrink-0" />
+            <Zap size={14} className="text-slate-400 shrink-0" />
             <span>Ships in {pricing.estimatedTurnaroundDays} business days</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <ShieldCheck size={14} className="text-brand-cyan shrink-0" />
+            <ShieldCheck size={14} className="text-slate-400 shrink-0" />
             <span>Free digital PDF proofing</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Truck size={14} className="text-brand-magenta shrink-0" />
+            <Truck size={14} className="text-slate-400 shrink-0" />
             <span>Pan-India insured courier</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Sparkles size={14} className="text-brand-yellow shrink-0" />
+            <Sparkles size={14} className="text-slate-400 shrink-0" />
             <span>100% Quality Checked</span>
           </div>
         </div>

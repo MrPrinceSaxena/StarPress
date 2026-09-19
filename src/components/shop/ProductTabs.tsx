@@ -62,7 +62,7 @@ export default function ProductTabs({ product }: ProductTabsProps) {
                       key={idx}
                       className="flex items-center gap-2.5 p-3 rounded-xl bg-bg-surface border border-border-subtle"
                     >
-                      <CheckCircle2 size={16} className="text-brand-cyan shrink-0" />
+                      <CheckCircle2 size={16} className="text-emerald-400/90 shrink-0" />
                       <span className="text-xs sm:text-sm text-text-primary">{feature}</span>
                     </div>
                   ))}
@@ -107,8 +107,9 @@ export default function ProductTabs({ product }: ProductTabsProps) {
               <li><strong className="text-white">Color Space:</strong> Design in CMYK color mode for optimal print fidelity. RGB files will be automatically converted to CMYK standard.</li>
               <li><strong className="text-white">Resolution:</strong> Ensure all rasterized elements and images are at least 300 DPI at 100% scale.</li>
             </ul>
-            <div className="p-4 rounded-xl bg-brand-cyan/10 border border-brand-cyan/30 text-xs text-brand-cyan mt-4">
-              💡 Don&apos;t have a print-ready design? Send your logo and text on WhatsApp and our pre-press designers will create a free digital layout for your approval!
+            <div className="p-4 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-slate-300 mt-4 flex items-center gap-2">
+              <span className="text-base">💡</span>
+              <span>Don&apos;t have a print-ready design? Send your logo and text on WhatsApp and our pre-press designers will create a free digital layout for your approval!</span>
             </div>
           </div>
         )}
@@ -123,17 +124,17 @@ export default function ProductTabs({ product }: ProductTabsProps) {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
               <div className="p-4 rounded-xl bg-bg-surface border border-border-subtle">
-                <div className="text-xs text-brand-yellow font-bold uppercase">North India / Delhi NCR</div>
+                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">North India / Delhi NCR</div>
                 <div className="text-lg font-bold text-white mt-1">2 – 3 Days</div>
                 <div className="text-xs text-text-muted mt-0.5">Express surface / air courier</div>
               </div>
               <div className="p-4 rounded-xl bg-bg-surface border border-border-subtle">
-                <div className="text-xs text-brand-cyan font-bold uppercase">Rest of India Metro</div>
+                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Rest of India Metro</div>
                 <div className="text-lg font-bold text-white mt-1">3 – 5 Days</div>
                 <div className="text-xs text-text-muted mt-0.5">Tracked door-to-door transit</div>
               </div>
               <div className="p-4 rounded-xl bg-bg-surface border border-border-subtle">
-                <div className="text-xs text-brand-magenta font-bold uppercase">Remote & Tier-3</div>
+                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Remote & Tier-3</div>
                 <div className="text-lg font-bold text-white mt-1">5 – 7 Days</div>
                 <div className="text-xs text-text-muted mt-0.5">India Post / Speed Post</div>
               </div>

@@ -22,17 +22,7 @@ export default function Newsletter() {
   return (
     <section className="py-12 md:py-16">
       <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
-        <div className="relative rounded-2xl border border-brand-magenta/50 bg-bg-surface p-8 sm:p-10 lg:p-12 overflow-hidden shadow-2xl">
-          {/* Ambient Lighting */}
-          <div
-            className="absolute top-0 left-10 w-[350px] h-[250px] bg-brand-yellow/10 rounded-full blur-[100px] pointer-events-none"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute bottom-0 right-10 w-[350px] h-[250px] bg-brand-magenta/15 rounded-full blur-[100px] pointer-events-none"
-            aria-hidden="true"
-          />
-
+        <div className="relative rounded-2xl border border-border-subtle bg-bg-surface p-8 sm:p-10 lg:p-12 overflow-hidden shadow-2xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
             {/* Left Zone: Form */}
             <div className="lg:col-span-7 space-y-4">
@@ -44,7 +34,7 @@ export default function Newsletter() {
               </p>
 
               {isSubmitted ? (
-                <div className="p-4 rounded-xl bg-brand-magenta/15 border border-brand-magenta/40 text-white text-sm font-semibold max-w-md">
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm font-semibold max-w-md">
                   🎉 Thanks for subscribing! Check your inbox for your 10% welcome coupon.
                 </div>
               ) : (
@@ -79,15 +69,15 @@ export default function Newsletter() {
               )}
 
               {error && (
-                <p className="text-xs text-brand-magenta font-medium">{error}</p>
+                <p className="text-xs text-rose-400 font-medium">{error}</p>
               )}
             </div>
 
             {/* Right Zone: Doodle Graphic */}
             <div className="lg:col-span-5 flex items-center justify-center lg:justify-end">
               <div className="relative flex items-center gap-4 sm:gap-6 py-4">
-                {/* Hand-drawn style curved cyan arrow */}
-                <div className="relative shrink-0 text-brand-cyan">
+                {/* Hand-drawn style curved amber arrow */}
+                <div className="relative shrink-0 text-brand-yellow/80">
                   <svg
                     width="110"
                     height="70"
@@ -98,14 +88,14 @@ export default function Newsletter() {
                   >
                     <path
                       d="M10 50 C 40 55, 75 45, 95 18"
-                      stroke="#29C5F6"
+                      stroke="currentColor"
                       strokeWidth="3.5"
                       strokeLinecap="round"
                       fill="none"
                     />
                     <path
                       d="M80 15 L 98 16 L 93 33"
-                      stroke="#29C5F6"
+                      stroke="currentColor"
                       strokeWidth="3.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -116,20 +106,10 @@ export default function Newsletter() {
 
                 {/* Rotated Handwritten Text Doodle */}
                 <div className="relative transform -rotate-8 select-none">
-                  {/* Paint-splash decorative accents behind doodle */}
-                  <div
-                    className="absolute -top-3 -left-4 w-12 h-12 bg-brand-yellow/30 rounded-full blur-md"
-                    aria-hidden="true"
-                  />
-                  <div
-                    className="absolute -bottom-2 -right-3 w-14 h-14 bg-brand-magenta/30 rounded-full blur-md"
-                    aria-hidden="true"
-                  />
-
                   <div className="relative font-script text-2xl sm:text-3xl lg:text-4xl text-white tracking-wider leading-tight text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
                     <div>GOOD</div>
                     <div>IDEAS</div>
-                    <div className="text-brand-magenta">PRINT WELL</div>
+                    <div className="text-brand-yellow">PRINT WELL</div>
                   </div>
                 </div>
               </div>

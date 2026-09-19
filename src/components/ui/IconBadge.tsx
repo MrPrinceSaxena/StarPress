@@ -29,8 +29,8 @@ export interface IconBadgeProps {
 export default function IconBadge({
   iconName,
   variant = "outline",
-  outlineColor = "border-brand-magenta",
-  fillColor = "bg-brand-magenta",
+  outlineColor = "border-border-subtle text-slate-300",
+  fillColor = "bg-bg-surface-alt text-brand-yellow border border-border-subtle",
   size = "md",
   className = "",
 }: IconBadgeProps) {

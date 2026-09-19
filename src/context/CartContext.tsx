@@ -46,33 +46,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (stored) {
         setItems(JSON.parse(stored));
       } else {
-        // Initial sample items for demonstration
-        setItems([
-          {
-            id: "prod-1",
-            name: "Premium Business Cards",
-            price: 299,
-            quantity: 1,
-            imageSrc: "/images/prod-business-cards.jpg",
-            href: "/shop/business-cards",
-          },
-          {
-            id: "prod-2",
-            name: "A4 Flyers",
-            price: 499,
-            quantity: 1,
-            imageSrc: "/images/prod-flyers.jpg",
-            href: "/shop/a4-flyers",
-          },
-          {
-            id: "prod-4",
-            name: "Custom Stickers",
-            price: 299,
-            quantity: 1,
-            imageSrc: "/images/prod-stickers.jpg",
-            href: "/shop/custom-stickers",
-          },
-        ]);
+        setItems([]);
       }
     } catch {
       // Ignore localStorage read errors

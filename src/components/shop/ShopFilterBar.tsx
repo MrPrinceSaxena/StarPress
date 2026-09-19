@@ -90,7 +90,7 @@ export default function ShopFilterBar({
             onClick={() => onSelectCategory("all")}
             className={`shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all select-none min-h-[38px] flex items-center justify-center ${
               selectedCategory === "all"
-                ? "bg-brand-yellow text-black shadow-md shadow-brand-yellow/20 font-bold scale-[1.02]"
+                ? "bg-brand-yellow text-black shadow-sm shadow-black/40 font-bold scale-[1.02]"
                 : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:border-white/30 active:scale-95"
             }`}
           >
@@ -108,7 +108,7 @@ export default function ShopFilterBar({
                 onClick={() => onSelectCategory(category.slug)}
                 className={`shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all select-none min-h-[38px] flex items-center justify-center ${
                   isSelected
-                    ? "bg-brand-magenta text-white shadow-md shadow-brand-magenta/30 font-bold scale-[1.02]"
+                    ? "bg-brand-yellow text-black shadow-sm shadow-black/40 font-bold scale-[1.02]"
                     : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:border-white/30 active:scale-95"
                 }`}
               >

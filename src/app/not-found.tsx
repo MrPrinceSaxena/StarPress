@@ -12,13 +12,9 @@ export default function NotFound() {
 
       <main className="flex-1 flex items-center justify-center py-20 px-6">
         <div className="max-w-md w-full text-center space-y-6">
-          {/* Neon 404 badge */}
+          {/* 404 badge */}
           <div className="relative inline-block">
-            <div
-              className="absolute -inset-4 bg-gradient-to-r from-brand-magenta to-brand-cyan rounded-full blur-2xl opacity-40 animate-pulse"
-              aria-hidden="true"
-            />
-            <span className="relative font-display font-black text-8xl sm:text-9xl text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-brand-magenta to-brand-cyan">
+            <span className="font-display font-black text-8xl sm:text-9xl text-brand-yellow tracking-tighter">
               404
             </span>
           </div>

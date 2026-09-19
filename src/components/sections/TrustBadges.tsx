@@ -15,9 +15,9 @@ export default function TrustBadges() {
               <IconBadge
                 iconName={badge.iconName}
                 variant="outline"
-                outlineColor="border-brand-magenta"
+                outlineColor="border-border-subtle text-slate-300 group-hover:border-brand-yellow/50 group-hover:text-brand-yellow"
                 size="md"
-                className="group-hover:border-brand-magenta group-hover:scale-105 transition-transform duration-200"
+                className="group-hover:scale-105 transition-all duration-200"
               />
               <div>
                 <div className="text-sm sm:text-base font-bold text-text-primary tracking-tight font-display">

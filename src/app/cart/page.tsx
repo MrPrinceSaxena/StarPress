@@ -93,8 +93,8 @@ export default function CartPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-border-subtle">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/40 bg-brand-cyan/10 text-brand-cyan text-xs font-bold uppercase tracking-wider mb-2">
-              <ShoppingBag size={13} />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">
+              <ShoppingBag size={13} className="text-brand-yellow" />
               <span>Review Your Print Order</span>
             </div>
             <h1 className="font-display font-black text-3xl sm:text-4xl text-white uppercase tracking-tight">
@@ -122,11 +122,7 @@ export default function CartPage() {
           </div>
         ) : items.length === 0 ? (
           /* Empty State */
-          <div className="relative rounded-3xl border border-border-subtle bg-bg-surface p-12 sm:p-20 text-center max-w-2xl mx-auto overflow-hidden shadow-2xl my-6">
-            <div
-              className="absolute -top-10 left-1/2 -translate-x-1/2 w-64 h-64 bg-brand-magenta/15 rounded-full blur-[90px] pointer-events-none"
-              aria-hidden="true"
-            />
+          <div className="relative rounded-3xl border border-border-subtle bg-bg-surface p-12 sm:p-20 text-center max-w-2xl mx-auto overflow-hidden shadow-xl my-6">
             <div className="relative z-10 space-y-6">
               <div className="w-20 h-20 rounded-2xl bg-bg-surface-alt border border-border-subtle flex items-center justify-center mx-auto text-brand-yellow shadow-inner">
                 <ShoppingBag size={38} />
@@ -161,38 +157,45 @@ export default function CartPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* Left Column: Cart Items List */}
             <div className="lg:col-span-8 space-y-6">
-              {/* Free Shipping Progress Indicator */}
-              <div className="rounded-2xl border border-border-subtle bg-bg-surface p-5 space-y-3">
-                <div className="flex items-center justify-between text-xs sm:text-sm">
-                  <span className="flex items-center gap-2 font-medium text-white">
-                    <Truck size={16} className="text-brand-cyan" />
-                    {isFreeShipping ? (
-                      <span className="text-emerald-400 font-bold">
-                        🎉 Congratulations! You unlocked Free Pan-India Shipping!
-                      </span>
-                    ) : (
+              {/* Shipping Status */}
+              {isFreeShipping ? (
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 text-xs sm:text-sm text-emerald-300">
+                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                    <span className="font-medium">
+                      Complimentary Pan-India Standard Delivery applied
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded shrink-0">
+                    Free Shipping
+                  </span>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-border-subtle bg-bg-surface px-4 py-3.5 space-y-2">
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="flex items-center gap-2 text-text-secondary">
+                      <Truck size={15} className="text-brand-yellow shrink-0" />
                       <span>
                         Add{" "}
-                        <strong className="text-brand-yellow font-black">
+                        <strong className="text-white font-semibold">
                           ₹{amountNeededForFreeShipping}
                         </strong>{" "}
-                        more to unlock{" "}
-                        <strong className="text-white">Free Express Shipping</strong>
+                        more to qualify for{" "}
+                        <span className="text-white font-medium">Free Shipping</span>
                       </span>
-                    )}
-                  </span>
-                  <span className="text-xs font-mono text-text-muted">
-                    {freeShippingProgress}%
-                  </span>
+                    </span>
+                    <span className="text-xs font-mono text-text-muted">
+                      ₹{discountedSubtotal} / ₹{FREE_SHIPPING_THRESHOLD}
+                    </span>
+                  </div>
+                  <div className="w-full h-1 rounded-full bg-bg-surface-alt overflow-hidden">
+                    <div
+                      className="h-full bg-brand-yellow rounded-full transition-all duration-300"
+                      style={{ width: `${freeShippingProgress}%` }}
+                    />
+                  </div>
                 </div>
-
-                <div className="w-full h-2 rounded-full bg-bg-surface-alt overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-brand-cyan via-brand-magenta to-brand-yellow transition-all duration-500 rounded-full"
-                    style={{ width: `${freeShippingProgress}%` }}
-                  />
-                </div>
-              </div>
+              )}
 
               {/* Items Card List */}
               <div className="rounded-2xl border border-border-subtle bg-bg-surface divide-y divide-border-subtle overflow-hidden">
@@ -234,7 +237,7 @@ export default function CartPage() {
                             </span>
                           </div>
 
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-brand-cyan/10 border border-brand-cyan/20 text-[10px] text-brand-cyan font-bold uppercase tracking-wider">
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-medium uppercase tracking-wider">
                             <Sparkles size={10} />
                             <span>Print Ready</span>
                           </div>
@@ -446,17 +449,17 @@ export default function CartPage() {
                 </Link>
 
                 {/* Trust Guarantees */}
-                <div className="pt-3 border-t border-border-subtle space-y-2 text-xs text-text-muted">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck size={14} className="text-brand-magenta shrink-0" />
+                <div className="pt-3 border-t border-border-subtle space-y-2.5 text-xs text-text-secondary">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck size={14} className="text-emerald-400/90 shrink-0" />
                     <span>100% Quality & Pre-Press Proof Verification</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Truck size={14} className="text-brand-cyan shrink-0" />
+                  <div className="flex items-center gap-2.5">
+                    <Truck size={14} className="text-emerald-400/90 shrink-0" />
                     <span>Express Dispatch with Real-Time Tracking</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-brand-yellow shrink-0" />
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 size={14} className="text-emerald-400/90 shrink-0" />
                     <span>Official GST Invoicing with Input Tax Credit</span>
                   </div>
                 </div>

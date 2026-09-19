@@ -34,7 +34,7 @@ export default function BestSellers({ onAddToCart }: BestSellersProps) {
 
           <Link
             href="/shop"
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-brand-cyan hover:text-cyan-300 transition-colors group shrink-0"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-300 hover:text-white transition-colors group shrink-0"
           >
             <span>View Full Shop Catalog</span>
             <ArrowRight

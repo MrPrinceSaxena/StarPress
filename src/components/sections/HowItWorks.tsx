@@ -20,20 +20,10 @@ const ICON_MAP = {
 export default function HowItWorks() {
   return (
     <section className="py-16 md:py-24 relative overflow-hidden">
-      {/* Background Ambient Glows */}
-      <div
-        className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[300px] bg-brand-cyan/10 rounded-full blur-[140px] pointer-events-none"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[500px] h-[300px] bg-brand-magenta/10 rounded-full blur-[140px] pointer-events-none"
-        aria-hidden="true"
-      />
-
       <div className="max-w-[1280px] mx-auto px-6 lg:px-10 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16 space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-cyan/40 bg-brand-cyan/10 text-brand-cyan text-xs font-bold tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold tracking-wider uppercase">
             <span>Seamless Ordering</span>
           </div>
           <h2 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-text-primary tracking-tight uppercase">
@@ -53,7 +43,7 @@ export default function HowItWorks() {
             return (
               <div
                 key={stepItem.step}
-                className="relative flex flex-col justify-between p-6 rounded-2xl bg-bg-surface border border-border-subtle hover:border-brand-magenta/40 transition-all duration-300 group hover:-translate-y-1.5 hover:shadow-[0_8px_30px_rgba(240,23,156,0.15)]"
+                className="relative flex flex-col justify-between p-6 rounded-2xl bg-bg-surface border border-border-subtle hover:border-white/20 transition-all duration-300 group hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50"
               >
                 {/* Step indicator header */}
                 <div>
@@ -82,7 +72,7 @@ export default function HowItWorks() {
 
                 {/* Subtle horizontal arrow indicator for desktop navigation */}
                 {!isLast && (
-                  <div className="hidden lg:flex items-center gap-1 mt-6 pt-3 border-t border-border-subtle/50 text-text-muted text-xs group-hover:text-brand-cyan transition-colors">
+                  <div className="hidden lg:flex items-center gap-1 mt-6 pt-3 border-t border-border-subtle/50 text-text-muted text-xs group-hover:text-brand-yellow transition-colors">
                     <span>Next step</span>
                     <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
                   </div>

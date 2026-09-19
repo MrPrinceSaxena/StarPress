@@ -30,8 +30,8 @@ export default function PrivacyPolicyPage() {
 
         {/* Header Title */}
         <div className="space-y-4 mb-12 pb-8 border-b border-border-subtle">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-cyan/40 bg-brand-cyan/10 text-brand-cyan text-xs font-bold uppercase tracking-wider">
-            <Shield size={13} />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+            <Shield size={13} className="text-brand-yellow" />
             <span>Effective Date: 1 January 2025</span>
           </div>
 

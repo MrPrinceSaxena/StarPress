@@ -7,22 +7,12 @@ export default function BulkOrderBanner() {
   return (
     <section className="py-12 md:py-20">
       <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
-        <div className="relative rounded-[28px] border border-border-subtle bg-gradient-to-br from-bg-surface via-[#161224] to-bg-surface p-8 sm:p-12 lg:p-14 overflow-hidden shadow-2xl">
-          {/* Ambient Lighting Accents */}
-          <div
-            className="absolute top-0 right-1/4 w-[500px] h-[350px] bg-brand-indigo/15 rounded-full blur-[140px] pointer-events-none"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute bottom-0 right-10 w-[400px] h-[300px] bg-brand-magenta/15 rounded-full blur-[120px] pointer-events-none"
-            aria-hidden="true"
-          />
-
+        <div className="relative rounded-[28px] border border-border-subtle bg-bg-surface p-8 sm:p-12 lg:p-14 overflow-hidden shadow-2xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center relative z-10">
             {/* Left Zone: Copy, Perks, and CTAs */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-yellow/40 bg-brand-yellow/10 text-brand-yellow text-xs font-bold tracking-wider uppercase">
-                <Sparkles size={14} />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold tracking-wider uppercase">
+                <Sparkles size={14} className="text-brand-yellow" />
                 <span>Corporate & Bulk Printing</span>
               </div>
 
@@ -43,7 +33,7 @@ export default function BulkOrderBanner() {
                   >
                     <CheckCircle2
                       size={18}
-                      className="text-brand-cyan shrink-0 mt-0.5"
+                      className="text-emerald-400/90 shrink-0 mt-0.5"
                     />
                     <div>
                       <h4 className="text-xs font-bold text-white tracking-tight">
@@ -63,7 +53,7 @@ export default function BulkOrderBanner() {
                   variant="primary"
                   size="lg"
                   href="/bulk-orders"
-                  className="!px-7 !py-3.5 !text-sm font-bold shadow-lg shadow-brand-yellow/15"
+                  className="!px-7 !py-3.5 !text-sm font-bold shadow-lg shadow-black/40"
                 >
                   <span>Request a Bulk Quote</span>
                   <ArrowRight size={18} />
@@ -83,7 +73,7 @@ export default function BulkOrderBanner() {
 
             {/* Right Zone: Wholesale Volume Slabs Card */}
             <div className="lg:col-span-5 relative">
-              <div className="p-6 sm:p-7 rounded-2xl bg-bg-surface border border-border-subtle shadow-2xl relative space-y-4">
+              <div className="p-6 sm:p-7 rounded-2xl bg-bg-surface-alt border border-border-subtle shadow-xl relative space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
                   <div>
                     <h3 className="font-display font-bold text-base text-white">
@@ -93,8 +83,8 @@ export default function BulkOrderBanner() {
                       Instant savings automatically applied
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-cyan/10 border border-brand-cyan/30 text-[11px] font-bold text-brand-cyan">
-                    <ShieldCheck size={13} />
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-slate-300">
+                    <ShieldCheck size={13} className="text-emerald-400" />
                     <span>GST Invoiced</span>
                   </div>
                 </div>
@@ -106,8 +96,8 @@ export default function BulkOrderBanner() {
                       key={idx}
                       className={`p-3.5 rounded-xl border transition-all ${
                         tier.featured
-                          ? "bg-bg-surface-alt border-brand-magenta/60 shadow-[0_0_15px_rgba(240,23,156,0.15)]"
-                          : "bg-bg-surface-alt/50 border-border-subtle"
+                          ? "bg-bg-surface border-brand-yellow/80 ring-1 ring-brand-yellow/30 shadow-md"
+                          : "bg-bg-surface/50 border-border-subtle"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -115,10 +105,10 @@ export default function BulkOrderBanner() {
                           {tier.range}
                         </span>
                         <span
-                          className={`font-display font-black text-xs px-2.5 py-0.5 rounded-full ${
+                          className={`font-display font-bold text-xs px-2.5 py-0.5 rounded-full ${
                             tier.featured
-                              ? "bg-brand-magenta text-white"
-                              : "bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/30"
+                              ? "bg-brand-yellow text-black"
+                              : "bg-white/10 text-slate-300 border border-white/10"
                           }`}
                         >
                           {tier.discount}
