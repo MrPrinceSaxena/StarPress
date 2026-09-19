@@ -2,13 +2,16 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Star,
   ChevronDown,
   Search,
   ShoppingBag,
   Menu,
+  User,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { NAV_LINKS } from "@/lib/data";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
@@ -20,6 +23,8 @@ export interface HeaderProps {
 }
 
 export default function Header({ cartCount: propCartCount }: HeaderProps) {
+  const router = useRouter();
+  const { data: session } = useSession();
   const { totalCount: dynamicCartCount } = useCart();
   const cartCount = propCartCount !== undefined ? propCartCount : dynamicCartCount;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -40,11 +45,11 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   }, []);
 
   const featuredCategories = [
-    { name: "Business Stationery", slug: "business-stationery", desc: "Cards, Letterheads, Envelopes" },
-    { name: "Marketing & Promo", slug: "marketing-promo", desc: "Flyers, Brochures, Booklets" },
-    { name: "Large Format Signage", slug: "large-format", desc: "Banners, Standees, Vinyls" },
-    { name: "Custom Stickers", slug: "stickers-labels", desc: "Die-Cut, Holographic, Roll" },
-    { name: "Corporate Merchandise", slug: "merchandise-gifts", desc: "Mugs, Pens, Diaries, Kits" },
+    { name: "Business Stationery", slug: "business-printing", desc: "Cards, Letterheads, Envelopes" },
+    { name: "Marketing & Promo", slug: "marketing-materials", desc: "Flyers, Brochures, Booklets" },
+    { name: "Large Format Signage", slug: "outdoor-advertising", desc: "Banners, Standees, Vinyls" },
+    { name: "Custom Stickers", slug: "labels-stickers", desc: "Die-Cut, Holographic, Roll" },
+    { name: "Corporate Merchandise", slug: "photo-custom-printing", desc: "Mugs, Pens, Diaries, Kits" },
     { name: "Custom Packaging", slug: "packaging", desc: "Boxes, Poly Mailers, Tape" },
   ];
 
@@ -183,9 +188,9 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                     onSubmit={(e) => {
                       e.preventDefault();
                       if (searchQuery.trim()) {
-                        window.location.href = `/shop?category=all&search=${encodeURIComponent(
-                          searchQuery.trim()
-                        )}`;
+                        router.push(
+                          `/shop?search=${encodeURIComponent(searchQuery.trim())}`
+                        );
                       }
                       setIsSearchOpen(false);
                     }}
@@ -222,6 +227,21 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 >
                   {cartCount}
                 </Badge>
+              )}
+            </Link>
+
+            {/* User Account / Sign In Button */}
+            <Link
+              href={session?.user ? "/account" : "/login"}
+              aria-label={session?.user ? `Account (${session.user.name})` : "Sign In"}
+              className="relative p-2.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow flex items-center justify-center min-w-[44px] min-h-[44px]"
+            >
+              {session?.user ? (
+                <div className="w-6 h-6 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center shadow-sm">
+                  {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+                </div>
+              ) : (
+                <User size={20} />
               )}
             </Link>
 

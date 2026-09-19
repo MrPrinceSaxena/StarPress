@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { CATALOG_CATEGORIES, CATALOG_PRODUCTS } from "../src/lib/catalog";
 
 const prisma = new PrismaClient();
@@ -88,20 +89,90 @@ async function main() {
       where: { productId: createdProduct.id },
     });
 
+    const isBatch =
+      prod.pricingModel === "batch" ||
+      (prod.pricingModel !== "unit" && (prod.quantityTiers[0]?.quantity ?? 1) >= 10);
+    const effectiveBaseQty = prod.baseQuantity || (isBatch ? (prod.quantityTiers[0]?.quantity ?? 1) : 1);
+    const baseUnitRate = isBatch ? prod.basePrice / effectiveBaseQty : prod.basePrice;
+
     for (const size of prod.sizeOptions) {
       for (const tier of prod.quantityTiers) {
-        const discountedRate = prod.basePrice * size.multiplier * (1 - tier.discountPercent / 100);
+        const rawUnitPrice = baseUnitRate * size.multiplier;
+        const discountedUnitPrice = rawUnitPrice * (1 - tier.discountPercent / 100);
+        const totalPrice = Math.round(discountedUnitPrice * tier.quantity);
         await prisma.pricingRule.create({
           data: {
             productId: createdProduct.id,
             label: `${size.label} / ${tier.quantity} pcs`,
-            price: Math.round(discountedRate * tier.quantity),
+            price: totalPrice,
           },
         });
       }
     }
 
     console.log(`  ✓ Product: ${prod.name} [${prod.categoryName}]`);
+  }
+
+  // 3. Seed Users (Admin & Sample Customer)
+  console.log("\n👤 Seeding Initial Users...");
+  const adminPasswordHash = await bcrypt.hash("Admin@StarPress2026", 10);
+  const customerPasswordHash = await bcrypt.hash("Customer@123", 10);
+
+  const adminUser = await prisma.user.upsert({
+    where: { email: "admin@starpress.in" },
+    update: {
+      name: "Star Press Admin",
+      role: Role.ADMIN,
+      phone: "+91 98970 54563",
+      passwordHash: adminPasswordHash,
+    },
+    create: {
+      email: "admin@starpress.in",
+      name: "Star Press Admin",
+      role: Role.ADMIN,
+      phone: "+91 98970 54563",
+      passwordHash: adminPasswordHash,
+    },
+  });
+  console.log(`  ✓ Admin User: ${adminUser.email} (Role: ${adminUser.role})`);
+
+  const customerUser = await prisma.user.upsert({
+    where: { email: "customer@starpress.in" },
+    update: {
+      name: "Rahul Sharma",
+      role: Role.CUSTOMER,
+      phone: "+91 98765 43210",
+      passwordHash: customerPasswordHash,
+    },
+    create: {
+      email: "customer@starpress.in",
+      name: "Rahul Sharma",
+      role: Role.CUSTOMER,
+      phone: "+91 98765 43210",
+      passwordHash: customerPasswordHash,
+    },
+  });
+  console.log(`  ✓ Customer User: ${customerUser.email} (Role: ${customerUser.role})`);
+
+  // Seed sample address for customer
+  const existingAddress = await prisma.address.findFirst({
+    where: { userId: customerUser.id },
+  });
+  if (!existingAddress) {
+    await prisma.address.create({
+      data: {
+        userId: customerUser.id,
+        label: "Office",
+        line1: "Suite 402, Star Media Tower",
+        line2: "MG Road, Civil Lines",
+        city: "Bareilly",
+        state: "Uttar Pradesh",
+        pincode: "243001",
+        phone: "+91 98765 43210",
+        isDefault: true,
+      },
+    });
+    console.log(`  ✓ Sample Address created for ${customerUser.email}`);
   }
 
   console.log("\n🎉 Database Seed Completed Successfully!");

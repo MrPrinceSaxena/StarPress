@@ -2,7 +2,8 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { X, ChevronRight, Star, Phone, MessageCircle, ShoppingBag, Sparkles } from "lucide-react";
+import { X, ChevronRight, Star, Phone, MessageCircle, ShoppingBag, Sparkles, User, LogOut, ShieldCheck } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
 import { NAV_LINKS, WHATSAPP_NUMBER, CONTACT_PHONE } from "@/lib/data";
 import Button from "@/components/ui/Button";
 
@@ -15,6 +16,8 @@ export default function MobileNavDrawer({
   isOpen,
   onClose,
 }: MobileNavDrawerProps) {
+  const { data: session } = useSession();
+
   // Prevent body scroll and handle Escape key when drawer is open
   useEffect(() => {
     if (isOpen) {
@@ -96,6 +99,80 @@ export default function MobileNavDrawer({
               </div>
               <ChevronRight size={16} className="text-zinc-500" />
             </Link>
+
+            {/* Auth / Account Links */}
+            <div className="pt-2 mt-2 border-t border-border-subtle">
+              {session?.user ? (
+                <div className="space-y-1">
+                  <div className="px-3.5 py-2 flex items-center gap-3 bg-white/[0.03] border border-border-subtle rounded-xl mb-2">
+                    <div className="w-8 h-8 rounded-full bg-brand-yellow/20 border border-brand-yellow/40 flex items-center justify-center text-brand-yellow font-bold text-xs uppercase">
+                      {session.user.name?.[0] || session.user.email?.[0] || "U"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-white truncate">{session.user.name || "Customer"}</p>
+                      <p className="text-[10px] text-text-muted truncate">{session.user.email}</p>
+                    </div>
+                    {session.user.role === "ADMIN" && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+
+                  <Link
+                    href="/account"
+                    onClick={onClose}
+                    className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <User size={16} className="text-brand-cyan" />
+                      <span>My Account & Orders</span>
+                    </div>
+                    <ChevronRight size={15} className="text-zinc-500" />
+                  </Link>
+
+                  {session.user.role === "ADMIN" && (
+                    <Link
+                      href="/admin/orders"
+                      onClick={onClose}
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-brand-cyan hover:text-white hover:bg-brand-cyan/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <ShieldCheck size={16} />
+                        <span>Admin Console</span>
+                      </div>
+                      <ChevronRight size={15} className="text-zinc-500" />
+                    </Link>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      signOut({ callbackUrl: "/" });
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <LogOut size={16} />
+                      <span>Sign Out</span>
+                    </div>
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={onClose}
+                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-brand-yellow hover:bg-brand-yellow/10 transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <User size={16} />
+                    <span>Sign In / Register</span>
+                  </div>
+                  <ChevronRight size={15} className="text-brand-yellow" />
+                </Link>
+              )}
+            </div>
           </nav>
         </div>
 
