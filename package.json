@@ -8,6 +8,7 @@
     "postinstall": "DATABASE_URL=\"${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/dummy?schema=public}\" prisma generate || true",
     "start": "next start",
     "lint": "next lint",
+    "test:security": "ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/test-security.ts",
     "prisma:studio": "prisma studio",
     "prisma:migrate": "prisma migrate dev"
   },

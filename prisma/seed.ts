@@ -114,9 +114,9 @@ async function main() {
   }
 
   // 3. Seed Users (Admin & Sample Customer)
-  console.log("\n👤 Seeding Initial Users...");
-  const adminPasswordHash = await bcrypt.hash("Admin@StarPress2026", 10);
-  const customerPasswordHash = await bcrypt.hash("Customer@123", 10);
+  console.log("\n👤 Seeding Initial Users (Enterprise 12-Round Bcrypt)...");
+  const adminPasswordHash = await bcrypt.hash("Admin@StarPress2026", 12);
+  const customerPasswordHash = await bcrypt.hash("Customer@StarPress2026", 12);
 
   const adminUser = await prisma.user.upsert({
     where: { email: "admin@starpress.in" },
@@ -125,6 +125,8 @@ async function main() {
       role: Role.ADMIN,
       phone: "+91 98970 54563",
       passwordHash: adminPasswordHash,
+      emailVerified: new Date(),
+      failedLoginAttempts: 0,
     },
     create: {
       email: "admin@starpress.in",
@@ -132,6 +134,8 @@ async function main() {
       role: Role.ADMIN,
       phone: "+91 98970 54563",
       passwordHash: adminPasswordHash,
+      emailVerified: new Date(),
+      failedLoginAttempts: 0,
     },
   });
   console.log(`  ✓ Admin User: ${adminUser.email} (Role: ${adminUser.role})`);
@@ -143,6 +147,8 @@ async function main() {
       role: Role.CUSTOMER,
       phone: "+91 98765 43210",
       passwordHash: customerPasswordHash,
+      emailVerified: new Date(),
+      failedLoginAttempts: 0,
     },
     create: {
       email: "customer@starpress.in",
@@ -150,6 +156,8 @@ async function main() {
       role: Role.CUSTOMER,
       phone: "+91 98765 43210",
       passwordHash: customerPasswordHash,
+      emailVerified: new Date(),
+      failedLoginAttempts: 0,
     },
   });
   console.log(`  ✓ Customer User: ${customerUser.email} (Role: ${customerUser.role})`);

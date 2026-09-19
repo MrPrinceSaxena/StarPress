@@ -27,6 +27,27 @@ model User {
   passwordHash          String?
   phone                 String?
   role                  Role                   @default(CUSTOMER)
+  
+  // Security & Verification
+  emailVerified         DateTime?
+  emailVerificationToken String?
+  emailVerificationExpires DateTime?
+  passwordResetToken    String?
+  passwordResetExpires   DateTime?
+  
+  // Brute force defense & lockout
+  failedLoginAttempts   Int                    @default(0)
+  lockedUntil           DateTime?
+  
+  // Multi-factor authentication
+  twoFactorEnabled      Boolean                @default(false)
+  twoFactorSecret       String?
+  twoFactorBackupCodes  String[]               @default([])
+  
+  // Activity tracking
+  lastLoginAt           DateTime?
+  lastLoginIp           String?
+  
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 
@@ -34,6 +55,41 @@ model User {
   orders                Order[]
   reviews               Review[]
   customizationRequests CustomizationRequest[]
+  sessions              Session[]
+  auditLogs             AuthAuditLog[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  sessionToken String   @unique
+  deviceInfo   String?  // Browser, OS, device fingerprint summary
+  ipAddress    String
+  isActive     Boolean  @default(true)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([sessionToken])
+}
+
+model AuthAuditLog {
+  id        String   @id @default(cuid())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId    String?
+  email     String
+  action    String   // LOGIN_SUCCESS, LOGIN_FAILURE, LOGOUT, REGISTER, PASSWORD_CHANGE, ACCOUNT_LOCKOUT, EMAIL_VERIFIED
+  ipAddress String?
+  userAgent String?
+  status    String   // SUCCESS, FAILURE
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Address {

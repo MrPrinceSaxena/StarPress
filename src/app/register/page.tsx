@@ -15,10 +15,12 @@ import {
   ShieldCheck,
   Printer,
   CheckCircle,
+  Check,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
+import { evaluatePassword, PASSWORD_MIN_LENGTH } from "@/lib/validation/auth";
 
 function RegisterForm() {
   const router = useRouter();
@@ -37,6 +39,8 @@ function RegisterForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const passwordEvaluation = evaluatePassword(formData.password);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -46,13 +50,16 @@ function RegisterForm() {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (formData.password !== formData.confirmPassword) {
-      setErrorMessage("Passwords do not match. Please re-enter.");
+    if (!passwordEvaluation.isValid) {
+      setErrorMessage(
+        passwordEvaluation.errors[0] ||
+          `Password must be at least ${PASSWORD_MIN_LENGTH} characters long with uppercase, lowercase, numbers, and special characters.`
+      );
       return;
     }
 
-    if (formData.password.length < 6) {
-      setErrorMessage("Password must be at least 6 characters long.");
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMessage("Passwords do not match. Please re-enter.");
       return;
     }
 
@@ -210,6 +217,101 @@ function RegisterForm() {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+
+            {/* Password Strength Meter */}
+            {formData.password && (
+              <div className="pt-2 space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-text-muted">Password Strength:</span>
+                  <span
+                    className={`font-semibold capitalize ${
+                      passwordEvaluation.strength === "strong"
+                        ? "text-emerald-400"
+                        : passwordEvaluation.strength === "good"
+                        ? "text-amber-400"
+                        : passwordEvaluation.strength === "fair"
+                        ? "text-yellow-500"
+                        : "text-rose-400"
+                    }`}
+                  >
+                    {passwordEvaluation.strength}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-1.5 h-1.5">
+                  {[1, 2, 3, 4].map((step) => (
+                    <div
+                      key={step}
+                      className={`rounded-full transition-all duration-300 ${
+                        passwordEvaluation.score >= step
+                          ? passwordEvaluation.strength === "strong"
+                            ? "bg-emerald-500"
+                            : passwordEvaluation.strength === "good"
+                            ? "bg-amber-400"
+                            : passwordEvaluation.strength === "fair"
+                            ? "bg-yellow-500"
+                            : "bg-rose-500"
+                          : "bg-white/10"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5 pt-1 text-[11px] text-text-muted">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${
+                        formData.password.length >= PASSWORD_MIN_LENGTH
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                          : "bg-white/5 text-slate-500 border border-white/10"
+                      }`}
+                    >
+                      ✓
+                    </span>
+                    <span>12+ characters</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${
+                        /[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password)
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                          : "bg-white/5 text-slate-500 border border-white/10"
+                      }`}
+                    >
+                      ✓
+                    </span>
+                    <span>Upper & lower case</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${
+                        /[0-9]/.test(formData.password)
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                          : "bg-white/5 text-slate-500 border border-white/10"
+                      }`}
+                    >
+                      ✓
+                    </span>
+                    <span>At least 1 number</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${
+                        /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(formData.password)
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                          : "bg-white/5 text-slate-500 border border-white/10"
+                      }`}
+                    >
+                      ✓
+                    </span>
+                    <span>Special character</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Confirm Password */}
