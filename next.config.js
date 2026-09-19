@@ -1,3 +1,15 @@
+const { execSync } = require("child_process");
+
+try {
+  // Ensure Prisma client is always generated before Next.js builds on Vercel/CI
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL ||
+    "postgresql://postgres:postgres@localhost:5432/dummy?schema=public";
+  execSync("npx prisma generate", { stdio: "inherit" });
+} catch (e) {
+  console.warn("Prisma generation notice:", e);
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

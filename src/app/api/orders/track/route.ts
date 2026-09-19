@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         trackingNumber: order.trackingNumber,
         courierPartner: order.courierPartner,
         createdAt: order.createdAt,
-        items: order.items.map((i) => ({
+        items: (order.items || []).map((i: any) => ({
           productName: i.productName,
           quantity: i.quantity,
           lineTotal: i.lineTotal,

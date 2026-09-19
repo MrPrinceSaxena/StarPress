@@ -58,7 +58,7 @@ export async function createOrder(input: CreateOrderInput) {
   const orderNumber = generateOrderNumber();
 
   try {
-    const order = await db.order.create({
+    const order = await (db.order as any).create({
       data: {
         orderNumber,
         userId: input.userId || null,
@@ -135,7 +135,7 @@ export async function getOrderById(idOrNumber: string) {
 export async function trackOrder(orderNumber: string, phoneOrEmail: string) {
   try {
     const normalizedInput = phoneOrEmail.trim().toLowerCase();
-    const order = await db.order.findFirst({
+    const order = await (db.order as any).findFirst({
       where: {
         orderNumber: orderNumber.trim().toUpperCase(),
         OR: [
