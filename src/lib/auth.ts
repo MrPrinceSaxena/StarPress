@@ -5,6 +5,12 @@ import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { Role } from "@prisma/client";
 
+if (!process.env.NEXTAUTH_URL) {
+  process.env.NEXTAUTH_URL = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : env.NEXTAUTH_URL || "http://localhost:3000";
+}
+
 if (!process.env.NEXTAUTH_SECRET) {
   process.env.NEXTAUTH_SECRET = env.NEXTAUTH_SECRET || "fallback-secret-development-key-32-chars";
 }
