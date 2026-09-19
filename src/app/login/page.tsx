@@ -1,26 +1,44 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import React, { useState, useCallback, useRef, Suspense, useId } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import {
-  Lock,
-  ArrowRight,
   Eye,
   EyeOff,
   AlertCircle,
   CheckCircle2,
   ShieldCheck,
-  Printer,
+  ArrowLeft,
   Sparkles,
-  Zap,
-  FileText,
-  Users,
-  AtSign,
+  Loader2,
 } from "lucide-react";
 
+// ---------------------------------------------------------------------------
+// Inline field error component — no layout shift, reserved space via min-h
+// ---------------------------------------------------------------------------
+function FieldError({ message }: { message: string | null }) {
+  return (
+    <div
+      role="alert"
+      aria-live="polite"
+      className="min-h-[18px] mt-1"
+    >
+      {message && (
+        <p className="flex items-center gap-1 text-[11px] text-rose-400 font-medium leading-tight">
+          <AlertCircle size={11} className="shrink-0" aria-hidden="true" />
+          {message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Login Form (inner — uses useSearchParams, must be inside <Suspense>)
+// ---------------------------------------------------------------------------
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,47 +46,55 @@ function LoginForm() {
   const registered = searchParams.get("registered");
   const errorParam = searchParams.get("error");
 
+  // Unique IDs for accessible label association
+  const emailId = useId();
+  const passwordId = useId();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(
+
+  // Field-level errors (shown on blur or submit)
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  // General / server error (shown below CTA)
+  const [serverError, setServerError] = useState<string | null>(
     errorParam === "AccessDenied"
       ? "You do not have administrator permissions to access that area."
       : null
   );
+
   const [isLoading, setIsLoading] = useState(false);
 
-  // Subtle 3D Card Tilt & Cursor Lighting
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
+  // ── Validation helpers ────────────────────────────────────────────────────
+  const validateEmail = (value: string): string | null => {
+    if (!value.trim()) return "Email address is required.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()))
+      return "Please enter a valid email address.";
+    return null;
+  };
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    // Calculate normalized offset from -1 to 1
-    const x = (e.clientX - centerX) / (rect.width / 2);
-    const y = (e.clientY - centerY) / (rect.height / 2);
-    setMouseOffset({
-      x: Math.max(-1, Math.min(1, x)),
-      y: Math.max(-1, Math.min(1, y)),
-    });
-  }, []);
+  const validatePassword = (value: string): string | null => {
+    if (!value) return "Password is required.";
+    return null;
+  };
 
-  const handleMouseLeave = useCallback(() => {
-    setIsHovered(false);
-    setMouseOffset({ x: 0, y: 0 });
-  }, []);
+  // ── Blur handlers (fire field validation on blur) ──────────────────────
+  const handleEmailBlur = () => setEmailError(validateEmail(email));
+  const handlePasswordBlur = () => setPasswordError(validatePassword(password));
 
-  const handleMouseEnter = useCallback(() => {
-    setIsHovered(true);
-  }, []);
-
+  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null);
+
+    // Validate all fields before submit
+    const eErr = validateEmail(email);
+    const pErr = validatePassword(password);
+    setEmailError(eErr);
+    setPasswordError(pErr);
+    if (eErr || pErr) return;
+
+    setServerError(null);
     setIsLoading(true);
 
     try {
@@ -79,419 +105,337 @@ function LoginForm() {
       });
 
       if (res?.error) {
-        setErrorMessage(res.error);
+        setServerError(res.error);
         setIsLoading(false);
         return;
       }
 
-      // Successful login
       router.push(callbackUrl);
       router.refresh();
-    } catch (err: any) {
-      setErrorMessage("Unable to connect to authentication server. Please try again.");
+    } catch {
+      setServerError("Unable to connect to authentication server. Please try again.");
       setIsLoading(false);
     }
   };
 
+  // ── Demo quick-fill ───────────────────────────────────────────────────────
   const fillDemoAdmin = () => {
     setEmail("admin@starpress.in");
     setPassword("Admin@StarPress2026");
-    setErrorMessage(null);
+    setEmailError(null);
+    setPasswordError(null);
+    setServerError(null);
   };
 
   const fillDemoCustomer = () => {
     setEmail("customer@starpress.in");
     setPassword("Customer@StarPress2026");
-    setErrorMessage(null);
+    setEmailError(null);
+    setPasswordError(null);
+    setServerError(null);
   };
 
   return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="relative w-full max-w-[500px] transition-transform duration-300 ease-out will-change-transform"
-      style={{
-        transform: isHovered
-          ? `perspective(1000px) rotateX(${-mouseOffset.y * 3.5}deg) rotateY(${mouseOffset.x * 3.5}deg) translateY(-2px)`
-          : "perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)",
-      }}
-    >
-      {/* Outer Glow Halo reacting to cursor */}
-      <div
-        className="pointer-events-none absolute -inset-1 rounded-[36px] bg-gradient-to-tr from-sky-500/20 via-transparent to-brand-yellow/25 blur-xl opacity-75 transition-opacity duration-500"
-        style={{
-          transform: `translate(${mouseOffset.x * 8}px, ${mouseOffset.y * 8}px)`,
-        }}
-      />
+    <div className="flex flex-col justify-center w-full max-w-[480px] px-8 sm:px-12 py-10">
+      {/* Back arrow */}
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm font-medium mb-8 w-fit
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:ring-offset-2
+          focus-visible:ring-offset-[#0B0C10] rounded-md transition-colors"
+        aria-label="Back to homepage"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        <span>Back</span>
+      </Link>
 
-      {/* Main Glassmorphism Authentication Panel */}
-      <div className="relative rounded-[32px] border border-white/[0.12] bg-[#090D1A]/75 backdrop-blur-2xl p-7 sm:p-10 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.85),0_0_50px_rgba(245,186,19,0.06)] overflow-hidden">
-        {/* Glowing Rim Accents: Cool Blue top-left, Warm Gold top-right */}
-        <div className="pointer-events-none absolute top-0 left-0 w-44 h-44 bg-sky-400/10 rounded-full blur-2xl" />
-        <div className="pointer-events-none absolute top-0 right-0 w-48 h-48 bg-brand-yellow/15 rounded-full blur-2xl" />
-        <div className="pointer-events-none absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-sky-400/50 via-brand-yellow/60 to-amber-400/20" />
-        <div className="pointer-events-none absolute -left-px top-8 bottom-8 w-px bg-gradient-to-b from-sky-400/40 via-transparent to-transparent" />
-        <div className="pointer-events-none absolute -right-px top-8 bottom-8 w-px bg-gradient-to-b from-amber-400/40 via-transparent to-transparent" />
-
-        {/* Card Header */}
-        <div className="text-center space-y-3 mb-7 relative z-10">
-          {/* Official Brand Logo Hallmark */}
-          <div className="flex justify-center mb-1">
-            <div className="relative h-14 w-40 transition-transform duration-300 hover:scale-105">
-              <Image
-                src="/images/Logo.png"
-                alt="Star Press - The Printing Hub"
-                fill
-                sizes="180px"
-                priority
-                className="object-contain drop-shadow-[0_0_25px_rgba(245,186,19,0.35)]"
-              />
-            </div>
-          </div>
-
-          <h1 className="font-display font-black text-2xl sm:text-3xl text-white tracking-tight">
-            Welcome <span className="text-brand-yellow">Back</span>
-          </h1>
-          <p className="text-xs sm:text-[13px] text-slate-400 max-w-xs mx-auto leading-relaxed">
-            Sign in to track print jobs, access corporate invoices, or manage print orders.
-          </p>
-        </div>
-
-        {/* Registration Success Banner */}
-        {registered && (
-          <div className="mb-5 flex items-start gap-3 p-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs backdrop-blur-md">
-            <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-400" />
-            <span>Account created successfully! Please log in with your credentials.</span>
-          </div>
-        )}
-
-        {/* Error Banner */}
-        {errorMessage && (
-          <div className="mb-5 flex items-start gap-3 p-3.5 rounded-2xl border border-rose-500/30 bg-rose-500/10 text-rose-200 text-xs backdrop-blur-md animate-in fade-in slide-in-from-top-1 duration-200">
-            <AlertCircle size={16} className="shrink-0 mt-0.5 text-rose-400" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
-        {/* Credentials Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
-          {/* Email Address */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 tracking-wide block">
-              Email Address
-            </label>
-            <div className="relative group">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
-                className="w-full bg-[#0E1322]/80 border border-white/[0.12] rounded-2xl pl-11 pr-4 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-yellow focus:ring-2 focus:ring-brand-yellow/20 group-hover:border-white/20 transition-all duration-200 shadow-inner"
-              />
-              <AtSign
-                size={17}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-yellow transition-colors pointer-events-none"
-              />
-            </div>
-          </div>
-
-          {/* Password */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 tracking-wide block">
-                Password
-              </label>
-              <Link
-                href="/contact?topic=PasswordReset"
-                className="text-xs font-medium text-brand-yellow/90 hover:text-brand-yellow hover:underline transition-colors"
-              >
-                Forgot Password?
-              </Link>
-            </div>
-            <div className="relative group">
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-[#0E1322]/80 border border-white/[0.12] rounded-2xl pl-11 pr-11 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-yellow focus:ring-2 focus:ring-brand-yellow/20 group-hover:border-white/20 transition-all duration-200 shadow-inner"
-              />
-              <Lock
-                size={17}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-yellow transition-colors pointer-events-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Sign In Primary CTA */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full relative group overflow-hidden !mt-6 rounded-2xl py-3.5 px-6 font-display font-extrabold text-sm uppercase tracking-wider text-black bg-gradient-to-r from-[#F5BA13] via-[#FFCA28] to-[#E5A800] shadow-[0_6px_28px_rgba(245,186,19,0.38)] hover:shadow-[0_8px_36px_rgba(245,186,19,0.55)] active:translate-y-0.5 active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
+      {/* Heading */}
+      <div className="mb-7">
+        <h1 className="font-display font-black text-3xl sm:text-4xl text-white tracking-tight leading-tight mb-1">
+          Welcome{" "}
+          <span className="text-brand-yellow">Back</span>
+        </h1>
+        <p className="text-sm text-slate-400">
+          Don&apos;t have an account?{" "}
+          <Link
+            href={`/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
+            className="text-brand-yellow font-semibold hover:underline
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-sm"
           >
-            {/* Subtle light sweep reflection on hover */}
-            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none" />
+            Create an Account
+          </Link>
+        </p>
+      </div>
 
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                <span>Signing In...</span>
-              </span>
-            ) : (
-              <span className="flex items-center gap-2 relative z-10">
-                <span>Sign In to Star Press</span>
-                <ArrowRight
-                  size={16}
-                  className="stroke-[2.5] group-hover:translate-x-1.5 transition-transform duration-200"
-                />
-              </span>
-            )}
+      {/* Registration success banner */}
+      {registered && (
+        <div
+          role="status"
+          className="mb-5 flex items-start gap-2.5 p-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs"
+        >
+          <CheckCircle2 size={15} className="shrink-0 mt-0.5 text-emerald-400" aria-hidden="true" />
+          <span>Account created successfully! Please sign in with your credentials.</span>
+        </div>
+      )}
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} noValidate className="space-y-1">
+        {/* Email */}
+        <div>
+          <label
+            htmlFor={emailId}
+            className="block text-xs font-semibold text-slate-300 tracking-wide mb-1.5"
+          >
+            Email Address
+          </label>
+          <input
+            id={emailId}
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null); }}
+            onBlur={handleEmailBlur}
+            placeholder="name@company.com"
+            aria-describedby={emailError ? `${emailId}-error` : undefined}
+            aria-invalid={!!emailError}
+            className={`w-full bg-white/[0.04] border rounded-full px-5 py-3.5 text-sm text-white
+              placeholder-slate-500 transition-all duration-200
+              focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow
+              focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:border-brand-yellow
+              hover:border-white/20
+              ${emailError ? "border-rose-500/60 bg-rose-500/[0.04]" : "border-white/[0.10]"}`}
+          />
+          <div id={`${emailId}-error`}>
+            <FieldError message={emailError} />
+          </div>
+        </div>
+
+        {/* Password */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label
+              htmlFor={passwordId}
+              className="block text-xs font-semibold text-slate-300 tracking-wide"
+            >
+              Password
+            </label>
+            <Link
+              href="/contact?topic=PasswordReset"
+              className="text-xs font-medium text-brand-yellow/90 hover:text-brand-yellow hover:underline transition-colors
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-sm"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+          <div className="relative">
+            <input
+              id={passwordId}
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); if (passwordError) setPasswordError(null); }}
+              onBlur={handlePasswordBlur}
+              placeholder="••••••••••••"
+              aria-describedby={passwordError ? `${passwordId}-error` : undefined}
+              aria-invalid={!!passwordError}
+              className={`w-full bg-white/[0.04] border rounded-full px-5 pr-12 py-3.5 text-sm text-white
+                placeholder-slate-500 transition-all duration-200
+                focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow
+                focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:border-brand-yellow
+                hover:border-white/20
+                ${passwordError ? "border-rose-500/60 bg-rose-500/[0.04]" : "border-white/[0.10]"}`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-full"
+            >
+              {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+            </button>
+          </div>
+          <div id={`${passwordId}-error`}>
+            <FieldError message={passwordError} />
+          </div>
+        </div>
+
+        {/* Server / general error — below CTA */}
+        {serverError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="flex items-start gap-2.5 p-3.5 rounded-2xl border border-rose-500/30
+              bg-rose-500/10 text-rose-300 text-xs mt-1"
+          >
+            <AlertCircle size={14} className="shrink-0 mt-0.5 text-rose-400" aria-hidden="true" />
+            <span>{serverError}</span>
+          </div>
+        )}
+
+        {/* Primary CTA */}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full !mt-5 relative group overflow-hidden rounded-full py-3.5 px-6
+            font-display font-extrabold text-sm uppercase tracking-wider text-black
+            bg-brand-yellow hover:bg-[#FFE04D]
+            shadow-[0_4px_24px_rgba(245,186,19,0.30)] hover:shadow-[0_6px_32px_rgba(245,186,19,0.45)]
+            active:translate-y-0.5 active:scale-[0.99] transition-all duration-200
+            flex items-center justify-center gap-2 cursor-pointer
+            disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow
+            focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0C10]"
+          aria-busy={isLoading}
+        >
+          {/* Shimmer on hover */}
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent
+              -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none"
+          />
+          {isLoading ? (
+            <span className="flex items-center gap-2 relative z-10">
+              <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+              <span>Signing In…</span>
+            </span>
+          ) : (
+            <span className="relative z-10">Sign In to Star Press</span>
+          )}
+        </button>
+      </form>
+
+      {/* Divider */}
+      <div className="relative my-6 flex items-center" aria-hidden="true">
+        <div className="flex-1 h-px bg-white/[0.08]" />
+        <span className="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">or</span>
+        <div className="flex-1 h-px bg-white/[0.08]" />
+      </div>
+
+      {/* Developer / Admin Quick Access */}
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-center space-y-2.5">
+        <div className="text-xs text-slate-400 font-medium flex items-center justify-center gap-1.5">
+          <Sparkles size={13} className="text-brand-yellow fill-brand-yellow/30" aria-hidden="true" />
+          <span>Developer / Admin Quick Access</span>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            type="button"
+            onClick={fillDemoAdmin}
+            className="flex-1 py-2 px-3 rounded-xl bg-brand-yellow/10 hover:bg-brand-yellow/20
+              border border-brand-yellow/30 hover:border-brand-yellow/50
+              text-xs text-slate-200 hover:text-white transition-all duration-200
+              flex items-center justify-center gap-1.5 font-medium
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-xl"
+          >
+            <span>Admin</span>
+            <span className="text-brand-yellow font-mono text-[10px]">(admin@starpress.in)</span>
           </button>
-        </form>
-
-        {/* Elegant OR Divider */}
-        <div className="relative my-6 text-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/[0.08]" />
-          </div>
-          <span className="relative px-3 bg-[#090D1A] text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-            OR
-          </span>
-        </div>
-
-        {/* Developer / Administrator Quick Access */}
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-center space-y-2.5 backdrop-blur-md">
-          <div className="text-xs text-slate-300 font-medium flex items-center justify-center gap-1.5">
-            <Sparkles size={14} className="text-brand-yellow fill-brand-yellow/30" />
-            <span>Developer / Administrator Quick Access</span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2 pt-1">
-            <button
-              type="button"
-              onClick={fillDemoAdmin}
-              className="flex-1 py-2 px-3 rounded-xl bg-brand-yellow/10 hover:bg-brand-yellow/20 border border-brand-yellow/30 hover:border-brand-yellow/50 text-xs text-slate-200 hover:text-white transition-all duration-200 flex items-center justify-center gap-1.5 font-medium group"
-            >
-              <span>Fill Admin Credentials</span>
-              <span className="text-brand-yellow font-mono text-[11px] group-hover:underline">
-                (admin@starpress.in)
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={fillDemoCustomer}
-              className="py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/20 text-xs text-slate-400 hover:text-slate-200 transition-all duration-200 font-medium"
-              title="Fill Customer Test Account"
-            >
-              Customer Test
-            </button>
-          </div>
-        </div>
-
-        {/* Security Indicator */}
-        <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-slate-400 font-medium">
-          <ShieldCheck size={15} className="text-emerald-400 shrink-0" />
-          <span>256-bit encrypted authentication session</span>
+          <button
+            type="button"
+            onClick={fillDemoCustomer}
+            className="flex-1 py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08]
+              border border-white/[0.08] hover:border-white/20
+              text-xs text-slate-400 hover:text-slate-200 transition-all duration-200 font-medium
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
+            title="Fill Customer Test Account"
+          >
+            Customer Test
+          </button>
         </div>
       </div>
 
-      {/* Switch to Register */}
-      <div className="text-center mt-6 text-xs text-slate-400">
-        Don&apos;t have a Star Press account yet?{" "}
-        <Link
-          href={`/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
-          className="text-brand-yellow font-semibold hover:text-[#FFE04D] hover:underline transition-colors"
-        >
-          Create Customer Account →
-        </Link>
+      {/* Security badge */}
+      <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-slate-500 font-medium">
+        <ShieldCheck size={14} className="text-emerald-400 shrink-0" aria-hidden="true" />
+        <span>256-bit encrypted session</span>
       </div>
     </div>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Page shell — split screen
+// ---------------------------------------------------------------------------
 export default function LoginPage() {
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
-
-  const handleGlobalMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const { clientX, clientY } = e;
-    const { innerWidth, innerHeight } = window;
-    const x = Math.round((clientX / innerWidth) * 100);
-    const y = Math.round((clientY / innerHeight) * 100);
-    setMousePos({ x, y });
-  };
-
   return (
-    <div
-      onMouseMove={handleGlobalMouseMove}
-      className="relative min-h-screen flex flex-col justify-between bg-[#06070B] text-white selection:bg-brand-yellow selection:text-black overflow-x-hidden"
-    >
-      {/* 1. PHOTOREALISTIC PRINTING WORKSPACE BACKGROUND */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Background Image: Commercial Digital Press Machine */}
-        <div className="absolute inset-0 opacity-40 mix-blend-luminosity scale-105">
-          <Image
-            src="/images/auth-press-bg.jpg"
-            alt="Star Press Commercial Printing Environment"
-            fill
-            priority
-            className="object-cover object-right md:object-center"
-            sizes="100vw"
-            quality={90}
-          />
-        </div>
+    <div className="min-h-screen flex bg-[#0B0C10] text-white selection:bg-brand-yellow selection:text-black">
 
-        {/* Ambient Dark Gradient Overlays for High Legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#06070B] via-[#06070B]/90 to-[#06070B]/40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-transparent to-[#06070B]/80" />
-
-        {/* Amber Floor Reflection Lines (matching the reference image) */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-brand-yellow/[0.08] to-transparent" />
-        <div className="absolute bottom-16 left-1/4 right-0 h-px bg-gradient-to-r from-transparent via-brand-yellow/40 to-transparent blur-[1px]" />
-        <div className="absolute bottom-28 left-1/3 right-12 h-px bg-gradient-to-r from-transparent via-brand-yellow/20 to-transparent blur-[2px]" />
-
-        {/* Interactive Ambient Cursor Spotlight */}
-        <div
-          className="absolute inset-0 transition-opacity duration-700 opacity-60"
-          style={{
-            background: `radial-gradient(750px circle at ${mousePos.x}% ${mousePos.y}%, rgba(245,186,19,0.09), transparent 70%)`,
-          }}
+      {/* ── LEFT PANEL: Brand Image ── */}
+      <div
+        className="hidden lg:flex lg:w-[45%] xl:w-[42%] relative flex-col overflow-hidden"
+        aria-hidden="true"
+      >
+        {/* Background image */}
+        <Image
+          src="/images/auth-press-bg.jpg"
+          alt=""
+          fill
+          priority
+          sizes="42vw"
+          className="object-cover object-center"
+          quality={90}
         />
 
-        {/* Cool Blue Ambient Rim Behind Center Card */}
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Dark gradient overlays for legibility */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0C10]/70 via-[#0B0C10]/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0C10] via-[#0B0C10]/10 to-[#0B0C10]/60" />
+
+        {/* Neon cyan glow rim (CSS only, not baked into image) */}
+        <div className="absolute top-1/4 left-0 w-72 h-72 bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/3 right-0 w-56 h-56 bg-brand-yellow/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Top-left: Logo */}
+        <div className="relative z-10 p-8 xl:p-10">
+          <div className="relative h-11 w-36">
+            <Image
+              src="/images/Logo.png"
+              alt="Star Press — The Printing Hub"
+              fill
+              sizes="144px"
+              priority
+              className="object-contain drop-shadow-[0_0_18px_rgba(245,186,19,0.40)]"
+            />
+          </div>
+        </div>
+
+        {/* Bottom tagline */}
+        <div className="relative z-10 mt-auto p-8 xl:p-10">
+          <p className="text-xs uppercase tracking-widest font-bold text-brand-yellow/80 font-mono mb-2">
+            Enterprise Portal
+          </p>
+          <h2 className="font-display font-extrabold text-2xl xl:text-3xl text-white leading-snug tracking-tight">
+            Your Printing <br />Workspace Awaits.
+          </h2>
+          <p className="text-sm text-slate-400 mt-3 leading-relaxed">
+            Track jobs · Manage orders · Print without limits.
+          </p>
+        </div>
       </div>
 
-      {/* 2. TOP HEADER NAVIGATION BAR */}
-      <header className="relative z-20 w-full max-w-[1400px] mx-auto px-6 sm:px-10 py-6 sm:py-8 flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link
-          href="/"
-          className="flex items-center group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-xl"
-          aria-label="Star Press — The Printing Hub"
-        >
-          <Image
-            src="/images/Logo.png"
-            alt="Star Press - The Printing Hub"
-            width={160}
-            height={52}
-            priority
-            className="h-10 sm:h-12 w-auto object-contain group-hover:scale-[1.03] transition-transform duration-200"
-          />
-        </Link>
+      {/* ── RIGHT PANEL: Form ── */}
+      <div className="flex-1 flex items-center justify-center relative overflow-y-auto">
+        {/* Subtle background texture for right panel */}
+        <div className="absolute inset-0 bg-[#0B0C10]" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-yellow/[0.04] rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-brand-cyan/[0.04] rounded-full blur-3xl pointer-events-none" />
 
-        {/* Slogan */}
-        <div className="hidden sm:flex items-center gap-2.5 text-xs font-semibold tracking-widest uppercase text-slate-400">
-          <span>Print Smarter</span>
-          <span className="text-brand-yellow font-bold">•</span>
-          <span>Work Faster</span>
+        <div className="relative z-10 w-full max-w-[480px]">
+          <Suspense
+            fallback={
+              <div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-400">
+                <Loader2 size={28} className="animate-spin text-brand-yellow" />
+                <p className="text-xs tracking-wider uppercase">Loading workspace…</p>
+              </div>
+            }
+          >
+            <LoginForm />
+          </Suspense>
         </div>
-      </header>
-
-      {/* 3. MAIN SPATIAL CANVAS */}
-      <main className="relative z-10 flex-1 max-w-[1400px] w-full mx-auto px-6 sm:px-10 py-6 sm:py-10 flex items-center">
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-10 xl:gap-16 items-center">
-          {/* Left Column: Brand Statement & Spatial Indicators */}
-          <div className="lg:col-span-6 xl:col-span-5 hidden lg:block space-y-8 pl-2">
-            {/* Timeline Vertical Accent with Glowing Node */}
-            <div className="relative pl-6 border-l border-brand-yellow/25 space-y-7">
-              {/* Glowing Amber Pinpoint Node */}
-              <div className="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-brand-yellow shadow-[0_0_14px_#F5BA13]" />
-
-              <div className="space-y-3">
-                <p className="text-xs uppercase tracking-widest font-bold text-brand-yellow/90 font-mono">
-                  Enterprise Portal
-                </p>
-                <h2 className="font-display font-extrabold text-3xl xl:text-4xl text-white tracking-tight leading-[1.15]">
-                  Your <br />
-                  <span className="text-white">Printing Workspace</span>
-                </h2>
-                <div className="space-y-1 text-sm text-slate-400 font-normal leading-relaxed pt-1">
-                  <p>Track jobs in real time.</p>
-                  <p>Manage commercial orders.</p>
-                  <p>Print without limits.</p>
-                </div>
-              </div>
-
-              {/* 3 Feature Pills */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md hover:border-brand-yellow/40 hover:bg-white/[0.05] transition-all duration-300 group">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-brand-yellow shrink-0 group-hover:scale-105 transition-transform">
-                    <Zap size={18} className="fill-brand-yellow/20" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white tracking-wide">Fast</p>
-                    <p className="text-[11px] text-slate-400">Print Tracking & Live Dispatch</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md hover:border-brand-yellow/40 hover:bg-white/[0.05] transition-all duration-300 group">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-brand-yellow shrink-0 group-hover:scale-105 transition-transform">
-                    <FileText size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white tracking-wide">Corporate</p>
-                    <p className="text-[11px] text-slate-400">Invoice & GST Management</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md hover:border-brand-yellow/40 hover:bg-white/[0.05] transition-all duration-300 group">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-brand-yellow shrink-0 group-hover:scale-105 transition-transform">
-                    <Users size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white tracking-wide">Built for</p>
-                    <p className="text-[11px] text-slate-400">Teams & Multi-Brand Accounts</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sub-label */}
-              <div className="pt-2">
-                <span className="text-xs text-slate-500 font-medium tracking-wide">
-                  Powered by Star Press Production Cloud
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Spatial Glass Login Form */}
-          <div className="lg:col-span-6 xl:col-span-7 flex justify-center lg:justify-end">
-            <Suspense
-              fallback={
-                <div className="w-full max-w-[500px] h-[550px] rounded-[32px] border border-white/10 bg-[#090D1A]/70 backdrop-blur-2xl flex flex-col items-center justify-center text-slate-400 gap-3">
-                  <div className="w-8 h-8 border-2 border-brand-yellow border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs tracking-wider uppercase">Loading Workspace...</p>
-                </div>
-              }
-            >
-              <LoginForm />
-            </Suspense>
-          </div>
-        </div>
-      </main>
-
-      {/* 4. FOOTER BAR */}
-      <footer className="relative z-20 w-full max-w-[1400px] mx-auto px-6 sm:px-10 py-6 sm:py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-        <p>© 2026 Star Press. All rights reserved.</p>
-        <p className="hidden md:block text-slate-400/80 font-medium">
-          Ideas to Printed Realities.
-        </p>
-        <p className="text-slate-400 font-medium">
-          Reliable Printing for a Brighter Tomorrow.
-        </p>
-      </footer>
+      </div>
     </div>
   );
 }
