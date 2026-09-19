@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
-  Star,
   ChevronDown,
   Search,
   ShoppingBag,
@@ -60,15 +60,17 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
           {/* Left: Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2 group shrink-0 focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:outline-none rounded-lg"
+            className="flex items-center group shrink-0 focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:outline-none rounded-lg"
+            aria-label="Star Press — The Printing Hub"
           >
-            <Star
-              size={20}
-              className="text-brand-yellow fill-brand-yellow group-hover:rotate-12 transition-transform duration-200"
+            <Image
+              src="/images/Logo.png"
+              alt="Star Press - The Printing Hub"
+              width={160}
+              height={50}
+              priority
+              className="h-10 sm:h-11 w-auto object-contain group-hover:scale-[1.03] transition-transform duration-200"
             />
-            <span className="font-display font-black text-xl tracking-tight text-text-primary">
-              STAR PRESS
-            </span>
           </Link>
 
           {/* Center: Desktop Navigation */}

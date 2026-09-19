@@ -2,7 +2,8 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { X, ChevronRight, Star, Phone, MessageCircle, ShoppingBag, Sparkles, User, LogOut, ShieldCheck } from "lucide-react";
+import Image from "next/image";
+import { X, ChevronRight, Phone, MessageCircle, ShoppingBag, Sparkles, User, LogOut, ShieldCheck } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { NAV_LINKS, WHATSAPP_NUMBER, CONTACT_PHONE } from "@/lib/data";
 import Button from "@/components/ui/Button";
@@ -59,10 +60,16 @@ export default function MobileNavDrawer({
             <Link
               href="/"
               onClick={onClose}
-              className="flex items-center gap-2 font-display font-black text-xl tracking-tight text-white"
+              className="flex items-center group"
+              aria-label="Star Press — The Printing Hub"
             >
-              <Star className="text-brand-yellow fill-brand-yellow" size={20} />
-              <span>STAR PRESS</span>
+              <Image
+                src="/images/Logo.png"
+                alt="Star Press - The Printing Hub"
+                width={140}
+                height={45}
+                className="h-9 w-auto object-contain"
+              />
             </Link>
             <button
               type="button"

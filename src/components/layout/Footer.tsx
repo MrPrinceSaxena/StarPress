@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Star } from "lucide-react";
+import Image from "next/image";
 import { FOOTER_COLUMNS } from "@/lib/data";
 
 export default function Footer() {
@@ -52,10 +52,16 @@ export default function Footer() {
           <div className="space-y-4">
             <Link
               href="/"
-              className="flex items-center gap-2 font-display font-black text-xl tracking-tight text-white"
+              className="inline-block group"
+              aria-label="Star Press — The Printing Hub"
             >
-              <Star className="text-brand-yellow fill-brand-yellow" size={20} />
-              <span>STAR PRESS</span>
+              <Image
+                src="/images/Logo.png"
+                alt="Star Press - The Printing Hub"
+                width={170}
+                height={55}
+                className="h-11 sm:h-12 w-auto object-contain group-hover:scale-[1.02] transition-transform duration-200"
+              />
             </Link>
             <p className="text-sm text-text-secondary leading-relaxed max-w-xs">
               Turning Ideas Into Print
