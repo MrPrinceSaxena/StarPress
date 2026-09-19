@@ -14,12 +14,14 @@ export async function GET() {
     }
 
     try {
-      const orders = await db.order.findMany({
+      const userWhere: any[] = [{ userId: session.user.id }];
+      if (session.user.email) {
+        userWhere.push({ guestEmail: session.user.email });
+      }
+
+      const orders = await (db.order as any).findMany({
         where: {
-          OR: [
-            { userId: session.user.id },
-            { guestEmail: session.user.email || undefined },
-          ],
+          OR: userWhere,
         },
         orderBy: { createdAt: "desc" },
         include: {

@@ -5,12 +5,16 @@ import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { Role } from "@prisma/client";
 
+if (!process.env.NEXTAUTH_SECRET) {
+  process.env.NEXTAUTH_SECRET = env.NEXTAUTH_SECRET || "fallback-secret-development-key-32-chars";
+}
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: env.NEXTAUTH_SECRET || "fallback-secret-development-key-32-chars",
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
     error: "/login",
