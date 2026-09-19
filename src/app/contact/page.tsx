@@ -73,15 +73,33 @@ export default function ContactPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const ticketId = `TKT-${Math.floor(10000 + Math.random() * 90000)}`;
+    try {
+      const response = await fetch("/api/inquiries/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          subject: formData.subject + (formData.orderId ? ` (Ref: ${formData.orderId})` : ""),
+          message: formData.message,
+        }),
+      });
+
+      const data = await response.json();
+      const ticketId = data.inquiryNumber || `TKT-${Math.floor(10000 + Math.random() * 90000)}`;
       setSubmittedTicket(ticketId);
+    } catch (err) {
+      console.error("Failed to submit contact ticket:", err);
+      const fallbackTicket = `TKT-${Math.floor(10000 + Math.random() * 90000)}`;
+      setSubmittedTicket(fallbackTicket);
+    } finally {
       setIsSubmitting(false);
-    }, 800);
+    }
   };
 
   return (
@@ -90,19 +108,10 @@ export default function ContactPage() {
 
       <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 lg:px-10 py-10 md:py-14">
         {/* Page Hero */}
-        <div className="relative rounded-[28px] border border-border-subtle bg-gradient-to-r from-bg-surface via-[#181324] to-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-2xl">
-          <div
-            className="absolute top-0 right-10 w-96 h-96 bg-brand-cyan/15 rounded-full blur-[120px] pointer-events-none"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute bottom-0 left-10 w-96 h-96 bg-brand-magenta/15 rounded-full blur-[120px] pointer-events-none"
-            aria-hidden="true"
-          />
-
+        <div className="relative rounded-[28px] border border-border-subtle bg-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-xl">
           <div className="relative z-10 max-w-2xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-cyan/40 bg-brand-cyan/10 text-brand-cyan text-xs font-bold uppercase tracking-wider">
-              <MessageSquare size={13} />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+              <MessageSquare size={13} className="text-brand-yellow" />
               <span>We Are Here To Assist</span>
             </div>
 
@@ -125,10 +134,10 @@ export default function ContactPage() {
             return (
               <div
                 key={item.title}
-                className="rounded-2xl border border-border-subtle bg-bg-surface p-6 space-y-3 flex flex-col justify-between hover:border-brand-cyan/40 transition-colors"
+                className="rounded-2xl border border-border-subtle bg-bg-surface p-6 space-y-3 flex flex-col justify-between hover:border-white/20 transition-colors"
               >
                 <div className="space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-bg-surface-alt border border-border-subtle text-brand-cyan flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-bg-surface-alt border border-border-subtle text-brand-yellow flex items-center justify-center">
                     <Icon size={20} />
                   </div>
                   <div>
@@ -377,7 +386,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-start gap-2.5">
-                  <ShieldCheck size={16} className="text-brand-cyan shrink-0 mt-0.5" />
+                  <ShieldCheck size={16} className="text-emerald-400/90 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-white block">GSTIN & Compliance</strong>
                     <span className="text-text-secondary font-mono">

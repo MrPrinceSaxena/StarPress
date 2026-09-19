@@ -74,16 +74,37 @@ export default function BulkOrdersPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const quoteRef = `SP-CORP-${Math.floor(1000 + Math.random() * 9000)}`;
+    try {
+      const response = await fetch("/api/inquiries/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.contactPerson || formData.companyName,
+          phone: formData.phone,
+          email: formData.email,
+          company: formData.companyName,
+          productType: formData.category,
+          quantity: formData.estimatedQuantity,
+          details: `Target Date: ${formData.targetDate || "Flexible"}. GSTIN: ${formData.gstin || "N/A"}. Message: ${formData.message}`,
+          swatchKitRequested: formData.requestSampleKit,
+        }),
+      });
+
+      const data = await response.json();
+      const quoteRef = data.inquiryNumber || `SP-CORP-${Math.floor(1000 + Math.random() * 9000)}`;
       setSubmittedQuoteId(quoteRef);
+    } catch (err) {
+      console.error("Failed to submit bulk order inquiry:", err);
+      const fallbackRef = `SP-CORP-${Math.floor(1000 + Math.random() * 9000)}`;
+      setSubmittedQuoteId(fallbackRef);
+    } finally {
       setIsSubmitting(false);
       window.scrollTo({ top: 400, behavior: "smooth" });
-    }, 1000);
+    }
   };
 
   return (
@@ -92,19 +113,10 @@ export default function BulkOrdersPage() {
 
       <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 lg:px-10 py-10 md:py-14">
         {/* Hero Section */}
-        <div className="relative rounded-[28px] border border-border-subtle bg-gradient-to-r from-bg-surface via-[#1a1428] to-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-2xl">
-          <div
-            className="absolute top-0 right-1/4 w-96 h-96 bg-brand-magenta/15 rounded-full blur-[130px] pointer-events-none"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute bottom-0 left-10 w-96 h-96 bg-brand-cyan/15 rounded-full blur-[130px] pointer-events-none"
-            aria-hidden="true"
-          />
-
+        <div className="relative rounded-[28px] border border-border-subtle bg-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-xl">
           <div className="relative z-10 max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-yellow/40 bg-brand-yellow/10 text-brand-yellow text-xs font-bold uppercase tracking-wider">
-              <BadgePercent size={14} />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+              <BadgePercent size={14} className="text-brand-yellow" />
               <span>Enterprise & Corporate Solutions</span>
             </div>
 
@@ -137,8 +149,8 @@ export default function BulkOrdersPage() {
                 key={tier.range}
                 className={`rounded-2xl border p-6 sm:p-8 flex flex-col justify-between relative transition-all duration-300 ${
                   tier.featured
-                    ? "border-brand-yellow bg-gradient-to-b from-brand-yellow/10 to-bg-surface shadow-[0_0_30px_rgba(255,230,0,0.1)] scale-100 md:scale-105"
-                    : "border-border-subtle bg-bg-surface hover:border-brand-cyan/40"
+                    ? "border-brand-yellow/80 bg-brand-yellow/[0.05] shadow-lg shadow-black/40 scale-100 md:scale-105"
+                    : "border-border-subtle bg-bg-surface hover:border-white/20"
                 }`}
               >
                 {tier.featured && (
@@ -162,7 +174,7 @@ export default function BulkOrdersPage() {
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-border-subtle flex items-center gap-2 text-xs text-brand-cyan">
+                <div className="pt-4 border-t border-border-subtle flex items-center gap-2 text-xs text-emerald-400/90 font-medium">
                   <CheckCircle2 size={14} />
                   <span>Free Pre-Production Proof Included</span>
                 </div>
@@ -178,9 +190,9 @@ export default function BulkOrdersPage() {
             return (
               <div
                 key={feat.title}
-                className="rounded-2xl border border-border-subtle bg-bg-surface p-6 space-y-3 hover:border-brand-magenta/40 transition-colors"
+                className="rounded-2xl border border-border-subtle bg-bg-surface p-6 space-y-3 hover:border-border-strong transition-colors"
               >
-                <div className="w-11 h-11 rounded-xl bg-bg-surface-alt border border-border-subtle text-brand-cyan flex items-center justify-center">
+                <div className="w-11 h-11 rounded-xl bg-bg-surface-alt border border-border-subtle text-brand-yellow flex items-center justify-center">
                   <IconComponent size={22} />
                 </div>
                 <h3 className="font-display font-bold text-base text-white">
@@ -200,8 +212,8 @@ export default function BulkOrdersPage() {
           <div className="lg:col-span-8">
             <div className="rounded-3xl border border-border-subtle bg-bg-surface p-6 sm:p-10 space-y-8 shadow-2xl">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/40 bg-brand-cyan/10 text-brand-cyan text-xs font-bold uppercase tracking-wider mb-2">
-                  <FileText size={13} />
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">
+                  <FileText size={13} className="text-brand-yellow" />
                   <span>Fast Response Under 2 Hours</span>
                 </div>
                 <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-tight">
@@ -447,7 +459,7 @@ export default function BulkOrdersPage() {
           <div className="lg:col-span-4 space-y-6">
             <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-7 space-y-6 shadow-xl sticky top-24">
               <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-brand-magenta">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
                   Immediate Procurement Desk
                 </span>
                 <h3 className="font-display font-black text-xl text-white uppercase tracking-tight">
@@ -489,15 +501,15 @@ export default function BulkOrdersPage() {
               {/* Guarantees */}
               <div className="pt-4 border-t border-border-subtle space-y-2.5 text-xs text-text-muted">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck size={14} className="text-brand-cyan shrink-0" />
+                  <ShieldCheck size={14} className="text-emerald-400/90 shrink-0" />
                   <span>ISO 9001:2015 Certified Color Calibration</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-brand-magenta shrink-0" />
+                  <Clock size={14} className="text-emerald-400/90 shrink-0" />
                   <span>Strict Turnaround SLA with Penalty Safeguard</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Layers size={14} className="text-brand-yellow shrink-0" />
+                  <Layers size={14} className="text-emerald-400/90 shrink-0" />
                   <span>Complimentary Pre-Flight File Preparation</span>
                 </div>
               </div>

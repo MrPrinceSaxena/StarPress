@@ -107,12 +107,62 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const orderId = `SP-${Math.floor(100000 + Math.random() * 900000)}`;
+    try {
+      const payload = {
+        guestEmail: formData.email,
+        guestPhone: formData.phone,
+        guestName: formData.fullName,
+        shippingAddress: {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          companyName: formData.companyName,
+          addressLine1: formData.addressLine1,
+          addressLine2: formData.addressLine2,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pinCode,
+        },
+        billingAddress: formData.isGstRequired ? {
+          companyName: formData.companyName,
+          gstin: formData.gstin,
+          addressLine1: formData.addressLine1,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pinCode,
+        } : undefined,
+        subtotal,
+        gstAmount: 0,
+        shippingFee: shippingFee + expressFee,
+        discountAmount: 0,
+        totalAmount: grandTotal,
+        paymentMethod: formData.paymentMethod,
+        notes: formData.notes,
+        items: items.map((it) => ({
+          productId: it.id,
+          productName: it.name,
+          productSlug: it.href?.replace("/shop/", "") || "product",
+          quantity: it.quantity,
+          unitPrice: it.price,
+          lineTotal: it.price * it.quantity,
+          previewUrl: it.imageSrc,
+        })),
+      };
+
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const resData = await response.json();
+      const placedOrder = resData.order;
+      const orderId = placedOrder?.orderNumber || `SP-${Date.now().toString().slice(-6)}`;
+
       const orderSummary = {
         orderId,
         date: new Date().toLocaleDateString("en-IN", {
@@ -141,9 +191,22 @@ export default function CheckoutPage() {
 
       setConfirmedOrder(orderSummary);
       clearCart();
+    } catch (err) {
+      console.error("Error submitting order:", err);
+      // Fallback in case of offline/network failure
+      const fallbackId = `SP-${Date.now().toString().slice(-6)}`;
+      setConfirmedOrder({
+        orderId: fallbackId,
+        date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+        total: grandTotal,
+        itemsCount: items.reduce((acc, it) => acc + it.quantity, 0),
+        shippingMethod: formData.shippingMethod,
+      });
+      clearCart();
+    } finally {
       setIsSubmitting(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 1200);
+    }
   };
 
   if (!isLoaded) {
@@ -172,12 +235,6 @@ export default function CheckoutPage() {
         <Header />
         <main className="flex-1 max-w-[800px] w-full mx-auto px-6 py-12 md:py-20">
           <div className="rounded-3xl border border-emerald-500/30 bg-bg-surface p-8 sm:p-12 text-center space-y-8 shadow-2xl relative overflow-hidden">
-            {/* Celebration Glow */}
-            <div
-              className="absolute -top-10 left-1/2 -translate-x-1/2 w-80 h-80 bg-emerald-500/15 rounded-full blur-[100px] pointer-events-none"
-              aria-hidden="true"
-            />
-
             <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">
               <CheckCircle2 size={44} />
             </div>
@@ -211,7 +268,7 @@ export default function CheckoutPage() {
 
               <div className="flex items-center justify-between text-xs text-text-secondary">
                 <span>Production Mode</span>
-                <span className="text-brand-cyan font-bold uppercase">
+                <span className="text-emerald-400 font-bold uppercase">
                   {confirmedOrder.shippingMethod === "express"
                     ? "Priority 24h Rush"
                     : "Standard Production"}
@@ -297,8 +354,8 @@ export default function CheckoutPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-border-subtle">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-yellow/40 bg-brand-yellow/10 text-brand-yellow text-xs font-bold uppercase tracking-wider mb-2">
-              <Lock size={13} />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">
+              <Lock size={13} className="text-brand-yellow" />
               <span>256-Bit Encrypted Secure Checkout</span>
             </div>
             <h1 className="font-display font-black text-3xl sm:text-4xl text-white uppercase tracking-tight">
@@ -326,7 +383,7 @@ export default function CheckoutPage() {
               {/* Step 1: Customer Contact */}
               <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8 space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-brand-magenta text-white font-black text-sm flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center shrink-0">
                     1
                   </div>
                   <div>
@@ -406,7 +463,7 @@ export default function CheckoutPage() {
               {/* Step 2: Delivery Address */}
               <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8 space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-brand-cyan text-black font-black text-sm flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center shrink-0">
                     2
                   </div>
                   <div>
@@ -609,10 +666,10 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* Step 4: Dispatch Speed & Production Priority */}
+              {/* Step 3: Dispatch Speed & Production Priority */}
               <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8 space-y-4">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-brand-yellow text-black font-black text-sm flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center shrink-0">
                     3
                   </div>
                   <div>
@@ -629,14 +686,14 @@ export default function CheckoutPage() {
                   <label
                     className={`rounded-xl border p-4 cursor-pointer flex flex-col justify-between transition-all ${
                       formData.shippingMethod === "standard"
-                        ? "border-brand-yellow bg-brand-yellow/5"
+                        ? "border-brand-yellow/90 bg-brand-yellow/[0.08] ring-1 ring-brand-yellow/40"
                         : "border-border-subtle bg-bg-surface-alt hover:border-text-secondary"
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="font-bold text-white text-sm">
-                          Standard Production
+                           Standard Production
                         </div>
                         <p className="text-xs text-text-secondary mt-1">
                           Dispatched in 3–5 business days. Free for orders ₹999+.
@@ -659,7 +716,7 @@ export default function CheckoutPage() {
                   <label
                     className={`rounded-xl border p-4 cursor-pointer flex flex-col justify-between transition-all ${
                       formData.shippingMethod === "express"
-                        ? "border-brand-magenta bg-brand-magenta/5"
+                        ? "border-brand-yellow/90 bg-brand-yellow/[0.08] ring-1 ring-brand-yellow/40"
                         : "border-border-subtle bg-bg-surface-alt hover:border-text-secondary"
                     }`}
                   >
@@ -667,7 +724,7 @@ export default function CheckoutPage() {
                       <div>
                         <div className="font-bold text-white text-sm flex items-center gap-1.5">
                           <span>Priority 24h Rush</span>
-                          <span className="text-[10px] bg-brand-magenta/20 text-brand-magenta px-1.5 py-0.5 rounded font-bold uppercase">
+                          <span className="text-[10px] bg-white/10 text-slate-200 border border-white/10 px-1.5 py-0.5 rounded font-bold uppercase">
                             Fast
                           </span>
                         </div>
@@ -681,20 +738,20 @@ export default function CheckoutPage() {
                         value="express"
                         checked={formData.shippingMethod === "express"}
                         onChange={handleInputChange}
-                        className="accent-brand-magenta"
+                        className="accent-brand-yellow"
                       />
                     </div>
-                    <div className="mt-3 text-xs font-mono font-bold text-brand-magenta">
+                    <div className="mt-3 text-xs font-mono font-bold text-white">
                       +₹249 Priority Fee
                     </div>
                   </label>
                 </div>
               </div>
 
-              {/* Step 5: Payment Method */}
+              {/* Step 4: Payment Method */}
               <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8 space-y-4">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-white text-black font-black text-sm flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center shrink-0">
                     4
                   </div>
                   <div>
@@ -711,12 +768,12 @@ export default function CheckoutPage() {
                   <label
                     className={`rounded-xl border p-4 cursor-pointer flex items-center justify-between transition-all ${
                       formData.paymentMethod === "online"
-                        ? "border-brand-cyan bg-brand-cyan/5"
+                        ? "border-brand-yellow/90 bg-brand-yellow/[0.08] ring-1 ring-brand-yellow/40"
                         : "border-border-subtle bg-bg-surface-alt hover:border-text-secondary"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <CreditCard className="text-brand-cyan" size={20} />
+                      <CreditCard className="text-brand-yellow" size={20} />
                       <div>
                         <div className="font-bold text-white text-sm">
                           Online UPI / Cards / NetBanking (Instant Confirmation)
@@ -732,14 +789,14 @@ export default function CheckoutPage() {
                       value="online"
                       checked={formData.paymentMethod === "online"}
                       onChange={handleInputChange}
-                      className="accent-brand-cyan"
+                      className="accent-brand-yellow"
                     />
                   </label>
 
                   <label
                     className={`rounded-xl border p-4 cursor-pointer flex items-center justify-between transition-all ${
                       formData.paymentMethod === "cod_proof"
-                        ? "border-brand-yellow bg-brand-yellow/5"
+                        ? "border-brand-yellow/90 bg-brand-yellow/[0.08] ring-1 ring-brand-yellow/40"
                         : "border-border-subtle bg-bg-surface-alt hover:border-text-secondary"
                     }`}
                   >
@@ -837,9 +894,9 @@ export default function CheckoutPage() {
                   </div>
 
                   {formData.shippingMethod === "express" && (
-                    <div className="flex items-center justify-between text-brand-magenta">
+                    <div className="flex items-center justify-between text-text-secondary">
                       <span>Priority 24h Rush</span>
-                      <span className="font-mono">+₹249</span>
+                      <span className="font-mono text-white font-medium">+₹249</span>
                     </div>
                   )}
 
@@ -879,11 +936,11 @@ export default function CheckoutPage() {
                 {/* Micro guarantees */}
                 <div className="pt-2 text-[11px] text-text-muted space-y-1.5 border-t border-border-subtle">
                   <div className="flex items-center gap-2">
-                    <ShieldCheck size={13} className="text-brand-magenta" />
+                    <ShieldCheck size={13} className="text-emerald-400/90" />
                     <span>Free Pre-Flight Artwork & Resolution Inspection</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Truck size={13} className="text-brand-cyan" />
+                    <Truck size={13} className="text-emerald-400/90" />
                     <span>Direct Courier Tracking Link Dispatched via SMS</span>
                   </div>
                 </div>

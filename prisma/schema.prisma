@@ -1,10 +1,5 @@
 // ============================================================================
-// Star Press — Database Schema (Phase 0 draft)
-// ============================================================================
-// This is the foundational schema. Pricing-rule detail (size/quantity/text-length
-// based pricing) is intentionally kept minimal here — it gets fully designed and
-// migrated in Phase 2 (Product Catalog & Pricing Logic). Every model below is
-// documented in docs/02-DATABASE-SCHEMA.md — keep both in sync.
+// Star Press — Production Database Schema (Phase C & Roadmap)
 // ============================================================================
 
 generator client {
@@ -17,7 +12,7 @@ datasource db {
 }
 
 // ----------------------------------------------------------------------------
-// Auth / Users
+// Auth & Users
 // ----------------------------------------------------------------------------
 
 enum Role {
@@ -26,34 +21,34 @@ enum Role {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  passwordHash  String?
-  phone         String?
-  role          Role      @default(CUSTOMER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                    String                 @id @default(cuid())
+  name                  String
+  email                 String                 @unique
+  passwordHash          String?
+  phone                 String?
+  role                  Role                   @default(CUSTOMER)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 
-  addresses     Address[]
-  orders        Order[]
-  reviews       Review[]
+  addresses             Address[]
+  orders                Order[]
+  reviews               Review[]
   customizationRequests CustomizationRequest[]
 }
 
 model Address {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String
-  label       String?  // e.g. "Home", "Office"
-  line1       String
-  line2       String?
-  city        String
-  state       String
-  pincode     String
-  phone       String
-  isDefault   Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  label     String?  // e.g. "Office", "Factory", "Home"
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  pincode   String
+  phone     String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 // ----------------------------------------------------------------------------
@@ -61,81 +56,81 @@ model Address {
 // ----------------------------------------------------------------------------
 
 model Category {
-  id          String    @id @default(cuid())
-  name        String    @unique   // e.g. "Business Printing"
-  slug        String    @unique
-  description String?
-  imageUrl    String?
-  displayOrder Int      @default(0)
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  name         String    @unique
+  slug         String    @unique
+  description  String?
+  imageUrl     String?
+  displayOrder Int       @default(0)
+  products     Product[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Product {
-  id            String    @id @default(cuid())
-  category      Category  @relation(fields: [categoryId], references: [id])
-  categoryId    String
-  name          String                 // e.g. "Business Cards"
-  slug          String    @unique
-  description   String?
-  basePrice     Decimal   @db.Decimal(10, 2)  // starting/reference price shown on cards
-  isFeatured    Boolean   @default(false)
-  isActive      Boolean   @default(true)
-  images        ProductImage[]
-  // Full pricing-rule structure (size/qty/text-length) designed in Phase 2.
-  // Placeholder relation so the shape exists in the schema from day one:
-  pricingRules  PricingRule[]
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  reviews       Review[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String         @id @default(cuid())
+  category     Category       @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  name         String
+  slug         String         @unique
+  description  String?
+  basePrice    Decimal        @db.Decimal(10, 2)
+  isFeatured   Boolean        @default(false)
+  isActive     Boolean        @default(true)
+  images       ProductImage[]
+  pricingRules PricingRule[]
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+  reviews      Review[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
 model ProductImage {
-  id         String   @id @default(cuid())
-  product    Product  @relation(fields: [productId], references: [id])
-  productId  String
-  url        String
-  altText    String?
-  displayOrder Int    @default(0)
+  id           String   @id @default(cuid())
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId    String
+  url          String
+  altText      String?
+  displayOrder Int      @default(0)
 }
 
-// Placeholder — real structure (per size/quantity/text-length pricing) is
-// designed in Phase 2. Kept minimal now so Product already has the relation.
 model PricingRule {
-  id          String   @id @default(cuid())
-  product     Product  @relation(fields: [productId], references: [id])
-  productId   String
-  label       String   // e.g. "A6 / 100 pcs"
-  price       Decimal  @db.Decimal(10, 2)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  label     String
+  price     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
 }
 
 // ----------------------------------------------------------------------------
-// Cart / Orders
+// Cart (Client & Optional Persistent)
 // ----------------------------------------------------------------------------
 
 model Cart {
-  id         String     @id @default(cuid())
-  userId     String?    @unique  // null = guest cart (session-based, Phase 3 decision)
-  items      CartItem[]
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id        String     @id @default(cuid())
+  userId    String?    @unique
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model CartItem {
-  id          String   @id @default(cuid())
-  cart        Cart     @relation(fields: [cartId], references: [id])
-  cartId      String
-  product     Product  @relation(fields: [productId], references: [id])
-  productId   String
-  quantity    Int
-  unitPrice   Decimal  @db.Decimal(10, 2)
-  specs       Json?    // chosen size/text/etc. — finalized in Phase 2
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2)
+  specs     Json?
+  createdAt DateTime @default(now())
 }
+
+// ----------------------------------------------------------------------------
+// Orders & Fulfillment
+// ----------------------------------------------------------------------------
 
 enum OrderStatus {
   PENDING
@@ -147,75 +142,126 @@ enum OrderStatus {
 }
 
 model Order {
-  id            String       @id @default(cuid())
-  user          User         @relation(fields: [userId], references: [id])
-  userId        String
-  status        OrderStatus  @default(PENDING)
-  totalAmount   Decimal      @db.Decimal(10, 2)
-  shippingAddress Json       // snapshot of address at order time
-  paymentId     String?      // Razorpay payment/order id
-  paymentStatus String?      // e.g. "paid", "failed", "refunded"
-  items         OrderItem[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id                String               @id @default(cuid())
+  orderNumber       String               @unique // Human readable: SP-YYYY-XXXXX
+  user              User?                @relation(fields: [userId], references: [id])
+  userId            String?              // Nullable for guest checkouts
+  guestEmail        String?
+  guestPhone        String?
+  guestName         String?
+  status            OrderStatus          @default(PENDING)
+  subtotal          Decimal              @db.Decimal(10, 2)
+  gstAmount         Decimal?             @db.Decimal(10, 2) // Nullable until GST rules confirmed
+  shippingFee       Decimal              @default(0) @db.Decimal(10, 2)
+  discountAmount    Decimal              @default(0) @db.Decimal(10, 2)
+  totalAmount       Decimal              @db.Decimal(10, 2)
+  shippingAddress   Json                 // Immutable address snapshot
+  billingAddress    Json?                // Optional B2B GST snapshot
+  paymentMethod     String?              // RAZORPAY, COD, MANUAL_PROOF
+  paymentId         String?              // Gateway transaction identifier
+  razorpayOrderId   String?
+  paymentStatus     String               @default("UNPAID") // UNPAID, PAID, FAILED, REFUNDED
+  notes             String?
+  trackingNumber    String?              // Courier AWB
+  courierPartner    String?              // Shiprocket, BlueDart, DTDC, etc.
+  items             OrderItem[]
+  transactions      PaymentTransaction[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
 }
 
 model OrderItem {
   id          String   @id @default(cuid())
-  order       Order    @relation(fields: [orderId], references: [id])
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId     String
-  product     Product  @relation(fields: [productId], references: [id])
-  productId   String
+  product     Product? @relation(fields: [productId], references: [id])
+  productId   String?
+  productName String
+  productSlug String
   quantity    Int
   unitPrice   Decimal  @db.Decimal(10, 2)
-  specs       Json?
-}
-
-// ----------------------------------------------------------------------------
-// Reviews / Leads / Support
-// ----------------------------------------------------------------------------
-
-model Review {
-  id         String   @id @default(cuid())
-  product    Product  @relation(fields: [productId], references: [id])
-  productId  String
-  user       User     @relation(fields: [userId], references: [id])
-  userId     String
-  rating     Int      // 1-5
-  comment    String?
-  createdAt  DateTime @default(now())
-}
-
-model CustomizationRequest {
-  id          String   @id @default(cuid())
-  user        User?    @relation(fields: [userId], references: [id])
-  userId      String?
-  productType String   // free text or linked product, decided in Phase 2/3
-  details     String?
-  fileUrl     String?  // uploaded design file (Cloudinary/S3 URL)
-  status      String   @default("new") // new / reviewed / quoted / converted
+  lineTotal   Decimal  @db.Decimal(10, 2)
+  specs       Json?    // { sizeId, materialId, dimensions, finish }
+  customText  String?
+  artworkUrl  String?
+  previewUrl  String?
   createdAt   DateTime @default(now())
 }
 
+model PaymentTransaction {
+  id                String   @id @default(cuid())
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId           String
+  gateway           String   @default("RAZORPAY")
+  gatewayOrderId    String?
+  gatewayPaymentId  String?
+  gatewaySignature  String?
+  method            String?  // UPI, CARD, NETBANKING, WALLET
+  amount            Decimal  @db.Decimal(10, 2)
+  currency          String   @default("INR")
+  status            String   // AUTHORIZED, CAPTURED, FAILED
+  rawPayload        Json?
+  createdAt         DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Inquiries, Leads & Support
+// ----------------------------------------------------------------------------
+
+model CustomizationRequest {
+  id            String   @id @default(cuid())
+  inquiryNumber String?  @unique // INQ-YYYY-XXXXX
+  user          User?    @relation(fields: [userId], references: [id])
+  userId        String?
+  name          String
+  email         String
+  phone         String
+  productType   String
+  quantity      String?
+  finishDetails String?
+  details       String?
+  fileUrl       String?
+  status        String   @default("NEW") // NEW, REVIEWED, QUOTED, CONVERTED, CLOSED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 model BulkOrderInquiry {
-  id           String   @id @default(cuid())
-  name         String
-  phone        String
-  email        String?
-  company      String?
-  productType  String?
-  quantity     String?
-  details      String?
-  status       String   @default("new")
-  createdAt    DateTime @default(now())
+  id                  String   @id @default(cuid())
+  inquiryNumber       String?  @unique // BLK-YYYY-XXXXX
+  name                String
+  phone               String
+  email               String?
+  company             String?
+  productType         String?
+  quantity            String?
+  details             String?
+  swatchKitRequested  Boolean  @default(false)
+  status              String   @default("NEW") // NEW, CONTACTED, QUOTED, WON, LOST
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model ContactInquiry {
-  id         String   @id @default(cuid())
-  name       String
-  email      String?
-  phone      String?
-  message    String
-  status     String   @default("new")
-  createdAt  DateTime @default(now())
+  id            String   @id @default(cuid())
+  inquiryNumber String?  @unique // CNT-YYYY-XXXXX
+  name          String
+  email         String?
+  phone         String?
+  subject       String?
+  message       String
+  status        String   @default("NEW") // NEW, REPLIED, ARCHIVED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  rating    Int      // 1 to 5 stars
+  comment   String?
+  createdAt DateTime @default(now())
 }
