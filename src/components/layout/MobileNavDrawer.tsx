@@ -3,10 +3,23 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { X, ChevronRight, Phone, MessageCircle, ShoppingBag, Sparkles, User, LogOut, ShieldCheck } from "lucide-react";
-import { useSession, signOut } from "next-auth/react";
+import {
+  X,
+  ChevronRight,
+  Phone,
+  MessageCircle,
+  ShoppingBag,
+  Sparkles,
+  User,
+  LogOut,
+  ShieldCheck,
+  Package,
+  MapPin,
+  ArrowRight,
+} from "lucide-react";
 import { NAV_LINKS, WHATSAPP_NUMBER, CONTACT_PHONE } from "@/lib/data";
 import Button from "@/components/ui/Button";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 export interface MobileNavDrawerProps {
   isOpen: boolean;
@@ -17,7 +30,7 @@ export default function MobileNavDrawer({
   isOpen,
   onClose,
 }: MobileNavDrawerProps) {
-  const { data: session } = useSession();
+  const { session, signOut } = useAuthSession();
 
   // Prevent body scroll and handle Escape key when drawer is open
   useEffect(() => {
@@ -127,13 +140,37 @@ export default function MobileNavDrawer({
                   </div>
 
                   <Link
-                    href="/account"
+                    href="/account?tab=orders"
+                    onClick={onClose}
+                    className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Package size={16} className="text-brand-yellow" />
+                      <span>My Orders & Tracking</span>
+                    </div>
+                    <ChevronRight size={15} className="text-zinc-500" />
+                  </Link>
+
+                  <Link
+                    href="/account?tab=profile"
                     onClick={onClose}
                     className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-colors"
                   >
                     <div className="flex items-center gap-2.5">
                       <User size={16} className="text-brand-cyan" />
-                      <span>My Account & Orders</span>
+                      <span>Profile & Security</span>
+                    </div>
+                    <ChevronRight size={15} className="text-zinc-500" />
+                  </Link>
+
+                  <Link
+                    href="/account?tab=addresses"
+                    onClick={onClose}
+                    className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <MapPin size={16} className="text-purple-400" />
+                      <span>Saved Addresses</span>
                     </div>
                     <ChevronRight size={15} className="text-zinc-500" />
                   </Link>
@@ -156,7 +193,7 @@ export default function MobileNavDrawer({
                     type="button"
                     onClick={() => {
                       onClose();
-                      signOut({ callbackUrl: "/" });
+                      signOut();
                     }}
                     className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
                   >
@@ -167,17 +204,36 @@ export default function MobileNavDrawer({
                   </button>
                 </div>
               ) : (
-                <Link
-                  href="/login"
-                  onClick={onClose}
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-brand-yellow hover:bg-brand-yellow/10 transition-colors"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <User size={16} />
-                    <span>Sign In / Register</span>
-                  </div>
-                  <ChevronRight size={15} className="text-brand-yellow" />
-                </Link>
+                <div className="space-y-2 pt-1">
+                  <Link
+                    href="/login"
+                    onClick={onClose}
+                    className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-sm font-bold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors shadow-md shadow-brand-yellow/10"
+                  >
+                    <span>Sign In</span>
+                    <ArrowRight size={15} />
+                  </Link>
+
+                  <Link
+                    href="/register"
+                    onClick={onClose}
+                    className="flex items-center justify-center w-full py-2.5 px-4 rounded-xl text-sm font-semibold border border-border-subtle text-white hover:bg-white/5 transition-colors"
+                  >
+                    Create Account
+                  </Link>
+
+                  <Link
+                    href="/account?tab=orders"
+                    onClick={onClose}
+                    className="flex items-center justify-between px-3.5 py-2 text-xs text-text-muted hover:text-white transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Package size={14} className="text-brand-yellow" />
+                      <span>Track an Order</span>
+                    </div>
+                    <ChevronRight size={13} className="text-zinc-500" />
+                  </Link>
+                </div>
               )}
             </div>
           </nav>

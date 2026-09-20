@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -10,39 +10,107 @@ import {
   ShoppingBag,
   Menu,
   User,
+  Package,
+  MapPin,
+  Settings,
+  ShieldCheck,
+  ShieldAlert,
+  LogOut,
+  Loader2,
+  CheckCircle2,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { NAV_LINKS } from "@/lib/data";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import MobileNavDrawer from "./MobileNavDrawer";
 import { useCart } from "@/context/CartContext";
+import { useAuthSession, useIsAdmin } from "@/hooks/useAuthSession";
 
 export interface HeaderProps {
   cartCount?: number;
 }
 
+interface MenuItem {
+  label: string;
+  href: string;
+  icon: React.ReactNode;
+  description?: string;
+  divider?: boolean;
+  highlight?: boolean;
+}
+
 export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { session, status, isHydrated, signOut: authSignOut } = useAuthSession();
+  const isAdmin = useIsAdmin();
   const { totalCount: dynamicCartCount } = useCart();
   const cartCount = propCartCount !== undefined ? propCartCount : dynamicCartCount;
+
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isShopHovered, setIsShopHovered] = useState(false);
 
-  // Close search popover on Escape key
-  React.useEffect(() => {
+  // Profile menu state
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const profileTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // Close menus on Escape key
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsSearchOpen(false);
         setIsShopHovered(false);
+        setIsProfileOpen(false);
+        profileTriggerRef.current?.focus();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Close profile dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target as Node) &&
+        profileTriggerRef.current &&
+        !profileTriggerRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    if (isProfileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isProfileOpen]);
+
+  const handleMenuItemClick = (href: string) => {
+    setIsProfileOpen(false);
+    router.push(href);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true);
+      await authSignOut();
+    } catch (error) {
+      console.error("[Header] Sign out error:", error);
+      setIsSigningOut(false);
+    }
+  };
+
+  const getUserInitial = (): string => {
+    const name = session?.user?.name || session?.user?.email || "";
+    return name.charAt(0).toUpperCase() || "U";
+  };
 
   const featuredCategories = [
     { name: "Business Stationery", slug: "business-printing", desc: "Cards, Letterheads, Envelopes" },
@@ -51,6 +119,45 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
     { name: "Custom Stickers", slug: "labels-stickers", desc: "Die-Cut, Holographic, Roll" },
     { name: "Corporate Merchandise", slug: "photo-custom-printing", desc: "Mugs, Pens, Diaries, Kits" },
     { name: "Custom Packaging", slug: "packaging", desc: "Boxes, Poly Mailers, Tape" },
+  ];
+
+  const authenticatedMenuItems: MenuItem[] = [
+    {
+      label: "My Orders & Tracking",
+      href: "/account?tab=orders",
+      icon: <Package size={17} className="text-brand-yellow shrink-0" />,
+      description: "View order history & live shipment status",
+    },
+    {
+      label: "Profile & Security",
+      href: "/account?tab=profile",
+      icon: <User size={17} className="text-brand-cyan shrink-0" />,
+      description: "Update personal details & password",
+    },
+    {
+      label: "Saved Delivery Addresses",
+      href: "/account?tab=addresses",
+      icon: <MapPin size={17} className="text-purple-400 shrink-0" />,
+      description: "Manage shipping & billing locations",
+    },
+    {
+      label: "Account Settings",
+      href: "/account?tab=profile",
+      icon: <Settings size={17} className="text-slate-400 shrink-0" />,
+      description: "Notification & account preferences",
+    },
+    ...(isAdmin
+      ? [
+          {
+            label: "Admin Console",
+            href: "/admin/orders",
+            icon: <ShieldAlert size={17} className="text-brand-cyan shrink-0" />,
+            description: "Manage orders, users & products",
+            divider: true,
+            highlight: true,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -232,20 +339,239 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               )}
             </Link>
 
-            {/* User Account / Sign In Button */}
-            <Link
-              href={session?.user ? "/account" : "/login"}
-              aria-label={session?.user ? `Account (${session.user.name})` : "Sign In"}
-              className="relative p-2.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow flex items-center justify-center min-w-[44px] min-h-[44px]"
-            >
-              {session?.user ? (
-                <div className="w-6 h-6 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center shadow-sm">
-                  {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
-                </div>
+            {/* ── Advanced User Profile / Auth Dropdown ── */}
+            <div className="relative">
+              {!isHydrated || status === "loading" ? (
+                // Hydration / Loading Placeholder
+                <div
+                  className="w-9 h-9 rounded-full bg-white/5 border border-border-subtle animate-pulse"
+                  aria-hidden="true"
+                />
+              ) : status === "authenticated" && session?.user ? (
+                // Authenticated Profile Button
+                <button
+                  ref={profileTriggerRef}
+                  type="button"
+                  onClick={() => setIsProfileOpen((prev) => !prev)}
+                  aria-label={`User menu for ${session.user.name || session.user.email}`}
+                  aria-haspopup="menu"
+                  aria-expanded={isProfileOpen}
+                  className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1.5 rounded-full hover:bg-white/5 border border-transparent hover:border-border-subtle transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
+                >
+                  {/* User Avatar Circle */}
+                  <div className="relative">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all shadow-sm ${
+                        session.user.role === "ADMIN"
+                          ? "bg-gradient-to-br from-cyan-400 to-cyan-600 text-black font-extrabold"
+                          : "bg-brand-yellow text-black"
+                      }`}
+                    >
+                      {getUserInitial()}
+                    </div>
+                    {/* Status indicator dot */}
+                    <span
+                      className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-bg-base ${
+                        session.user.role === "ADMIN" ? "bg-brand-cyan" : "bg-emerald-400"
+                      }`}
+                    />
+                  </div>
+
+                  {/* Name on large screens */}
+                  <span className="hidden xl:inline-block text-xs font-semibold text-white max-w-[90px] truncate">
+                    {session.user.name?.split(" ")[0] || "Account"}
+                  </span>
+
+                  <ChevronDown
+                    size={14}
+                    className={`text-slate-400 transition-transform duration-200 ${
+                      isProfileOpen ? "rotate-180 text-brand-yellow" : ""
+                    }`}
+                  />
+                </button>
               ) : (
-                <User size={20} />
+                // Unauthenticated / Guest Trigger Button
+                <button
+                  ref={profileTriggerRef}
+                  type="button"
+                  onClick={() => setIsProfileOpen((prev) => !prev)}
+                  aria-label="Sign In or Register"
+                  aria-haspopup="menu"
+                  aria-expanded={isProfileOpen}
+                  className="flex items-center gap-1.5 p-2 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow"
+                >
+                  <User size={20} />
+                  <ChevronDown
+                    size={13}
+                    className={`text-slate-500 transition-transform duration-200 ${
+                      isProfileOpen ? "rotate-180 text-brand-yellow" : ""
+                    }`}
+                  />
+                </button>
               )}
-            </Link>
+
+              {/* ── Dropdown Menu Popover ── */}
+              {isProfileOpen && (
+                <div
+                  ref={profileDropdownRef}
+                  role="menu"
+                  aria-label="User Account Menu"
+                  className="absolute right-0 top-full mt-2 w-80 sm:w-84 bg-bg-surface border border-border-subtle rounded-2xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150 overflow-hidden"
+                >
+                  {status === "authenticated" && session?.user ? (
+                    // ── Authenticated Dropdown Body ──
+                    <div>
+                      {/* Identity Header */}
+                      <div className="p-4 bg-gradient-to-r from-white/[0.04] to-white/[0.01] border-b border-border-subtle">
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`w-11 h-11 rounded-2xl flex items-center justify-center font-display font-black text-base shrink-0 shadow-md ${
+                              session.user.role === "ADMIN"
+                                ? "bg-gradient-to-br from-cyan-400 to-cyan-600 text-black border border-cyan-300"
+                                : "bg-brand-yellow text-black border border-yellow-300"
+                            }`}
+                          >
+                            {getUserInitial()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-bold text-white truncate">
+                              {session.user.name || "Valued Customer"}
+                            </h3>
+                            <p className="text-xs text-text-muted truncate mt-0.5">
+                              {session.user.email}
+                            </p>
+                            <div className="mt-2 flex items-center gap-2">
+                              {session.user.role === "ADMIN" ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/40">
+                                  <ShieldCheck size={11} />
+                                  <span>Administrator</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/30">
+                                  <CheckCircle2 size={11} />
+                                  <span>Verified Customer</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Navigation Items */}
+                      <div className="p-1.5 space-y-0.5">
+                        {authenticatedMenuItems.map((item, idx) => (
+                          <React.Fragment key={idx}>
+                            {item.divider && (
+                              <div className="border-t border-border-subtle my-1.5 mx-2" />
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleMenuItemClick(item.href)}
+                              role="menuitem"
+                              className={`w-full px-3 py-2.5 rounded-xl text-left flex items-start gap-3 transition-colors group ${
+                                item.highlight
+                                  ? "hover:bg-brand-cyan/10 border border-transparent hover:border-brand-cyan/20"
+                                  : "hover:bg-white/5"
+                              }`}
+                            >
+                              <div className="mt-0.5">{item.icon}</div>
+                              <div className="flex-1 min-w-0">
+                                <p
+                                  className={`text-xs font-semibold group-hover:text-white transition-colors ${
+                                    item.highlight ? "text-brand-cyan" : "text-slate-200"
+                                  }`}
+                                >
+                                  {item.label}
+                                </p>
+                                {item.description && (
+                                  <p className="text-[10px] text-text-muted line-clamp-1 mt-0.5">
+                                    {item.description}
+                                  </p>
+                                )}
+                              </div>
+                            </button>
+                          </React.Fragment>
+                        ))}
+                      </div>
+
+                      {/* Sign Out Action */}
+                      <div className="border-t border-border-subtle p-2">
+                        <button
+                          type="button"
+                          onClick={handleSignOut}
+                          disabled={isSigningOut}
+                          role="menuitem"
+                          className="w-full px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          {isSigningOut ? (
+                            <>
+                              <Loader2 size={14} className="animate-spin" />
+                              <span>Signing out…</span>
+                            </>
+                          ) : (
+                            <>
+                              <LogOut size={14} />
+                              <span>Sign Out</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // ── Unauthenticated / Guest Dropdown Body ──
+                    <div>
+                      {/* Guest Greeting */}
+                      <div className="p-5 bg-gradient-to-br from-brand-yellow/[0.08] via-transparent to-brand-cyan/[0.05] border-b border-border-subtle text-center">
+                        <div className="w-10 h-10 rounded-full bg-brand-yellow/15 border border-brand-yellow/30 flex items-center justify-center mx-auto mb-2 text-brand-yellow">
+                          <Sparkles size={18} />
+                        </div>
+                        <h3 className="font-display font-bold text-sm text-white mb-1">
+                          Welcome to Star Press
+                        </h3>
+                        <p className="text-xs text-text-muted leading-relaxed">
+                          Sign in to manage active print orders, saved designs, and express checkout.
+                        </p>
+                      </div>
+
+                      {/* Guest CTAs */}
+                      <div className="p-4 space-y-2.5">
+                        <Link
+                          href="/login"
+                          onClick={() => setIsProfileOpen(false)}
+                          role="menuitem"
+                          className="w-full py-2.5 px-4 bg-brand-yellow hover:bg-[#FFE04D] text-black font-bold text-xs rounded-full flex items-center justify-center gap-1.5 transition-all shadow-md shadow-brand-yellow/10"
+                        >
+                          <span>Sign In to Account</span>
+                          <ArrowRight size={14} />
+                        </Link>
+
+                        <Link
+                          href="/register"
+                          onClick={() => setIsProfileOpen(false)}
+                          role="menuitem"
+                          className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 border border-border-subtle text-white font-semibold text-xs rounded-full flex items-center justify-center transition-colors text-center"
+                        >
+                          Create New Account
+                        </Link>
+                      </div>
+
+                      {/* Guest Order Tracking Helper */}
+                      <div className="p-3 bg-white/[0.02] border-t border-border-subtle">
+                        <Link
+                          href="/account?tab=orders"
+                          onClick={() => setIsProfileOpen(false)}
+                          role="menuitem"
+                          className="flex items-center gap-2 text-xs text-text-secondary hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
+                        >
+                          <Package size={14} className="text-brand-yellow" />
+                          <span>Track an Existing Order</span>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* "Get a Quote" Button (Desktop) */}
             <div className="hidden sm:block">

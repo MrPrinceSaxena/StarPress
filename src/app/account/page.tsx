@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Package,
@@ -19,10 +18,12 @@ import {
   AlertCircle,
   ExternalLink,
   Lock,
+  Loader2,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 interface OrderItem {
   id: string;
@@ -55,11 +56,27 @@ interface AddressRecord {
   isDefault: boolean;
 }
 
-export default function AccountPage() {
-  const { data: session, status } = useSession();
+function AccountContent() {
+  const { session, status, isHydrated, signOut: authSignOut } = useAuthSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [activeTab, setActiveTab] = useState<"orders" | "addresses" | "profile">("orders");
+
+  // Deep-linking: sync tab from URL query param (?tab=orders|profile|addresses|settings)
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "orders" || tabParam === "addresses" || tabParam === "profile") {
+      setActiveTab(tabParam);
+    } else if (tabParam === "settings") {
+      setActiveTab("profile");
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: "orders" | "addresses" | "profile") => {
+    setActiveTab(tab);
+    router.replace(`/account?tab=${tab}`, { scroll: false });
+  };
 
   // Orders state
   const [orders, setOrders] = useState<OrderRecord[]>([]);
@@ -91,10 +108,11 @@ export default function AccountPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   useEffect(() => {
+    if (!isHydrated) return;
     if (status === "unauthenticated") {
-      router.push("/login?callbackUrl=/account");
+      router.replace("/login?callbackUrl=/account");
     }
-  }, [status, router]);
+  }, [isHydrated, status, router]);
 
   useEffect(() => {
     if (session?.user) {
@@ -198,21 +216,8 @@ export default function AccountPage() {
     }
   };
 
-  if (status === "loading") {
-    return (
-      <div className="flex min-h-screen flex-col bg-bg-base text-text-primary">
-        <Header />
-        <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 py-20 text-center text-text-secondary">
-          <div className="inline-block w-8 h-8 border-2 border-brand-yellow border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-sm">Loading customer dashboard...</p>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!session) {
-    return null;
+  if (!isHydrated || status === "loading" || !session?.user) {
+    return <AccountSkeleton />;
   }
 
   const isAdmin = session.user.role === "ADMIN";
@@ -251,15 +256,16 @@ export default function AccountPage() {
             {isAdmin && (
               <Link
                 href="/admin/orders"
-                className="px-4 py-2 rounded-xl border border-brand-yellow/40 bg-brand-yellow/10 text-brand-yellow hover:bg-brand-yellow/20 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors"
+                className="px-4 py-2 rounded-xl bg-brand-cyan/20 border border-brand-cyan/40 hover:bg-brand-cyan/30 text-brand-cyan text-xs font-bold flex items-center gap-2 transition-colors"
               >
-                <span>Admin Panel</span>
-                <ArrowRight size={14} />
+                <ShieldAlert size={14} />
+                <span>Admin Console</span>
               </Link>
             )}
+
             <button
               type="button"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => authSignOut()}
               className="px-4 py-2 rounded-xl border border-border-subtle bg-bg-surface-alt hover:border-white/20 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-2 transition-colors"
             >
               <LogOut size={14} />
@@ -272,7 +278,7 @@ export default function AccountPage() {
         <div className="flex border-b border-border-subtle gap-2 sm:gap-6 overflow-x-auto pb-px">
           <button
             type="button"
-            onClick={() => setActiveTab("orders")}
+            onClick={() => handleTabChange("orders")}
             className={`pb-3.5 px-2 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === "orders"
                 ? "border-brand-yellow text-brand-yellow"
@@ -285,7 +291,7 @@ export default function AccountPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("addresses")}
+            onClick={() => handleTabChange("addresses")}
             className={`pb-3.5 px-2 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === "addresses"
                 ? "border-brand-yellow text-brand-yellow"
@@ -298,7 +304,7 @@ export default function AccountPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("profile")}
+            onClick={() => handleTabChange("profile")}
             className={`pb-3.5 px-2 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === "profile"
                 ? "border-brand-yellow text-brand-yellow"
@@ -681,5 +687,31 @@ export default function AccountPage() {
 
       <Footer />
     </div>
+  );
+}
+
+function AccountSkeleton() {
+  return (
+    <div className="flex min-h-screen flex-col bg-bg-base text-text-primary">
+      <Header />
+      <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 lg:px-10 py-10 md:py-14 space-y-8 animate-pulse">
+        <div className="rounded-3xl border border-border-subtle bg-bg-surface p-8 h-32" />
+        <div className="flex gap-4 border-b border-border-subtle pb-3">
+          <div className="w-32 h-6 bg-white/5 rounded-md" />
+          <div className="w-32 h-6 bg-white/5 rounded-md" />
+          <div className="w-32 h-6 bg-white/5 rounded-md" />
+        </div>
+        <div className="rounded-3xl border border-border-subtle bg-bg-surface p-12 h-64" />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={<AccountSkeleton />}>
+      <AccountContent />
+    </Suspense>
   );
 }
