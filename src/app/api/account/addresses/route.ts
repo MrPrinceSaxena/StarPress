@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getSessionUser } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const user = (await getSessionUser()) || (await getServerSession(authOptions))?.user;
 
-    if (!session || !session.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
     }
 
     try {
       const addresses = await db.address.findMany({
-        where: { userId: session.user.id },
+        where: { userId: user.id },
         orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
       });
 
@@ -31,9 +32,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = (await getSessionUser()) || (await getServerSession(authOptions))?.user;
 
-    if (!session || !session.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
     }
 
@@ -51,14 +52,14 @@ export async function POST(request: NextRequest) {
       if (isDefault) {
         // Reset any existing default
         await db.address.updateMany({
-          where: { userId: session.user.id },
+          where: { userId: user.id },
           data: { isDefault: false },
         });
       }
 
       const address = await db.address.create({
         data: {
-          userId: session.user.id,
+          userId: user.id,
           label: label || "Delivery Address",
           line1: line1.trim(),
           line2: line2?.trim() || null,
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
         success: true,
         address: {
           id: `addr-${Date.now()}`,
-          userId: session.user.id,
+          userId: user.id,
           label: label || "Delivery Address",
           line1,
           line2,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense, useId } from "react";
+import React, { useState, useEffect, useCallback, useRef, Suspense, useId } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -10,8 +10,8 @@ import {
   AlertCircle,
   ShieldCheck,
   ArrowLeft,
-  CheckCircle,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { evaluatePassword, PASSWORD_MIN_LENGTH } from "@/lib/validation/auth";
 import { supabase } from "@/lib/supabase/client";
@@ -22,10 +22,10 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 // ---------------------------------------------------------------------------
 function FieldError({ id, message }: { id?: string; message: string | null }) {
   return (
-    <div id={id} role={message ? "alert" : undefined} aria-live="polite" className="min-h-[18px] mt-1">
+    <div id={id} role={message ? "alert" : undefined} aria-live="polite" className="min-h-[14px] mt-0.5">
       {message && (
-        <p className="flex items-center gap-1 text-[11px] text-rose-400 font-medium leading-tight">
-          <AlertCircle size={11} className="shrink-0" aria-hidden="true" />
+        <p className="flex items-center gap-1 text-[10px] text-rose-400 font-medium leading-tight">
+          <AlertCircle size={10} className="shrink-0" aria-hidden="true" />
           {message}
         </p>
       )}
@@ -60,16 +60,17 @@ function AuthenticatedRedirectScreen({ session }: { session: any }) {
 // ---------------------------------------------------------------------------
 function RegisterSkeleton() {
   return (
-    <div className="flex flex-col justify-center w-full max-w-[500px] px-8 sm:px-12 py-10 animate-pulse">
-      <div className="w-16 h-4 bg-white/10 rounded mb-8" />
-      <div className="w-48 h-8 bg-white/10 rounded mb-2" />
-      <div className="w-64 h-4 bg-white/5 rounded mb-8" />
-      <div className="space-y-4">
-        <div className="w-full h-12 bg-white/5 rounded-full" />
-        <div className="w-full h-12 bg-white/5 rounded-full" />
-        <div className="w-full h-12 bg-white/5 rounded-full" />
-        <div className="w-full h-12 bg-brand-yellow/20 rounded-full mt-6" />
+    <div className="w-full max-w-[440px] sm:max-w-[460px] rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#0A0D17]/70 backdrop-blur-xl p-5 sm:p-6 animate-pulse space-y-3">
+      <div className="flex justify-between items-center">
+        <div className="w-14 h-4 bg-white/10 rounded-md" />
+        <div className="w-20 h-6 bg-white/10 rounded-md" />
       </div>
+      <div className="w-40 h-6 bg-white/10 rounded-lg mb-1" />
+      <div className="w-56 h-3 bg-white/5 rounded-md mb-2" />
+      <div className="w-full h-9 bg-white/5 rounded-full" />
+      <div className="w-full h-9 bg-white/5 rounded-full" />
+      <div className="w-full h-9 bg-white/5 rounded-full" />
+      <div className="w-full h-10 bg-brand-yellow/20 rounded-full mt-3" />
     </div>
   );
 }
@@ -80,7 +81,7 @@ function RegisterSkeleton() {
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { session, status, isHydrated, signInWithGoogle, isConfigured } = useAuthSession();
+  const { session, status, isHydrated, isConfigured } = useAuthSession();
   const callbackUrl = searchParams.get("callbackUrl") || "/account";
 
   // Redirect if already authenticated
@@ -120,7 +121,51 @@ function RegisterForm() {
   // General / server error (shown below CTA)
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isConfirmationSent, setIsConfirmationSent] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  const handleResend = async () => {
+    if (!formData.email.trim()) return;
+    setIsResending(true);
+    try {
+      await supabase.auth.resend({
+        type: "signup",
+        email: formData.email.trim(),
+        options: {
+          emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(callbackUrl)}` : undefined,
+        },
+      });
+      setResendSuccess(true);
+    } catch {
+      // safe fallback
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  // 3D Spatial Parallax Tilt
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const x = (e.clientX - centerX) / (rect.width / 2);
+    const y = (e.clientY - centerY) / (rect.height / 2);
+    setMouseOffset({
+      x: Math.max(-1, Math.min(1, x)),
+      y: Math.max(-1, Math.min(1, y)),
+    });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+    setMouseOffset({ x: 0, y: 0 });
+  }, []);
 
   const passwordEvaluation = evaluatePassword(formData.password);
 
@@ -169,33 +214,46 @@ function RegisterForm() {
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFieldErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
+    const error = validateField(name, value);
+    setFieldErrors((prev) => ({ ...prev, [name]: error }));
   };
 
   // ── Submit via Supabase Auth ───────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const errors: Record<string, string | null> = {};
-    (Object.keys(formData) as Array<keyof typeof formData>).forEach((key) => {
-      errors[key] = validateField(key, formData[key]);
-    });
+    // Validate all fields
+    const errors: Record<string, string | null> = {
+      name: validateField("name", formData.name),
+      email: validateField("email", formData.email),
+      phone: validateField("phone", formData.phone),
+      password: validateField("password", formData.password),
+      confirmPassword: validateField("confirmPassword", formData.confirmPassword),
+    };
 
     setFieldErrors(errors);
-    const hasError = Object.values(errors).some((err) => err !== null);
-    if (hasError) return;
+    const hasErrors = Object.values(errors).some(Boolean);
+    if (hasErrors) return;
 
     setServerError(null);
     setIsLoading(true);
 
     try {
-      // Create user in Supabase Auth (keeping phone out of metadata as per review)
+      const emailRedirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(callbackUrl)}`
+          : undefined;
+
       const { data, error } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,
         options: {
+          emailRedirectTo,
           data: {
+            full_name: formData.name.trim(),
             name: formData.name.trim(),
+            phone: formData.phone.trim() || undefined,
+            role: "CUSTOMER",
           },
         },
       });
@@ -206,37 +264,30 @@ function RegisterForm() {
         return;
       }
 
+      // Check if session established (instant login when email confirmation is disabled)
       if (data?.session) {
-        // Auto-login active
-        router.push(callbackUrl);
-        router.refresh();
-      } else {
-        // Confirmation email sent
-        router.push(`/login?registered=true&email=${encodeURIComponent(formData.email.trim())}`);
+        window.location.href = callbackUrl;
+        return;
       }
+
+      // If session is null, Supabase sent a confirmation email
+      setIsConfirmationSent(true);
+      setIsLoading(false);
     } catch {
       setServerError("Unable to connect to authentication service. Please try again.");
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSignUp = async () => {
-    setIsGoogleLoading(true);
-    setServerError(null);
-    const { error } = await signInWithGoogle(callbackUrl);
-    if (error) {
-      setServerError(error.message);
-      setIsGoogleLoading(false);
-    }
-  };
 
-  // ── Strength meter colors ─────────────────────────────────────────────────
+  // Strength meter styles
   const strengthColors: Record<string, string> = {
-    strong: "bg-emerald-500",
+    strong: "bg-emerald-400",
     good: "bg-amber-400",
     fair: "bg-yellow-500",
     weak: "bg-rose-500",
   };
+
   const strengthTextColors: Record<string, string> = {
     strong: "text-emerald-400",
     good: "text-amber-400",
@@ -246,12 +297,12 @@ function RegisterForm() {
 
   // ── Shared input className factory ────────────────────────────────────────
   const inputCls = (hasError: boolean) =>
-    `w-full bg-white/[0.04] border rounded-full px-5 py-3.5 text-sm text-white
-     placeholder-slate-500 transition-all duration-200
+    `w-full bg-white/[0.05] border rounded-full px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs text-white
+     placeholder-slate-500 transition-all duration-200 backdrop-blur-md
      focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow
      focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:border-brand-yellow
-     hover:border-white/20
-     ${hasError ? "border-rose-500/60 bg-rose-500/[0.04]" : "border-white/[0.10]"}`;
+     hover:border-white/25
+     ${hasError ? "border-rose-500/60 bg-rose-500/[0.04]" : "border-white/[0.12]"}`;
 
   if (!isHydrated) {
     return <RegisterSkeleton />;
@@ -262,399 +313,358 @@ function RegisterForm() {
   }
 
   return (
-    <div className="flex flex-col justify-center w-full max-w-[480px] px-8 sm:px-12 py-10">
-      {/* Back arrow */}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm font-medium mb-8 w-fit
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:ring-offset-2
-          focus-visible:ring-offset-[#0B0C10] rounded-md transition-colors"
-        aria-label="Back to homepage"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        <span>Back</span>
-      </Link>
+    <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
+      className="relative w-full max-w-[440px] sm:max-w-[460px] transition-transform duration-200 ease-out will-change-transform"
+      style={{
+        transform: isHovered
+          ? `perspective(1000px) rotateX(${-mouseOffset.y * 3}deg) rotateY(${mouseOffset.x * 3}deg) translateY(-2px)`
+          : "perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)",
+      }}
+    >
+      {/* Outer Glow Halo reacting to cursor */}
+      <div
+        className="pointer-events-none absolute -inset-1.5 rounded-[36px] bg-gradient-to-tr from-brand-yellow/25 via-white/10 to-brand-cyan/25 blur-xl opacity-60 transition-opacity duration-500"
+        style={{
+          transform: `translate(${mouseOffset.x * 6}px, ${mouseOffset.y * 6}px)`,
+        }}
+      />
 
-      {/* Heading */}
-      <div className="mb-7">
-        <h1 className="font-display font-black text-3xl sm:text-4xl text-white tracking-tight leading-tight mb-1">
-          Create <span className="text-brand-yellow">Account</span>
-        </h1>
-        <p className="text-sm text-slate-400">
-          Already have an account?{" "}
+      {/* Main Spatial Glassmorphism Window Panel */}
+      <div className="relative rounded-[28px] sm:rounded-[32px] border border-white/20 bg-[#090D1A]/55 backdrop-blur-2xl sm:backdrop-blur-3xl p-5 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.65),0_0_40px_rgba(245,186,19,0.08)] overflow-hidden">
+        {/* Spatial light rims & glass specular highlights */}
+        <div className="pointer-events-none absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+        <div className="pointer-events-none absolute -left-px top-8 bottom-8 w-px bg-gradient-to-b from-white/30 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute -right-px top-8 bottom-8 w-px bg-gradient-to-b from-brand-yellow/30 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute top-0 right-0 w-36 h-36 bg-brand-yellow/[0.08] rounded-full blur-2xl" />
+        <div className="pointer-events-none absolute bottom-0 left-0 w-36 h-36 bg-brand-cyan/[0.08] rounded-full blur-2xl" />
+
+        {/* Top Header Row with Back link & Star Press Hallmark Logo */}
+        <div className="flex items-center justify-between mb-2 relative z-10">
           <Link
-            href={`/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
-            className="text-brand-yellow font-semibold hover:underline
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-sm"
+            href="/"
+            className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-xs font-medium py-1 px-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.08] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
+            aria-label="Back to homepage"
           >
-            Sign In
+            <ArrowLeft size={13} aria-hidden="true" />
+            <span>Back</span>
           </Link>
-        </p>
-      </div>
+          <div className="relative h-6 w-24">
+            <Image
+              src="/images/Logo.png"
+              alt="Star Press"
+              fill
+              sizes="96px"
+              priority
+              className="object-contain drop-shadow-[0_0_12px_rgba(245,186,19,0.35)]"
+            />
+          </div>
+        </div>
 
-      {/* Configuration notice if Supabase keys not set */}
-      {!isConfigured && (
-        <div className="mb-5 p-3.5 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-200 text-xs">
-          <p className="font-semibold text-amber-300 mb-0.5 flex items-center gap-1.5">
-            <AlertCircle size={14} className="shrink-0" />
-            <span>Supabase Setup Notice</span>
-          </p>
-          <p className="text-[11px] text-amber-200/90 leading-relaxed">
-            Add <code className="px-1 py-0.5 rounded bg-black/40 text-amber-300 font-mono">NEXT_PUBLIC_SUPABASE_URL</code> and <code className="px-1 py-0.5 rounded bg-black/40 text-amber-300 font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your <code className="font-mono">.env.local</code> to activate live Supabase Auth.
+        {/* Heading */}
+        <div className="mb-2 relative z-10">
+          <h1 className="font-display font-black text-xl sm:text-2xl text-white tracking-tight leading-tight mb-0.5">
+            Create <span className="text-brand-yellow">Account</span>
+          </h1>
+          <p className="text-[11px] sm:text-xs text-slate-400">
+            Already have an account?{" "}
+            <Link
+              href={`/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
+              className="text-brand-yellow font-semibold hover:underline
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-sm"
+            >
+              Sign In
+            </Link>
           </p>
         </div>
-      )}
 
-      {/* Google OAuth Button */}
-      <button
-        type="button"
-        onClick={handleGoogleSignUp}
-        disabled={isGoogleLoading || isLoading}
-        className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-full
-          bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 hover:border-white/25
-          text-white text-sm font-semibold transition-all duration-200
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow
-          disabled:opacity-60 disabled:cursor-not-allowed mb-5 shadow-sm group"
-      >
-        {isGoogleLoading ? (
-          <Loader2 size={18} className="animate-spin text-brand-yellow" />
-        ) : (
-          <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-105" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-          </svg>
+        {/* Configuration notice if Supabase keys not set */}
+        {!isConfigured && (
+          <div className="mb-2 p-2 rounded-xl border border-amber-500/30 bg-amber-500/15 text-amber-200 text-xs backdrop-blur-md relative z-10">
+            <p className="font-semibold text-amber-300 mb-0.5 flex items-center gap-1.5 text-[10px]">
+              <AlertCircle size={12} className="shrink-0" />
+              <span>Supabase Setup Notice</span>
+            </p>
+            <p className="text-[9px] text-amber-200/90 leading-relaxed">
+              Add <code className="px-1 py-0.2 rounded bg-black/40 text-amber-300 font-mono">NEXT_PUBLIC_SUPABASE_URL</code> and <code className="px-1 py-0.2 rounded bg-black/40 text-amber-300 font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your <code className="font-mono">.env.local</code> to activate live Supabase Auth.
+            </p>
+          </div>
         )}
-        <span>{isGoogleLoading ? "Connecting to Google…" : "Sign up with Google"}</span>
-      </button>
 
-      {/* Divider */}
-      <div className="flex items-center gap-3 mb-5">
-        <div className="flex-1 h-px bg-white/10" />
-        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold font-mono">
-          or register with email
-        </span>
-        <div className="flex-1 h-px bg-white/10" />
-      </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} noValidate className="space-y-1">
-        {/* Full Name */}
-        <div>
-          <label htmlFor={nameId} className="block text-xs font-semibold text-slate-300 tracking-wide mb-1.5">
-            Full Name
-          </label>
-          <input
-            id={nameId}
-            type="text"
-            name="name"
-            autoComplete="name"
-            required
-            value={formData.name}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            placeholder="Rohan Sharma"
-            aria-describedby={fieldErrors.name ? `${nameId}-error` : undefined}
-            aria-invalid={!!fieldErrors.name}
-            className={inputCls(!!fieldErrors.name)}
-          />
-          <FieldError id={`${nameId}-error`} message={fieldErrors.name} />
-        </div>
-
-        {/* Email */}
-        <div>
-          <label htmlFor={emailId} className="block text-xs font-semibold text-slate-300 tracking-wide mb-1.5">
-            Email Address
-          </label>
-          <input
-            id={emailId}
-            type="email"
-            name="email"
-            autoComplete="email"
-            required
-            value={formData.email}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            placeholder="rohan@company.in"
-            aria-describedby={fieldErrors.email ? `${emailId}-error` : undefined}
-            aria-invalid={!!fieldErrors.email}
-            className={inputCls(!!fieldErrors.email)}
-          />
-          <FieldError id={`${emailId}-error`} message={fieldErrors.email} />
-        </div>
-
-        {/* Mobile */}
-        <div>
-          <label htmlFor={phoneId} className="block text-xs font-semibold text-slate-300 tracking-wide mb-1.5">
-            Mobile Number{" "}
-            <span className="text-slate-500 font-normal">(WhatsApp proofs &amp; AWB alerts)</span>
-          </label>
-          <input
-            id={phoneId}
-            type="tel"
-            name="phone"
-            autoComplete="tel"
-            required
-            value={formData.phone}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            placeholder="9876543210"
-            aria-describedby={fieldErrors.phone ? `${phoneId}-error` : undefined}
-            aria-invalid={!!fieldErrors.phone}
-            className={inputCls(!!fieldErrors.phone)}
-          />
-          <FieldError id={`${phoneId}-error`} message={fieldErrors.phone} />
-        </div>
-
-        {/* Password */}
-        <div>
-          <label htmlFor={passwordId} className="block text-xs font-semibold text-slate-300 tracking-wide mb-1.5">
-            Password
-          </label>
-          <div className="relative">
+        {isConfirmationSent ? (
+          <div className="text-center py-6 px-2 relative z-10 space-y-3.5">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 mx-auto flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.35)]">
+              <CheckCircle2 size={28} />
+            </div>
+            <h2 className="font-display font-black text-xl text-white">Check Your Inbox</h2>
+            <p className="text-xs text-slate-300 leading-relaxed max-w-xs mx-auto">
+              We&apos;ve sent a verification link to <span className="text-brand-yellow font-semibold">{formData.email}</span>. Click the link in your email to confirm your account and start ordering.
+            </p>
+            {resendSuccess && (
+              <div className="p-2 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 text-xs">
+                Verification link resent! Please check your spam or inbox.
+              </div>
+            )}
+            <div className="pt-2 flex flex-col sm:flex-row gap-2.5 justify-center">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isResending || resendSuccess}
+                className="py-2.5 px-4 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/20 text-white text-xs font-semibold transition-all disabled:opacity-50"
+              >
+                {isResending ? "Resending…" : resendSuccess ? "Link Resent" : "Resend Link"}
+              </button>
+              <Link
+                href={`/login?registered=1&email=${encodeURIComponent(formData.email)}`}
+                className="py-2.5 px-4 rounded-full bg-brand-yellow hover:bg-[#FFE04D] text-black text-xs font-bold transition-all text-center"
+              >
+                Proceed to Sign In
+              </Link>
+            </div>
+          </div>
+        ) : (
+          /* Form */
+          <form onSubmit={handleSubmit} noValidate className="space-y-1 relative z-10">
+            {/* Full Name */}
+            <div>
+              <label htmlFor={nameId} className="block text-[10px] sm:text-[11px] font-semibold text-slate-300 tracking-wide mb-0.5">
+                Full Name
+              </label>
             <input
-              id={passwordId}
-              type={showPassword ? "text" : "password"}
-              name="password"
-              autoComplete="new-password"
+              id={nameId}
+              type="text"
+              name="name"
+              autoComplete="name"
               required
-              value={formData.password}
+              value={formData.name}
               onChange={handleInputChange}
               onBlur={handleBlur}
-              placeholder="Minimum 12 characters"
-              aria-describedby={fieldErrors.password ? `${passwordId}-error` : `${passwordId}-hint`}
-              aria-invalid={!!fieldErrors.password}
-              className={`${inputCls(!!fieldErrors.password)} pr-12`}
+              placeholder="Rohan Sharma"
+              aria-describedby={fieldErrors.name ? `${nameId}-error` : undefined}
+              aria-invalid={!!fieldErrors.name}
+              className={inputCls(!!fieldErrors.name)}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              aria-pressed={showPassword}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1
-                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-full"
-            >
-              {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
-            </button>
+            <FieldError id={`${nameId}-error`} message={fieldErrors.name} />
           </div>
 
-          {/* Password strength meter (shown once user starts typing) */}
-          {formData.password && (
-            <div id={`${passwordId}-hint`} className="pt-2 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-500">Strength:</span>
-                <span className={`font-semibold capitalize ${strengthTextColors[passwordEvaluation.strength] ?? "text-slate-400"}`}>
-                  {passwordEvaluation.strength}
-                </span>
-              </div>
-              {/* 4-segment bar */}
-              <div className="grid grid-cols-4 gap-1.5 h-1.5" aria-hidden="true">
-                {[1, 2, 3, 4].map((step) => (
-                  <div
-                    key={step}
-                    className={`rounded-full transition-all duration-300 ${
-                      passwordEvaluation.score >= step
-                        ? (strengthColors[passwordEvaluation.strength] ?? "bg-slate-500")
-                        : "bg-white/10"
-                    }`}
-                  />
-                ))}
-              </div>
-              {/* Checklist */}
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-0.5 text-[11px] text-slate-500">
-                {[
-                  { label: `${PASSWORD_MIN_LENGTH}+ characters`, met: formData.password.length >= PASSWORD_MIN_LENGTH },
-                  { label: "Upper & lower case", met: /[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) },
-                  { label: "At least 1 number", met: /[0-9]/.test(formData.password) },
-                  { label: "Special character", met: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(formData.password) },
-                ].map(({ label, met }) => (
-                  <div key={label} className="flex items-center gap-1.5">
-                    <span
-                      className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] shrink-0 ${
-                        met
-                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-                          : "bg-white/5 text-slate-600 border border-white/10"
+          {/* Email */}
+          <div>
+            <label htmlFor={emailId} className="block text-[10px] sm:text-[11px] font-semibold text-slate-300 tracking-wide mb-0.5">
+              Email Address
+            </label>
+            <input
+              id={emailId}
+              type="email"
+              name="email"
+              autoComplete="email"
+              required
+              value={formData.email}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              placeholder="rohan@company.in"
+              aria-describedby={fieldErrors.email ? `${emailId}-error` : undefined}
+              aria-invalid={!!fieldErrors.email}
+              className={inputCls(!!fieldErrors.email)}
+            />
+            <FieldError id={`${emailId}-error`} message={fieldErrors.email} />
+          </div>
+
+          {/* Mobile */}
+          <div>
+            <label htmlFor={phoneId} className="block text-[10px] sm:text-[11px] font-semibold text-slate-300 tracking-wide mb-0.5">
+              Mobile Number{" "}
+              <span className="text-slate-500 font-normal text-[9px]">(WhatsApp proofs &amp; AWB)</span>
+            </label>
+            <input
+              id={phoneId}
+              type="tel"
+              name="phone"
+              autoComplete="tel"
+              required
+              value={formData.phone}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              placeholder="9876543210"
+              aria-describedby={fieldErrors.phone ? `${phoneId}-error` : undefined}
+              aria-invalid={!!fieldErrors.phone}
+              className={inputCls(!!fieldErrors.phone)}
+            />
+            <FieldError id={`${phoneId}-error`} message={fieldErrors.phone} />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label htmlFor={passwordId} className="block text-[10px] sm:text-[11px] font-semibold text-slate-300 tracking-wide mb-0.5">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id={passwordId}
+                type={showPassword ? "text" : "password"}
+                name="password"
+                autoComplete="new-password"
+                required
+                value={formData.password}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                placeholder="Minimum 12 characters"
+                aria-describedby={fieldErrors.password ? `${passwordId}-error` : `${passwordId}-hint`}
+                aria-invalid={!!fieldErrors.password}
+                className={`${inputCls(!!fieldErrors.password)} pr-10`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-full"
+              >
+                {showPassword ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
+              </button>
+            </div>
+
+            {/* Password strength meter */}
+            {formData.password && (
+              <div id={`${passwordId}-hint`} className="pt-1 space-y-1">
+                <div className="flex items-center justify-between text-[9px]">
+                  <span className="text-slate-500">Strength:</span>
+                  <span className={`font-semibold capitalize ${strengthTextColors[passwordEvaluation.strength] ?? "text-slate-400"}`}>
+                    {passwordEvaluation.strength}
+                  </span>
+                </div>
+                {/* 4-segment bar */}
+                <div className="grid grid-cols-4 gap-1 h-1" aria-hidden="true">
+                  {[1, 2, 3, 4].map((step) => (
+                    <div
+                      key={step}
+                      className={`rounded-full transition-all duration-300 ${
+                        passwordEvaluation.score >= step
+                          ? (strengthColors[passwordEvaluation.strength] ?? "bg-slate-500")
+                          : "bg-white/10"
                       }`}
-                      aria-hidden="true"
-                    >
-                      ✓
-                    </span>
-                    <span className={met ? "text-slate-400" : ""}>{label}</span>
-                  </div>
-                ))}
+                    />
+                  ))}
+                </div>
               </div>
+            )}
+            <FieldError id={`${passwordId}-error`} message={fieldErrors.password} />
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label htmlFor={confirmPasswordId} className="block text-[10px] sm:text-[11px] font-semibold text-slate-300 tracking-wide mb-0.5">
+              Confirm Password
+            </label>
+            <input
+              id={confirmPasswordId}
+              type={showPassword ? "text" : "password"}
+              name="confirmPassword"
+              autoComplete="new-password"
+              required
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              placeholder="Re-enter password"
+              aria-describedby={fieldErrors.confirmPassword ? `${confirmPasswordId}-error` : undefined}
+              aria-invalid={!!fieldErrors.confirmPassword}
+              className={inputCls(!!fieldErrors.confirmPassword)}
+            />
+            <FieldError id={`${confirmPasswordId}-error`} message={fieldErrors.confirmPassword} />
+          </div>
+
+          {/* Server error */}
+          {serverError && (
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="flex items-start gap-2 p-2 rounded-xl border border-rose-500/30
+                bg-rose-500/15 text-rose-300 text-xs mt-1 backdrop-blur-md"
+            >
+              <AlertCircle size={13} className="shrink-0 mt-0.5 text-rose-400" aria-hidden="true" />
+              <span>{serverError}</span>
             </div>
           )}
-          <FieldError id={`${passwordId}-error`} message={fieldErrors.password} />
-        </div>
 
-        {/* Confirm Password */}
-        <div>
-          <label htmlFor={confirmPasswordId} className="block text-xs font-semibold text-slate-300 tracking-wide mb-1.5">
-            Confirm Password
-          </label>
-          <input
-            id={confirmPasswordId}
-            type={showPassword ? "text" : "password"}
-            name="confirmPassword"
-            autoComplete="new-password"
-            required
-            value={formData.confirmPassword}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            placeholder="Re-enter password"
-            aria-describedby={fieldErrors.confirmPassword ? `${confirmPasswordId}-error` : undefined}
-            aria-invalid={!!fieldErrors.confirmPassword}
-            className={inputCls(!!fieldErrors.confirmPassword)}
-          />
-          <FieldError id={`${confirmPasswordId}-error`} message={fieldErrors.confirmPassword} />
-        </div>
-
-        {/* Server error — below CTA */}
-        {serverError && (
-          <div
-            role="alert"
-            aria-live="assertive"
-            className="flex items-start gap-2.5 p-3.5 rounded-2xl border border-rose-500/30
-              bg-rose-500/10 text-rose-300 text-xs mt-2"
+          {/* Primary CTA */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full !mt-2 relative group overflow-hidden rounded-full py-2 sm:py-2.5 px-6
+              font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider text-black
+              bg-brand-yellow hover:bg-[#FFE04D]
+              shadow-[0_4px_20px_rgba(245,186,19,0.35)] hover:shadow-[0_6px_28px_rgba(245,186,19,0.50)]
+              active:translate-y-0.5 active:scale-[0.99] transition-all duration-200
+              flex items-center justify-center gap-2 cursor-pointer
+              disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow
+              focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0C10]"
+            aria-busy={isLoading}
           >
-            <AlertCircle size={14} className="shrink-0 mt-0.5 text-rose-400" aria-hidden="true" />
-            <span>{serverError}</span>
-          </div>
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent
+                -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none"
+            />
+            {isLoading ? (
+              <span className="flex items-center gap-2 relative z-10">
+                <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                <span>Creating Account…</span>
+              </span>
+            ) : (
+              <span className="relative z-10 font-black tracking-wide">Create Star Press Account</span>
+            )}
+          </button>
+        </form>
         )}
 
-        {/* Perks checklist */}
-        <div className="pt-2 space-y-1.5 text-[11px] text-slate-500">
-          {[
-            "Free digital 3D soft proof review on all orders",
-            "Saved multiple delivery destinations (Offices, Warehouses)",
-          ].map((perk) => (
-            <div key={perk} className="flex items-center gap-2">
-              <CheckCircle size={12} className="text-emerald-400 shrink-0" aria-hidden="true" />
-              <span>{perk}</span>
-            </div>
-          ))}
+        {/* Security badge */}
+        <div className="mt-2 flex items-center justify-center gap-1.5 text-[9px] sm:text-[10px] text-slate-400/90 font-medium relative z-10">
+          <ShieldCheck size={12} className="text-emerald-400 shrink-0" aria-hidden="true" />
+          <span>Your data and artworks are strictly confidential</span>
         </div>
-
-        {/* Primary CTA */}
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full !mt-5 relative group overflow-hidden rounded-full py-3.5 px-6
-            font-display font-extrabold text-sm uppercase tracking-wider text-black
-            bg-brand-yellow hover:bg-[#FFE04D]
-            shadow-[0_4px_24px_rgba(245,186,19,0.30)] hover:shadow-[0_6px_32px_rgba(245,186,19,0.45)]
-            active:translate-y-0.5 active:scale-[0.99] transition-all duration-200
-            flex items-center justify-center gap-2 cursor-pointer
-            disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow
-            focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0C10]"
-          aria-busy={isLoading}
-        >
-          <span
-            aria-hidden="true"
-            className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent
-              -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none"
-          />
-          {isLoading ? (
-            <span className="flex items-center gap-2 relative z-10">
-              <Loader2 size={16} className="animate-spin" aria-hidden="true" />
-              <span>Creating Account…</span>
-            </span>
-          ) : (
-            <span className="relative z-10">Create Star Press Account</span>
-          )}
-        </button>
-      </form>
-
-      {/* Security badge */}
-      <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-slate-500 font-medium">
-        <ShieldCheck size={14} className="text-emerald-400 shrink-0" aria-hidden="true" />
-        <span>Your data and uploaded artworks are strictly confidential</span>
       </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Page shell — split screen (mirrors login layout exactly)
+// Page shell — Spatial Glassmorphism & Full Background Image
 // ---------------------------------------------------------------------------
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen flex bg-[#0B0C10] text-white selection:bg-brand-yellow selection:text-black">
-
-      {/* ── LEFT PANEL: Brand Image ── */}
-      <div
-        className="hidden lg:flex lg:w-[45%] xl:w-[42%] relative flex-col overflow-hidden"
-        aria-hidden="true"
-      >
-        {/* Background image via next/image */}
+    <div className="relative min-h-screen h-screen max-h-screen w-full flex items-center justify-center p-4 sm:p-6 overflow-hidden selection:bg-brand-yellow selection:text-black">
+      {/* Full-bleed Star Press workspace background */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <Image
-          src="/images/auth-press-bg.jpg"
-          alt=""
+          src="/images/auth-press-bg.png"
+          alt="Star Press Studio"
           fill
           priority
-          sizes="42vw"
+          sizes="100vw"
           className="object-cover object-center"
-          quality={90}
+          quality={95}
         />
-
-        {/* Dark gradient overlays (CSS, not baked into image) */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0C10]/70 via-[#0B0C10]/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0C10] via-[#0B0C10]/10 to-[#0B0C10]/60" />
-
-        {/* Neon glow accents — CSS only */}
-        <div className="absolute top-1/4 left-0 w-72 h-72 bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/3 right-0 w-56 h-56 bg-brand-yellow/10 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Logo */}
-        <div className="relative z-10 p-8 xl:p-10">
-          <div className="relative h-11 w-36">
-            <Image
-              src="/images/Logo.png"
-              alt="Star Press — The Printing Hub"
-              fill
-              sizes="144px"
-              priority
-              className="object-contain drop-shadow-[0_0_18px_rgba(245,186,19,0.40)]"
-            />
-          </div>
-        </div>
-
-        {/* Bottom tagline */}
-        <div className="relative z-10 mt-auto p-8 xl:p-10">
-          <p className="text-xs uppercase tracking-widest font-bold text-brand-yellow/80 font-mono mb-2">
-            Join Star Press
-          </p>
-          <h2 className="font-display font-extrabold text-2xl xl:text-3xl text-white leading-snug tracking-tight">
-            Ideas to <br />Printed Realities.
-          </h2>
-          <p className="text-sm text-slate-400 mt-3 leading-relaxed">
-            Corporate accounts · B2B pricing · WhatsApp proofs.
-          </p>
-        </div>
+        {/* Subtle ambient film grain / light contrast touch keeping image 100% visible */}
+        <div className="absolute inset-0 bg-black/10" />
       </div>
 
-      {/* ── RIGHT PANEL: Form ── */}
-      <div className="flex-1 flex items-center justify-center relative overflow-y-auto">
-        {/* Right panel background treatment */}
-        <div className="absolute inset-0 bg-[#0B0C10]" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-yellow/[0.04] rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-brand-cyan/[0.04] rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 w-full max-w-[480px]">
-          <Suspense
-            fallback={
-              <div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-400">
-                <Loader2 size={28} className="animate-spin text-brand-yellow" />
-                <p className="text-xs tracking-wider uppercase">Loading…</p>
-              </div>
-            }
-          >
-            <RegisterForm />
-          </Suspense>
-        </div>
+      {/* Spatial Glassmorphism Auth Window */}
+      <div className="relative z-10 w-full flex items-center justify-center">
+        <Suspense
+          fallback={
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-400">
+              <Loader2 size={28} className="animate-spin text-brand-yellow" />
+              <p className="text-xs tracking-wider uppercase font-mono">Loading Star Press…</p>
+            </div>
+          }
+        >
+          <RegisterForm />
+        </Suspense>
       </div>
     </div>
   );

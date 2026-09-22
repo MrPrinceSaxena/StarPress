@@ -1,22 +1,23 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getSessionUser } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const user = (await getSessionUser()) || (await getServerSession(authOptions))?.user;
 
-    if (!session || !session.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
     }
 
     try {
-      const userWhere: any[] = [{ userId: session.user.id }];
-      if (session.user.email) {
-        userWhere.push({ guestEmail: session.user.email });
+      const userWhere: any[] = [{ userId: user.id }];
+      if (user.email) {
+        userWhere.push({ guestEmail: user.email });
       }
 
       const orders = await (db.order as any).findMany({

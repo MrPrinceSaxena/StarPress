@@ -27,7 +27,7 @@ export async function createClient() {
       },
       remove(name: string, options: CookieOptions) {
         try {
-          cookieStore.set({ name, value: "", ...options });
+          cookieStore.set({ name, value: "", maxAge: 0, ...options });
         } catch {
           // The `delete` method was called from a Server Component.
         }
@@ -57,6 +57,27 @@ export async function getAuthenticatedUser() {
     console.error("[Supabase Server] Error getting authenticated user:", err);
     return null;
   }
+}
+
+/**
+ * Normalized user session helper for API routes.
+ * Maps Supabase user identity to application user contract.
+ */
+export async function getSessionUser() {
+  const supabaseUser = await getAuthenticatedUser();
+  if (!supabaseUser) return null;
+
+  const email = supabaseUser.email || "";
+  const metadata = supabaseUser.user_metadata || {};
+  const appMetadata = supabaseUser.app_metadata || {};
+
+  return {
+    id: supabaseUser.id,
+    email,
+    name: metadata.name || metadata.full_name || (email ? email.split("@")[0] : "Customer"),
+    phone: supabaseUser.phone || metadata.phone || null,
+    role: appMetadata.role || metadata.role || "CUSTOMER",
+  };
 }
 
 /**

@@ -2,21 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import bcrypt from "bcryptjs";
 import { authOptions } from "@/lib/auth";
+import { getSessionUser } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const user = (await getSessionUser()) || (await getServerSession(authOptions))?.user;
 
-    if (!session || !session.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
     }
 
     try {
-      const user = await db.user.findUnique({
-        where: { id: session.user.id },
+      const dbUser = await db.user.findUnique({
+        where: { id: user.id },
         select: {
           id: true,
           name: true,
@@ -27,20 +28,29 @@ export async function GET() {
         },
       });
 
-      if (!user) {
-        return NextResponse.json({ error: "User profile not found." }, { status: 404 });
+      if (!dbUser) {
+        return NextResponse.json({
+          success: true,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+          },
+        });
       }
 
-      return NextResponse.json({ success: true, user });
+      return NextResponse.json({ success: true, user: dbUser });
     } catch (dbErr) {
       return NextResponse.json({
         success: true,
         user: {
-          id: session.user.id,
-          name: session.user.name,
-          email: session.user.email,
-          phone: session.user.phone,
-          role: session.user.role,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
         },
       });
     }
@@ -52,9 +62,9 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = (await getSessionUser()) || (await getServerSession(authOptions))?.user;
 
-    if (!session || !session.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
     }
 
@@ -62,7 +72,7 @@ export async function PATCH(request: NextRequest) {
 
     try {
       const existingUser = await db.user.findUnique({
-        where: { id: session.user.id },
+        where: { id: user.id },
       });
 
       if (!existingUser) {
@@ -107,7 +117,7 @@ export async function PATCH(request: NextRequest) {
       }
 
       const updated = await db.user.update({
-        where: { id: session.user.id },
+        where: { id: user.id },
         data: updateData,
         select: {
           id: true,
@@ -128,11 +138,11 @@ export async function PATCH(request: NextRequest) {
         success: true,
         message: "Profile updated (dev fallback).",
         user: {
-          id: session.user.id,
-          name: name || session.user.name,
-          email: session.user.email,
-          phone: phone || session.user.phone,
-          role: session.user.role,
+          id: user.id,
+          name: name || user.name,
+          email: user.email,
+          phone: phone || user.phone,
+          role: user.role,
         },
       });
     }
