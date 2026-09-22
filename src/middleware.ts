@@ -165,13 +165,7 @@ export async function middleware(req: NextRequest) {
   const allowPathFallback = process.env.FALLBACK_ADMIN_PATH === "true" || !isProduction;
 
   if (pathname.startsWith("/admin")) {
-    if (!allowPathFallback && isProduction) {
-      // Production: Route to dedicated admin subdomain
-      const adminUrl = new URL(pathname + req.nextUrl.search, `https://admin.${host}`);
-      return createRedirect(adminUrl);
-    }
-
-    // Dev or DNS fallback mode: enforce strict admin credentials
+    // Enforce strict admin credentials on all /admin/* routes
     if (pathname !== "/admin/login") {
       if (!isAuthenticated) {
         const loginUrl = new URL("/admin/login", req.url);
@@ -184,7 +178,7 @@ export async function middleware(req: NextRequest) {
         return createRedirect(redirectUrl);
       }
     } else {
-      // Visiting /admin/login while already an admin
+      // Visiting /admin/login while already authenticated as admin
       if (isAuthenticated && isAdmin) {
         return createRedirect(new URL("/admin/dashboard", req.url));
       }
@@ -211,14 +205,6 @@ export async function middleware(req: NextRequest) {
     )
   ) {
     if (isAuthenticated) {
-      // If an administrator signs in via the customer login, direct them to their console
-      if (isAdmin) {
-        if (!allowPathFallback && isProduction) {
-          return createRedirect(new URL(`https://admin.${host}/admin/orders`));
-        }
-        return createRedirect(new URL("/admin/orders", req.url));
-      }
-
       // Standard customer redirect
       const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
       if (

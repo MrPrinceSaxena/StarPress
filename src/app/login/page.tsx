@@ -93,13 +93,7 @@ function LoginForm() {
   // Redirect if already authenticated
   useEffect(() => {
     if (status === "authenticated" && session) {
-      if (session.user?.role === "ADMIN") {
-        const host = typeof window !== "undefined" ? window.location.host : "";
-        const target = host.includes("starpress.com") ? "https://admin.starpress.com/admin/dashboard" : "/admin/dashboard";
-        router.replace(target);
-      } else {
-        router.replace(callbackUrl);
-      }
+      router.replace(callbackUrl);
     }
   }, [status, session, router, callbackUrl]);
 
@@ -219,13 +213,7 @@ function LoginForm() {
       }
 
       if (data?.user) {
-        const isAdmin = data.user.app_metadata?.role === "ADMIN";
-        let dest = callbackUrl;
-        if (isAdmin) {
-          const host = typeof window !== "undefined" ? window.location.host : "";
-          dest = host.includes("starpress.com") ? "https://admin.starpress.com/admin/dashboard" : "/admin/dashboard";
-        }
-        window.location.href = dest;
+        window.location.href = callbackUrl;
       }
     } catch {
       setServerError("Unable to connect to authentication service. Please try again.");

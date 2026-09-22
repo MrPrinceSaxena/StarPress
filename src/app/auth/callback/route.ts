@@ -39,12 +39,7 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data?.user) {
-      const isAdmin = data.user.app_metadata?.role === "ADMIN";
       let destination = next;
-
-      if (destination === "/account" && isAdmin) {
-        destination = "/admin/dashboard";
-      }
 
       if (destination.startsWith("/") && !destination.startsWith("//")) {
         return NextResponse.redirect(`${origin}${destination}`);
