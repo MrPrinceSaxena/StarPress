@@ -51,10 +51,13 @@ export async function middleware(req: NextRequest) {
     host === "admin" ||
     host.startsWith("admin-");
 
-  // Helper: preserve refreshed cookies and query strings across all redirects
+  // Helper: preserve refreshed cookies and query strings across all redirects (prevent browser caching of redirects)
   const createRedirect = (destination: URL | string) => {
     const targetUrl = typeof destination === "string" ? new URL(destination, req.url) : destination;
     const redirectRes = NextResponse.redirect(targetUrl);
+    redirectRes.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    redirectRes.headers.set("Pragma", "no-cache");
+    redirectRes.headers.set("Expires", "0");
     response.cookies.getAll().forEach((cookie) => {
       redirectRes.cookies.set(cookie.name, cookie.value, cookie);
     });
@@ -156,14 +159,10 @@ export async function middleware(req: NextRequest) {
   }
 
   // =========================================================================
-  // SCENARIO B: Primary Customer Domain (starpress.com / localhost)
+  // SCENARIO B: Primary Customer Domain (starpress.in / localhost)
   // =========================================================================
 
-  // B1. Admin portal requests on primary domain:
-  // Redirect to admin.starpress.com if in production, or allow path-based fallback if configured / in dev
-  const isProduction = process.env.NODE_ENV === "production" && host.includes("starpress");
-  const allowPathFallback = process.env.FALLBACK_ADMIN_PATH === "true" || !isProduction;
-
+  // B1. Admin portal requests on primary domain
   if (pathname.startsWith("/admin")) {
     // Enforce strict admin credentials on all /admin/* routes
     if (pathname !== "/admin/login") {
