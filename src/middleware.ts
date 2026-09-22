@@ -3,22 +3,36 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
-// Routes that require authentication
-const PROTECTED_ROUTES = [
+// Protected customer routes requiring standard authentication
+const PROTECTED_CUSTOMER_ROUTES = [
   "/account",
-  "/admin",
   "/dashboard",
   "/orders",
   "/settings",
   "/saved-addresses",
 ];
 
-// Routes that authenticated users should not access
-const AUTH_ROUTES = [
+// Customer authentication routes
+const CUSTOMER_AUTH_ROUTES = [
   "/login",
   "/register",
   "/forgot-password",
   "/reset-password",
+];
+
+// Public e-commerce routes that should be redirected to main domain if hit on admin subdomain
+const PUBLIC_STORE_ROUTES = [
+  "/shop",
+  "/cart",
+  "/checkout",
+  "/bulk-orders",
+  "/custom-printing",
+  "/categories",
+  "/about",
+  "/contact",
+  "/privacy",
+  "/terms",
+  "/faq",
 ];
 
 export async function middleware(req: NextRequest) {
@@ -29,38 +43,177 @@ export async function middleware(req: NextRequest) {
   const isAuthenticated = !!user;
   const isAdmin = user?.app_metadata?.role === "ADMIN";
 
-  // Helper to preserve refreshed cookies across all redirects
-  const createRedirect = (url: URL | string) => {
-    const redirectRes = NextResponse.redirect(url);
+  // 2. Extract Host & Subdomain Detection
+  const rawHost = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const host = rawHost.toLowerCase().split(":")[0];
+  const isAdminHost =
+    host.startsWith("admin.") ||
+    host === "admin" ||
+    host.startsWith("admin-");
+
+  // Helper: preserve refreshed cookies and query strings across all redirects
+  const createRedirect = (destination: URL | string) => {
+    const targetUrl = typeof destination === "string" ? new URL(destination, req.url) : destination;
+    const redirectRes = NextResponse.redirect(targetUrl);
     response.cookies.getAll().forEach((cookie) => {
       redirectRes.cookies.set(cookie.name, cookie.value, cookie);
     });
     return addSecurityHeaders(redirectRes);
   };
 
-  // 2. Protected Routes Guard
-  if (PROTECTED_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
+  // Helper: preserve refreshed cookies and query strings across internal rewrites
+  const createRewrite = (destination: URL | string) => {
+    const targetUrl = typeof destination === "string" ? new URL(destination, req.url) : destination;
+    // Preserve existing search params if not explicitly overridden
+    if (!targetUrl.search && req.nextUrl.search) {
+      targetUrl.search = req.nextUrl.search;
+    }
+    const rewriteRes = NextResponse.rewrite(targetUrl);
+    response.cookies.getAll().forEach((cookie) => {
+      rewriteRes.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return addSecurityHeaders(rewriteRes);
+  };
+
+  // =========================================================================
+  // SCENARIO A: Dedicated Admin Subdomain (admin.starpress.com / admin.localhost)
+  // =========================================================================
+  if (isAdminHost) {
+    // A1. Root access ("/")
+    if (pathname === "/" || pathname === "") {
+      if (isAuthenticated && isAdmin) {
+        const rewriteUrl = new URL("/admin/orders", req.url);
+        rewriteUrl.search = req.nextUrl.search;
+        return createRewrite(rewriteUrl);
+      } else {
+        const loginUrl = new URL("/admin/login", req.url);
+        loginUrl.search = req.nextUrl.search;
+        return createRewrite(loginUrl);
+      }
+    }
+
+    // A2. Subdomain login route ("/login")
+    if (pathname === "/login") {
+      if (isAuthenticated && isAdmin) {
+        return createRedirect(new URL("/admin/orders", req.url));
+      }
+      return createRewrite(new URL("/admin/login", req.url));
+    }
+
+    // A3. Subdomain orders route ("/orders")
+    if (pathname === "/orders") {
+      if (isAuthenticated && isAdmin) {
+        return createRewrite(new URL("/admin/orders", req.url));
+      }
+      const loginUrl = new URL("/admin/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", "/orders");
+      return createRedirect(loginUrl);
+    }
+
+    // A4. Admin login page reverse guard
+    if (pathname === "/admin/login") {
+      if (isAuthenticated && isAdmin) {
+        return createRedirect(new URL("/admin/orders", req.url));
+      }
+      return addSecurityHeaders(response);
+    }
+
+    // A5. Protect all /admin/* routes on the admin subdomain
+    if (pathname.startsWith("/admin")) {
+      if (!isAuthenticated || !isAdmin) {
+        const loginUrl = new URL("/admin/login", req.url);
+        loginUrl.searchParams.set("callbackUrl", pathname);
+        return createRedirect(loginUrl);
+      }
+      return addSecurityHeaders(response);
+    }
+
+    // A6. Allow APIs and Auth callbacks through
+    if (pathname.startsWith("/api") || pathname.startsWith("/auth")) {
+      return addSecurityHeaders(response);
+    }
+
+    // A7. If a public store route is hit on the admin subdomain, redirect to main storefront
+    if (PUBLIC_STORE_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
+      const primaryHost = host.replace(/^admin\./, "").replace(/^admin-/, "");
+      const proto = req.headers.get("x-forwarded-proto") || "https";
+      const target = new URL(pathname + req.nextUrl.search, `${proto}://${primaryHost || "starpress.in"}`);
+      return createRedirect(target);
+    }
+
+    return addSecurityHeaders(response);
+  }
+
+  // =========================================================================
+  // SCENARIO B: Primary Customer Domain (starpress.com / localhost)
+  // =========================================================================
+
+  // B1. Admin portal requests on primary domain:
+  // Redirect to admin.starpress.com if in production, or allow path-based fallback if configured / in dev
+  const isProduction = process.env.NODE_ENV === "production" && host.includes("starpress");
+  const allowPathFallback = process.env.FALLBACK_ADMIN_PATH === "true" || !isProduction;
+
+  if (pathname.startsWith("/admin")) {
+    if (!allowPathFallback && isProduction) {
+      // Production: Route to dedicated admin subdomain
+      const adminUrl = new URL(pathname + req.nextUrl.search, `https://admin.${host}`);
+      return createRedirect(adminUrl);
+    }
+
+    // Dev or DNS fallback mode: enforce strict admin credentials
+    if (pathname !== "/admin/login") {
+      if (!isAuthenticated) {
+        const loginUrl = new URL("/admin/login", req.url);
+        loginUrl.searchParams.set("callbackUrl", pathname);
+        return createRedirect(loginUrl);
+      }
+      if (!isAdmin) {
+        const redirectUrl = new URL("/account", req.url);
+        redirectUrl.searchParams.set("error", "AccessDenied");
+        return createRedirect(redirectUrl);
+      }
+    } else {
+      // Visiting /admin/login while already an admin
+      if (isAuthenticated && isAdmin) {
+        return createRedirect(new URL("/admin/orders", req.url));
+      }
+    }
+  }
+
+  // B2. Protected Customer Routes Guard
+  if (
+    PROTECTED_CUSTOMER_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`)
+    )
+  ) {
     if (!isAuthenticated) {
       const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return createRedirect(loginUrl);
     }
-
-    // Defense-in-depth: Admin routes require server-validated app_metadata.role
-    if (pathname.startsWith("/admin") && !isAdmin) {
-      const redirectUrl = new URL("/account", req.url);
-      redirectUrl.searchParams.set("error", "AccessDenied");
-      return createRedirect(redirectUrl);
-    }
   }
 
-  // 3. Auth Routes Reverse Guard (Redirect authenticated users away from /login & /register)
-  if (AUTH_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
+  // B3. Customer Auth Routes Reverse Guard (/login & /register)
+  if (
+    CUSTOMER_AUTH_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`)
+    )
+  ) {
     if (isAuthenticated) {
-      const destination = isAdmin ? "/admin/orders" : "/account";
+      // If an administrator signs in via the customer login, direct them to their console
+      if (isAdmin) {
+        if (!allowPathFallback && isProduction) {
+          return createRedirect(new URL(`https://admin.${host}/admin/orders`));
+        }
+        return createRedirect(new URL("/admin/orders", req.url));
+      }
 
+      // Standard customer redirect
       const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
-      if (callbackUrl && !AUTH_ROUTES.some((route) => callbackUrl.startsWith(route))) {
+      if (
+        callbackUrl &&
+        !CUSTOMER_AUTH_ROUTES.some((route) => callbackUrl.startsWith(route))
+      ) {
         try {
           const parsedCallback = new URL(callbackUrl, req.url);
           if (parsedCallback.origin === req.nextUrl.origin) {
@@ -73,11 +226,11 @@ export async function middleware(req: NextRequest) {
         }
       }
 
-      return createRedirect(new URL(destination, req.url));
+      return createRedirect(new URL("/account", req.url));
     }
   }
 
-  // 4. Inforce Enterprise HTTP Security Headers
+  // 4. Enforce Enterprise HTTP Security Headers
   return addSecurityHeaders(response);
 }
 

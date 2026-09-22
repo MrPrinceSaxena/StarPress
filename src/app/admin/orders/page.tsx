@@ -27,8 +27,7 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import AdminHeader from "@/components/admin/AdminHeader";
 import { useAuthSession } from "@/hooks/useAuthSession";
 
 interface OrderItem {
@@ -379,11 +378,10 @@ function AdminOrdersContent() {
     );
   }
 
-  // Non-admin security wall
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex flex-col bg-[#07090E] text-white">
-        <Header />
+        <AdminHeader />
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="max-w-md w-full rounded-3xl border border-rose-500/30 bg-rose-500/10 p-8 text-center space-y-4 backdrop-blur-xl shadow-2xl">
             <div className="w-14 h-14 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 mx-auto flex items-center justify-center shadow-[0_0_24px_rgba(244,63,94,0.3)]">
@@ -391,26 +389,31 @@ function AdminOrdersContent() {
             </div>
             <h1 className="font-display font-black text-xl text-white">Administrator Access Required</h1>
             <p className="text-xs text-slate-300 leading-relaxed">
-              This console is restricted to Star Press administrative personnel. Your current account does not have admin permissions.
+              This console is restricted to Star Press administrative personnel. Your current account does not have operations clearance.
             </p>
-            <div className="pt-2 flex justify-center gap-3">
+            <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3">
               <Link
-                href="/account"
-                className="px-5 py-2.5 rounded-full bg-brand-yellow hover:bg-[#FFE04D] text-black text-xs font-bold transition-all shadow-md"
+                href="/admin/login"
+                className="px-5 py-2.5 rounded-full bg-brand-yellow hover:bg-[#FFE04D] text-black text-xs font-bold transition-all shadow-md text-center"
               >
-                Go to My Account
+                Sign In to Admin Portal
               </Link>
+              <a
+                href={process.env.NEXT_PUBLIC_APP_URL || "/"}
+                className="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all border border-white/10 text-center"
+              >
+                Go to Public Store
+              </a>
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-[#07090E] text-white selection:bg-brand-yellow selection:text-black">
-      <Header />
+      <AdminHeader activeSection="orders" />
 
       {/* Live Toast Banner */}
       {toastMessage && (
@@ -901,7 +904,12 @@ function AdminOrdersContent() {
         </div>
       )}
 
-      <Footer />
+      {/* Operations Console Status Footer */}
+      <footer className="border-t border-white/10 bg-[#07090E]/60 py-4 px-6 text-center">
+        <p className="text-[11px] font-mono text-slate-500">
+          STAR PRESS OPERATIONS OS • RESTRICTED PRODUCTION ENVIRONMENT • ALL ACTIONS AUDITED
+        </p>
+      </footer>
     </div>
   );
 }

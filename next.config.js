@@ -23,6 +23,13 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [],
   },
+  /**
+   * Subdomain Multi-Tenancy Architecture (admin.starpress.com):
+   * Dynamic subdomain rewrites are processed at the Edge in `src/middleware.ts`.
+   * When rewriting hostnames (`admin.starpress.com` -> `/admin/orders`),
+   * `NextResponse.rewrite()` strictly preserves URL query parameters (`searchParams`)
+   * and copies `@supabase/ssr` chunked session cookies directly to avoid dropped sessions.
+   */
   async headers() {
     return [
       {
