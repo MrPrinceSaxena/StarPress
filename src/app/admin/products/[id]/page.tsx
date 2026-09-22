@@ -1,817 +1,429 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter, useParams } from "next/navigation";
+import React, { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  ArrowLeft,
-  Package,
-  Save,
-  Trash2,
-  ExternalLink,
-  Eye,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  DollarSign,
-  Layers,
-  FileText,
-  Image as ImageIcon,
-  ShieldAlert,
-  Plus,
-  RefreshCw,
-} from "lucide-react";
-import AdminHeader from "@/components/admin/AdminHeader";
-import { useAuthSession } from "@/hooks/useAuthSession";
+  ArrowLeft, Save, Eye, Trash2, Copy, Archive, MoreHorizontal,
+  Package, ImageIcon, IndianRupee, BoxSelect, Layers, Truck,
+  Search as SearchIcon, Globe, Upload, X, Plus, GripVertical,
+  Bold, Italic, Underline, ListOrdered, List, Link2, AlignLeft, ExternalLink,
+} from 'lucide-react';
+import { showToast } from '@/components/admin/ui/Toast';
+import StatusBadge from '@/components/admin/ui/StatusBadge';
+import ConfirmDialog from '@/components/admin/ui/ConfirmDialog';
+import { productService, categoryService } from '@/lib/admin/services';
+import type { AdminProduct, AdminCategory, AdminProductImage, AdminVariantOption } from '@/lib/admin/types';
 
-interface ProductDetail {
-  id: string;
-  sku: string;
-  name: string;
-  slug: string;
-  description: string;
-  shortDescription?: string;
-  categoryId: string;
-  categoryName: string;
-  categorySlug: string;
-  status: "draft" | "published" | "archived";
-  basePrice: number;
-  compareAtPrice?: number | null;
-  costPerUnit?: number | null;
-  discountPercentage?: number | null;
-  marginPercent?: number | null;
-  trackInventory: boolean;
-  stockQuantity: number;
-  lowStockThreshold: number;
-  isFeatured: boolean;
-  metaTitle?: string | null;
-  metaDescription?: string | null;
-  metaKeywords?: string | null;
-  publishedAt?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  images: Array<{
-    id: string;
-    url: string;
-    altText?: string | null;
-    isPrimary: boolean;
-    position: number;
-  }>;
-}
+const TABS = [
+  { key: 'basic', label: 'Basic Info', icon: Package },
+  { key: 'media', label: 'Media', icon: ImageIcon },
+  { key: 'pricing', label: 'Pricing', icon: IndianRupee },
+  { key: 'inventory', label: 'Inventory', icon: BoxSelect },
+  { key: 'variants', label: 'Variants', icon: Layers },
+  { key: 'shipping', label: 'Shipping', icon: Truck },
+  { key: 'seo', label: 'SEO', icon: SearchIcon },
+  { key: 'publishing', label: 'Publishing', icon: Globe },
+] as const;
 
-type TabKey = "basic" | "description" | "images" | "pricing" | "inventory" | "publish";
+type TabKey = typeof TABS[number]['key'];
 
-function ProductEditContent() {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
-  const params = useParams();
-  const productId = params?.id as string;
-  const { session, status, isHydrated, isAdmin } = useAuthSession();
+  const [activeTab, setActiveTab] = useState<TabKey>('basic');
+  const [product, setProduct] = useState<AdminProduct | null>(null);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<TabKey>("basic");
-  const [product, setProduct] = useState<ProductDetail | null>(null);
-  const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string }>>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Editable Form States
-  const [name, setName] = useState("");
-  const [sku, setSku] = useState("");
-  const [slug, setSlug] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [shortDescription, setShortDescription] = useState("");
-  const [description, setDescription] = useState("");
-  const [basePrice, setBasePrice] = useState("");
-  const [compareAtPrice, setCompareAtPrice] = useState("");
-  const [costPerUnit, setCostPerUnit] = useState("");
-  const [stockQuantity, setStockQuantity] = useState("0");
-  const [lowStockThreshold, setLowStockThreshold] = useState("10");
+  // Editable state (mirrors product fields)
+  const [name, setName] = useState('');
+  const [shortDescription, setShortDescription] = useState('');
+  const [description, setDescription] = useState('');
+  const [sku, setSku] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [brand, setBrand] = useState('');
+  const [basePrice, setBasePrice] = useState('');
+  const [compareAtPrice, setCompareAtPrice] = useState('');
+  const [costPerItem, setCostPerItem] = useState('');
+  const [taxable, setTaxable] = useState(true);
   const [trackInventory, setTrackInventory] = useState(true);
-  const [productStatus, setProductStatus] = useState<"draft" | "published" | "archived">("draft");
-  const [images, setImages] = useState<ProductDetail["images"]>([]);
-  const [newImageUrl, setNewImageUrl] = useState("");
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [stockQuantity, setStockQuantity] = useState('');
+  const [lowStockThreshold, setLowStockThreshold] = useState('');
+  const [allowBackorders, setAllowBackorders] = useState(false);
+  const [images, setImages] = useState<AdminProductImage[]>([]);
+  const [variantOptions, setVariantOptions] = useState<AdminVariantOption[]>([]);
+  const [weight, setWeight] = useState('');
+  const [dimensions, setDimensions] = useState({ length: '', width: '', height: '' });
+  const [requiresShipping, setRequiresShipping] = useState(true);
+  const [fragile, setFragile] = useState(false);
+  const [shippingClass, setShippingClass] = useState('standard');
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
+  const [seoSlug, setSeoSlug] = useState('');
+  const [status, setStatus] = useState<'draft' | 'published' | 'archived'>('draft');
+  const [featured, setFeatured] = useState(false);
+  const [visibility, setVisibility] = useState({ onlineStore: true, pos: false, shop: false });
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  // Fetch Categories
   useEffect(() => {
-    async function loadCategories() {
-      try {
-        const res = await fetch("/api/admin/categories");
-        const data = await res.json();
-        if (data.success && Array.isArray(data.categories)) {
-          setCategories(data.categories);
-        }
-      } catch {
-        // ignore
-      }
-    }
-    loadCategories();
-  }, []);
-
-  // Fetch Product Data
-  const loadProduct = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/admin/products/${productId}`);
-      const data = await res.json();
-      if (data.success && data.product) {
-        const p: ProductDetail = data.product;
+    async function load() {
+      setLoading(true);
+      const [p, cats] = await Promise.all([productService.getProduct(id), categoryService.getCategories()]);
+      setCategories(cats);
+      if (p) {
         setProduct(p);
-        setName(p.name);
-        setSku(p.sku);
-        setSlug(p.slug);
-        setCategoryId(p.categoryId || "");
-        setShortDescription(p.shortDescription || "");
-        setDescription(p.description || "");
-        setBasePrice(p.basePrice?.toString() || "");
-        setCompareAtPrice(p.compareAtPrice?.toString() || "");
-        setCostPerUnit(p.costPerUnit?.toString() || "");
-        setStockQuantity(p.stockQuantity?.toString() || "0");
-        setLowStockThreshold(p.lowStockThreshold?.toString() || "10");
-        setTrackInventory(p.trackInventory ?? true);
-        setProductStatus(p.status || "draft");
-        setImages(p.images || []);
-      } else {
-        setErrorMessage("Product not found.");
+        setName(p.name); setShortDescription(p.shortDescription); setDescription(p.description);
+        setSku(p.sku); setCategoryId(p.categoryId); setTags([...p.tags]); setBrand(p.brand);
+        setBasePrice(p.basePrice.toString()); setCompareAtPrice(p.compareAtPrice?.toString() || '');
+        setCostPerItem(p.costPerItem?.toString() || ''); setTaxable(p.taxable);
+        setTrackInventory(p.trackInventory); setStockQuantity(p.stockQuantity.toString());
+        setLowStockThreshold(p.lowStockThreshold.toString()); setAllowBackorders(p.allowBackorders);
+        setImages([...p.images]); setVariantOptions([...p.variantOptions]);
+        setWeight(p.weight?.toString() || '');
+        setDimensions({
+          length: p.dimensions?.length.toString() || '',
+          width: p.dimensions?.width.toString() || '',
+          height: p.dimensions?.height.toString() || '',
+        });
+        setRequiresShipping(p.requiresShipping); setFragile(p.fragile); setShippingClass(p.shippingClass);
+        setSeoTitle(p.seo.title); setSeoDescription(p.seo.description); setSeoSlug(p.seo.slug);
+        setStatus(p.status); setFeatured(p.featured); setVisibility({ ...p.visibility });
       }
-    } catch {
-      setErrorMessage("Failed to load product details.");
-    } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+    load();
+  }, [id]);
 
-  useEffect(() => {
-    if (productId) {
-      loadProduct();
-    }
-  }, [productId]);
-
-  // Live profit margin calculation
-  const numericBasePrice = parseFloat(basePrice) || 0;
-  const numericCost = parseFloat(costPerUnit) || 0;
-  const marginPercent =
-    numericBasePrice > 0 && numericCost > 0
-      ? (((numericBasePrice - numericCost) / numericBasePrice) * 100).toFixed(1)
-      : null;
-
-  // Save Product Updates
   const handleSave = async () => {
-    if (!name.trim()) {
-      showToast("Product name cannot be empty.");
-      return;
-    }
-
-    setIsSaving(true);
-    setErrorMessage(null);
-
+    setSaving(true);
     try {
-      const payload = {
-        name: name.trim(),
-        sku: sku.trim(),
-        slug: slug.trim(),
-        categoryId,
-        shortDescription: shortDescription.trim(),
-        description: description.trim(),
-        basePrice: numericBasePrice,
+      const cat = categories.find((c) => c.id === categoryId);
+      await productService.updateProduct(id, {
+        name, shortDescription, description, sku, categoryId,
+        categoryName: cat?.name || '', status, basePrice: parseFloat(basePrice) || 0,
         compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
-        costPerUnit: numericCost || null,
-        stockQuantity: parseInt(stockQuantity, 10) || 0,
-        lowStockThreshold: parseInt(lowStockThreshold, 10) || 10,
-        trackInventory,
-        status: productStatus,
-      };
-
-      const res = await fetch(`/api/admin/products/${productId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        costPerItem: costPerItem ? parseFloat(costPerItem) : null,
+        taxable, trackInventory, stockQuantity: parseInt(stockQuantity) || 0,
+        lowStockThreshold: parseInt(lowStockThreshold) || 10, allowBackorders,
+        images, variantOptions, tags, brand,
+        weight: weight ? parseFloat(weight) : null,
+        dimensions: dimensions.length ? {
+          length: parseFloat(dimensions.length) || 0,
+          width: parseFloat(dimensions.width) || 0,
+          height: parseFloat(dimensions.height) || 0,
+        } : null,
+        requiresShipping, fragile, shippingClass,
+        seo: { title: seoTitle, description: seoDescription, slug: seoSlug },
+        visibility, featured,
       });
-
-      const data = await res.json();
-      if (data.success) {
-        showToast("Product changes saved successfully!");
-      } else {
-        setErrorMessage(data.error || "Failed to update product.");
-      }
-    } catch {
-      setErrorMessage("Error communicating with server.");
+      showToast('Product saved successfully');
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
-  // Add Image via URL
-  const handleAddImageUrl = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newImageUrl.trim()) return;
+  const handleDelete = async () => {
+    await productService.deleteProduct(id);
+    showToast('Product deleted');
+    router.push('/admin/products');
+  };
 
-    setIsUploadingImage(true);
-    try {
-      const formData = new FormData();
-      formData.append("imageUrl", newImageUrl.trim());
-      formData.append("altText", `${name} image`);
-      formData.append("isPrimary", images.length === 0 ? "true" : "false");
-
-      const res = await fetch(`/api/admin/products/${productId}/images/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (data.success && data.images) {
-        setImages((prev) => [...prev, ...data.images]);
-        setNewImageUrl("");
-        showToast("Image added to gallery.");
-      }
-    } catch {
-      showToast("Failed to add image.");
-    } finally {
-      setIsUploadingImage(false);
+  const handleDuplicate = async () => {
+    const dup = await productService.duplicateProduct(id);
+    if (dup) {
+      showToast(`"${dup.name}" created as draft`);
+      router.push(`/admin/products/${dup.id}`);
     }
   };
 
-  // Remove Image
-  const handleDeleteImage = (imgId: string) => {
-    setImages((prev) => prev.filter((img) => img.id !== imgId));
-    showToast("Image removed from gallery.");
+  const addTag = () => {
+    const t = tagInput.trim();
+    if (t && !tags.includes(t)) { setTags([...tags, t]); setTagInput(''); }
   };
 
-  // Set Primary Image
-  const handleSetPrimaryImage = (imgId: string) => {
-    setImages((prev) =>
-      prev.map((img) => ({
-        ...img,
-        isPrimary: img.id === imgId,
-      }))
-    );
-    showToast("Primary display image updated.");
-  };
-
-  // Delete Product
-  const handleDeleteProduct = async () => {
-    if (!confirm(`Are you sure you want to permanently delete "${name}"?`)) return;
-
-    setIsDeleting(true);
-    try {
-      const res = await fetch(`/api/admin/products/${productId}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (data.success) {
-        router.push("/admin/products");
-      }
-    } catch {
-      showToast("Failed to delete product.");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  if (!isHydrated || status === "loading" || isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#07090E] text-white">
-        <Loader2 size={32} className="animate-spin text-brand-yellow" />
+      <div className="flex items-center justify-center py-32">
+        <div className="w-6 h-6 border-2 border-brand-yellow border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (!isAdmin) {
+  if (!product) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#07090E] text-white">
-        <AdminHeader />
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-md w-full rounded-3xl border border-rose-500/30 bg-rose-500/10 p-8 text-center space-y-4">
-            <ShieldAlert size={28} className="text-rose-400 mx-auto" />
-            <h1 className="font-display font-black text-xl text-white">Administrator Access Required</h1>
-            <p className="text-xs text-slate-300">
-              This console is restricted to Star Press administrative personnel.
-            </p>
-            <Link
-              href="/admin/login"
-              className="px-5 py-2.5 rounded-full bg-brand-yellow text-black text-xs font-bold inline-block"
-            >
-              Sign In to Admin Portal
-            </Link>
-          </div>
-        </main>
+      <div className="text-center py-32">
+        <Package size={40} className="mx-auto text-text-muted mb-3" />
+        <p className="text-sm text-text-muted">Product not found</p>
+        <button onClick={() => router.push('/admin/products')} className="mt-3 text-xs text-brand-yellow hover:underline">← Back to Products</button>
       </div>
     );
   }
 
-  const navTabs: Array<{ id: TabKey; label: string; icon: React.ReactNode }> = [
-    { id: "basic", label: "Basic Info", icon: <Package size={15} /> },
-    { id: "description", label: "Description & HTML", icon: <FileText size={15} /> },
-    { id: "images", label: `Images (${images.length})`, icon: <ImageIcon size={15} /> },
-    { id: "pricing", label: "Pricing & Margin", icon: <DollarSign size={15} /> },
-    { id: "inventory", label: "Inventory", icon: <Layers size={15} /> },
-    { id: "publish", label: "Publish & Visibility", icon: <Eye size={15} /> },
-  ];
+  const inputClass = "w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border-subtle text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-yellow/30 transition-colors";
+  const textareaClass = "w-full px-3 py-2.5 rounded-lg bg-white/[0.03] border border-border-subtle text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-yellow/30 transition-colors resize-none";
+
+  const InputGroup = ({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) => (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-text-secondary">{label}</label>
+      {children}
+      {hint && <p className="text-[11px] text-text-muted">{hint}</p>}
+    </div>
+  );
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#07090E] text-white selection:bg-brand-yellow selection:text-black">
-      <AdminHeader activeSection="products" />
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 animate-in fade-in slide-in-from-top-3 duration-200">
-          <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-[#0F1422] border border-brand-cyan/40 text-brand-cyan text-xs font-semibold shadow-2xl backdrop-blur-xl">
-            <CheckCircle2 size={16} />
-            <span>{toastMessage}</span>
+    <div className="max-w-[1200px]">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.push('/admin/products')} className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors">
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold text-white">{name || product.name}</h1>
+              <StatusBadge status={status} />
+            </div>
+            <p className="text-xs text-text-muted font-mono">{sku}</p>
           </div>
         </div>
-      )}
-
-      <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Top Breadcrumb & Action Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/admin/products"
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors"
-              title="Return to Product List"
-            >
-              <ArrowLeft size={16} />
-            </Link>
-            <div>
-              <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-                <span>SKU: {sku || "UNASSIGNED"}</span>
-                <span>•</span>
-                <span
-                  className={`uppercase font-bold ${
-                    productStatus === "published" ? "text-emerald-400" : "text-amber-400"
-                  }`}
-                >
-                  {productStatus}
-                </span>
-              </div>
-              <h1 className="font-display font-black text-2xl text-white truncate max-w-lg">
-                {name || "Edit Product"}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* View on Public Store */}
-            <a
-              href={`/shop/${slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5"
-            >
-              <span>View Storefront</span>
-              <ExternalLink size={13} />
-            </a>
-
-            {/* Delete */}
-            <button
-              onClick={handleDeleteProduct}
-              disabled={isDeleting}
-              className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all text-xs"
-              title="Delete Product"
-            >
-              {isDeleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+        <div className="flex items-center gap-2">
+          <a href={`/shop/${product.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-border-subtle transition-colors">
+            <ExternalLink size={14} /> Preview
+          </a>
+          <div className="relative">
+            <button onClick={() => setShowActions(!showActions)} className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] border border-border-subtle transition-colors">
+              <MoreHorizontal size={16} />
             </button>
-
-            {/* Save */}
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="px-5 py-2 rounded-xl bg-brand-yellow hover:bg-[#FFE04D] text-black text-xs font-bold flex items-center gap-2 transition-all shadow-[0_4px_16px_rgba(255,224,77,0.25)] disabled:opacity-50"
-            >
-              {isSaving ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Save size={14} />
-              )}
-              <span>Save Changes</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Error Alert */}
-        {errorMessage && (
-          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-3">
-            <AlertCircle size={16} className="text-rose-400 shrink-0" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
-        {/* Tab Navigation & Content Container */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Tabs Sidebar */}
-          <div className="lg:col-span-1 space-y-1">
-            <div className="rounded-2xl border border-white/10 bg-[#0B0F19]/80 backdrop-blur-xl p-2 space-y-1">
-              {navTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-left transition-all ${
-                    activeTab === tab.id
-                      ? "bg-brand-yellow text-black font-bold shadow-md"
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <span className="shrink-0">{tab.icon}</span>
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Quick Metrics Widget */}
-            <div className="rounded-2xl border border-white/10 bg-[#0B0F19]/40 p-4 space-y-3 mt-4">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
-                Financial Snapshot
-              </span>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Current Margin:</span>
-                <span className="font-mono font-bold text-emerald-400">
-                  {marginPercent ? `${marginPercent}%` : "N/A"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Inventory Units:</span>
-                <span className="font-mono font-bold text-white">{stockQuantity}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Main Content Pane */}
-          <div className="lg:col-span-3">
-            {/* Tab 1: Basic Info */}
-            {activeTab === "basic" && (
-              <div className="rounded-2xl border border-white/10 bg-[#0B0F19]/70 backdrop-blur-xl p-6 space-y-4">
-                <h2 className="text-sm font-bold uppercase font-mono tracking-wider text-brand-yellow flex items-center gap-2">
-                  <Package size={16} />
-                  <span>Basic Product Information</span>
-                </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Product Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 focus:border-brand-yellow rounded-xl text-xs text-white outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Category *
-                    </label>
-                    <select
-                      value={categoryId}
-                      onChange={(e) => setCategoryId(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 focus:border-brand-yellow rounded-xl text-xs text-white outline-none"
-                    >
-                      {categories.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      SKU Code
-                    </label>
-                    <input
-                      type="text"
-                      value={sku}
-                      onChange={(e) => setSku(e.target.value.toUpperCase())}
-                      className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 focus:border-brand-yellow font-mono rounded-xl text-xs text-white outline-none uppercase"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Storefront URL Slug
-                    </label>
-                    <input
-                      type="text"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 focus:border-brand-yellow font-mono rounded-xl text-xs text-white outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Short Description (Product Card Snippet)
-                  </label>
-                  <textarea
-                    value={shortDescription}
-                    onChange={(e) => setShortDescription(e.target.value)}
-                    rows={3}
-                    className="w-full px-3.5 py-2 bg-black/40 border border-white/10 focus:border-brand-yellow rounded-xl text-xs text-white outline-none resize-none"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Tab 2: Description & Live HTML Preview */}
-            {activeTab === "description" && (
-              <div className="rounded-2xl border border-white/10 bg-[#0B0F19]/70 backdrop-blur-xl p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-bold uppercase font-mono tracking-wider text-brand-yellow flex items-center gap-2">
-                    <FileText size={16} />
-                    <span>Rich Product Description & Specifications</span>
-                  </h2>
-                  <span className="text-[11px] font-mono text-slate-400">
-                    Supports HTML & Markdown
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Editor */}
-                  <div className="flex flex-col">
-                    <label className="text-xs font-semibold text-slate-300 mb-1">
-                      HTML / Markdown Source
-                    </label>
-                    <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      rows={14}
-                      placeholder="<p>Detailed product overview, paper weight specifications, printing technique...</p>"
-                      className="w-full px-3.5 py-3 bg-black/50 border border-white/10 focus:border-brand-yellow rounded-xl font-mono text-xs text-white placeholder:text-slate-600 outline-none resize-none flex-1"
-                    />
-                  </div>
-
-                  {/* Live Rendered Preview */}
-                  <div className="flex flex-col">
-                    <label className="text-xs font-semibold text-slate-300 mb-1">
-                      Live Storefront Preview
-                    </label>
-                    <div className="w-full p-4 bg-white/[0.02] border border-white/10 rounded-xl text-xs text-slate-200 overflow-y-auto max-h-[340px] prose prose-invert prose-xs">
-                      {description ? (
-                        <div dangerouslySetInnerHTML={{ __html: description }} />
-                      ) : (
-                        <p className="text-slate-500 italic">No description written yet.</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 3: Images Management */}
-            {activeTab === "images" && (
-              <div className="rounded-2xl border border-white/10 bg-[#0B0F19]/70 backdrop-blur-xl p-6 space-y-4">
-                <h2 className="text-sm font-bold uppercase font-mono tracking-wider text-brand-yellow flex items-center gap-2">
-                  <ImageIcon size={16} />
-                  <span>Product Photo Gallery</span>
-                </h2>
-
-                {/* Add Image by URL */}
-                <form onSubmit={handleAddImageUrl} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newImageUrl}
-                    onChange={(e) => setNewImageUrl(e.target.value)}
-                    placeholder="Enter image URL (/images/... or https://...)"
-                    className="flex-1 px-3.5 py-2.5 bg-black/40 border border-white/10 focus:border-brand-yellow rounded-xl text-xs text-white placeholder:text-slate-600 outline-none"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isUploadingImage || !newImageUrl.trim()}
-                    className="px-4 py-2.5 rounded-xl bg-brand-yellow text-black text-xs font-bold flex items-center gap-1.5 transition-all disabled:opacity-50"
-                  >
-                    {isUploadingImage ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Plus size={14} />
-                    )}
-                    <span>Add Image</span>
+            {showActions && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowActions(false)} />
+                <div className="absolute right-0 top-full mt-1 w-40 bg-bg-surface border border-border-subtle rounded-xl shadow-elevation-md py-1 z-20 animate-fadeIn">
+                  <button onClick={() => { handleDuplicate(); setShowActions(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-white hover:bg-white/[0.04]">
+                    <Copy size={13} /> Duplicate
                   </button>
-                </form>
+                  <button onClick={() => { productService.bulkUpdateStatus([id], 'archived'); setStatus('archived'); showToast('Product archived'); setShowActions(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-white hover:bg-white/[0.04]">
+                    <Archive size={13} /> Archive
+                  </button>
+                  <div className="border-t border-border-subtle my-1" />
+                  <button onClick={() => { setDeleteDialog(true); setShowActions(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10">
+                    <Trash2 size={13} /> Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors disabled:opacity-50 shadow-sm">
+            <Save size={14} />
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
 
-                {/* Images Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pt-2">
-                  {images.map((img) => (
-                    <div
-                      key={img.id}
-                      className="group relative rounded-xl border border-white/10 bg-black/40 overflow-hidden"
-                    >
-                      <div className="aspect-square relative w-full">
-                        <Image
-                          src={img.url}
-                          alt={img.altText || name}
-                          fill
-                          sizes="200px"
-                          className="object-cover"
-                        />
+      <div className="flex gap-6">
+        {/* Vertical Tabs */}
+        <div className="w-48 shrink-0 space-y-0.5">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all ${activeTab === tab.key ? 'bg-white/[0.08] text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'}`}>
+                <Icon size={16} /> {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab Content — Same structure as New Product */}
+        <div className="flex-1 bg-bg-surface border border-border-subtle rounded-xl p-6">
+          {activeTab === 'basic' && (
+            <div className="space-y-5">
+              <h2 className="text-sm font-semibold text-white mb-4">Basic Information</h2>
+              <InputGroup label="Product Name">
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+              </InputGroup>
+              <InputGroup label="Short Description" hint="Max 200 characters">
+                <textarea value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} rows={2} maxLength={200} className={textareaClass} />
+              </InputGroup>
+              <InputGroup label="Product Description">
+                <div className="border border-border-subtle rounded-lg overflow-hidden">
+                  <div className="flex items-center gap-0.5 px-2 py-1.5 bg-white/[0.02] border-b border-border-subtle">
+                    {[Bold, Italic, Underline, ListOrdered, List, Link2, AlignLeft].map((Icon, i) => (
+                      <button key={i} className="p-1.5 rounded text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors" type="button"><Icon size={14} /></button>
+                    ))}
+                  </div>
+                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={6} className="w-full px-3 py-2.5 bg-transparent text-sm text-white placeholder:text-slate-600 focus:outline-none resize-none" />
+                </div>
+              </InputGroup>
+              <div className="grid grid-cols-2 gap-4">
+                <InputGroup label="Category">
+                  <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputClass + ' cursor-pointer'}>
+                    {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                  </select>
+                </InputGroup>
+                <InputGroup label="SKU">
+                  <input type="text" value={sku} onChange={(e) => setSku(e.target.value)} className={inputClass} />
+                </InputGroup>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <InputGroup label="Brand">
+                  <input type="text" value={brand} onChange={(e) => setBrand(e.target.value)} className={inputClass} />
+                </InputGroup>
+                <InputGroup label="Tags">
+                  <div className="flex flex-wrap gap-1.5 p-2 rounded-lg bg-white/[0.03] border border-border-subtle min-h-[36px]">
+                    {tags.map((tag) => (
+                      <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.06] text-xs text-text-secondary">
+                        {tag}<button onClick={() => setTags(tags.filter((t) => t !== tag))} className="hover:text-white"><X size={12} /></button>
+                      </span>
+                    ))}
+                    <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())} placeholder={tags.length === 0 ? 'Add tags…' : ''} className="flex-1 min-w-[80px] bg-transparent text-xs text-white placeholder:text-slate-600 focus:outline-none" />
+                  </div>
+                </InputGroup>
+              </div>
+            </div>
+          )}
+          {activeTab === 'media' && (
+            <div className="space-y-5">
+              <h2 className="text-sm font-semibold text-white mb-4">Product Media</h2>
+              <div onClick={() => setImages([...images, { id: `img_${Date.now()}`, url: '', altText: '', isPrimary: images.length === 0, position: images.length }])} className="border-2 border-dashed border-border-subtle rounded-xl p-10 text-center hover:border-brand-yellow/30 hover:bg-brand-yellow/[0.02] transition-colors cursor-pointer">
+                <Upload size={32} className="mx-auto text-text-muted mb-3" />
+                <p className="text-sm font-medium text-text-secondary">Drag and drop images here</p>
+                <p className="text-xs text-text-muted mt-1">or <span className="text-brand-yellow">browse from your device</span></p>
+              </div>
+              {images.length > 0 && (
+                <div className="grid grid-cols-4 gap-3">
+                  {images.map((img, idx) => (
+                    <div key={img.id} className={`relative rounded-lg border overflow-hidden aspect-square bg-white/[0.03] ${img.isPrimary ? 'border-brand-yellow/40 ring-1 ring-brand-yellow/20' : 'border-border-subtle'}`}>
+                      <div className="absolute inset-0 flex items-center justify-center text-text-muted"><ImageIcon size={24} /></div>
+                      <div className="absolute top-2 left-2 flex items-center gap-1">
+                        <GripVertical size={12} className="text-text-muted cursor-grab" />
+                        {img.isPrimary && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-brand-yellow text-black">PRIMARY</span>}
                       </div>
-
-                      {img.isPrimary && (
-                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-brand-yellow text-black font-bold text-[9px] uppercase font-mono tracking-wider shadow-md">
-                          Primary
-                        </span>
-                      )}
-
-                      <div className="p-2 flex items-center justify-between border-t border-white/10 bg-[#07090E]/90">
-                        <button
-                          type="button"
-                          onClick={() => handleSetPrimaryImage(img.id)}
-                          className="text-[10px] text-slate-400 hover:text-brand-yellow transition-colors font-medium"
-                        >
-                          Set Primary
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteImage(img.id)}
-                          className="text-[10px] text-rose-400 hover:text-rose-300 transition-colors"
-                        >
-                          Remove
-                        </button>
+                      <div className="absolute top-2 right-2 flex items-center gap-1">
+                        {!img.isPrimary && <button onClick={() => setImages(images.map((im, i) => ({ ...im, isPrimary: i === idx })))} className="p-1 rounded bg-black/50 text-white/70 hover:text-white text-[9px] font-medium">Set Primary</button>}
+                        <button onClick={() => setImages(images.filter((_, i) => i !== idx))} className="p-1 rounded bg-black/50 text-rose-400 hover:text-rose-300"><Trash2 size={12} /></button>
                       </div>
                     </div>
                   ))}
                 </div>
+              )}
+            </div>
+          )}
+          {activeTab === 'pricing' && (
+            <div className="space-y-5">
+              <h2 className="text-sm font-semibold text-white mb-4">Pricing</h2>
+              <div className="grid grid-cols-3 gap-4">
+                <InputGroup label="Selling Price (₹)"><input type="number" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} className={inputClass} /></InputGroup>
+                <InputGroup label="Compare-at Price (₹)"><input type="number" value={compareAtPrice} onChange={(e) => setCompareAtPrice(e.target.value)} className={inputClass} /></InputGroup>
+                <InputGroup label="Cost per Item (₹)"><input type="number" value={costPerItem} onChange={(e) => setCostPerItem(e.target.value)} className={inputClass} /></InputGroup>
               </div>
-            )}
-
-            {/* Tab 4: Pricing & Margin */}
-            {activeTab === "pricing" && (
-              <div className="rounded-2xl border border-white/10 bg-[#0B0F19]/70 backdrop-blur-xl p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-bold uppercase font-mono tracking-wider text-brand-cyan flex items-center gap-2">
-                    <DollarSign size={16} />
-                    <span>Pricing & Profit Margin</span>
-                  </h2>
-
-                  {marginPercent !== null && (
-                    <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-bold">
-                      Calculated Margin: {marginPercent}%
-                    </div>
-                  )}
+              {basePrice && costPerItem && (
+                <div className="p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20">
+                  <span className="text-xs text-emerald-400 font-medium">Margin: ₹{(parseFloat(basePrice) - parseFloat(costPerItem)).toFixed(0)} ({(((parseFloat(basePrice) - parseFloat(costPerItem)) / parseFloat(basePrice)) * 100).toFixed(1)}%)</span>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Base Retail Price (₹) *
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={basePrice}
-                      onChange={(e) => setBasePrice(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 focus:border-brand-cyan font-mono rounded-xl text-xs text-white outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Compare-at Price (₹) (Strike-through)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={compareAtPrice}
-                      onChange={(e) => setCompareAtPrice(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 focus:border-brand-cyan font-mono rounded-xl text-xs text-white outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Cost per Unit (₹) (Production Cost)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={costPerUnit}
-                      onChange={(e) => setCostPerUnit(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 focus:border-brand-cyan font-mono rounded-xl text-xs text-white outline-none"
-                    />
-                  </div>
+              )}
+              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={taxable} onChange={(e) => setTaxable(e.target.checked)} className="w-4 h-4 rounded accent-brand-yellow" /><span className="text-xs text-text-secondary">Charge tax</span></label>
+            </div>
+          )}
+          {activeTab === 'inventory' && (
+            <div className="space-y-5">
+              <h2 className="text-sm font-semibold text-white mb-4">Inventory</h2>
+              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={trackInventory} onChange={(e) => setTrackInventory(e.target.checked)} className="w-4 h-4 rounded accent-brand-yellow" /><span className="text-sm text-text-secondary">Track inventory</span></label>
+              {trackInventory && (
+                <div className="grid grid-cols-2 gap-4">
+                  <InputGroup label="Quantity"><input type="number" value={stockQuantity} onChange={(e) => setStockQuantity(e.target.value)} className={inputClass} /></InputGroup>
+                  <InputGroup label="Low Stock Threshold"><input type="number" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(e.target.value)} className={inputClass} /></InputGroup>
                 </div>
-              </div>
-            )}
-
-            {/* Tab 5: Inventory */}
-            {activeTab === "inventory" && (
-              <div className="rounded-2xl border border-white/10 bg-[#0B0F19]/70 backdrop-blur-xl p-6 space-y-4">
-                <h2 className="text-sm font-bold uppercase font-mono tracking-wider text-purple-400 flex items-center gap-2">
-                  <Layers size={16} />
-                  <span>Stock & Inventory Thresholds</span>
-                </h2>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Available Stock Quantity
-                    </label>
-                    <input
-                      type="number"
-                      value={stockQuantity}
-                      onChange={(e) => setStockQuantity(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 focus:border-purple-400 font-mono rounded-xl text-xs text-white outline-none"
-                    />
+              )}
+              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={allowBackorders} onChange={(e) => setAllowBackorders(e.target.checked)} className="w-4 h-4 rounded accent-brand-yellow" /><span className="text-sm text-text-secondary">Allow backorders</span></label>
+            </div>
+          )}
+          {activeTab === 'variants' && (
+            <div className="space-y-5">
+              <h2 className="text-sm font-semibold text-white mb-4">Variants</h2>
+              {variantOptions.map((opt, idx) => (
+                <div key={idx} className="p-4 rounded-lg bg-white/[0.02] border border-border-subtle space-y-3">
+                  <div className="flex items-center justify-between">
+                    <InputGroup label={`Option ${idx + 1}`}>
+                      <input type="text" value={opt.name} onChange={(e) => { const u = [...variantOptions]; u[idx] = { ...u[idx], name: e.target.value }; setVariantOptions(u); }} placeholder="e.g. Size, Color" className={inputClass + ' max-w-xs'} />
+                    </InputGroup>
+                    <button onClick={() => setVariantOptions(variantOptions.filter((_, i) => i !== idx))} className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10"><Trash2 size={14} /></button>
                   </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Low Stock Threshold (Alert level)
-                    </label>
-                    <input
-                      type="number"
-                      value={lowStockThreshold}
-                      onChange={(e) => setLowStockThreshold(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 focus:border-purple-400 font-mono rounded-xl text-xs text-white outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-2 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="trackInventory"
-                    checked={trackInventory}
-                    onChange={(e) => setTrackInventory(e.target.checked)}
-                    className="w-4 h-4 rounded text-brand-yellow focus:ring-brand-yellow/50 bg-black/40 border-white/10"
-                  />
-                  <label htmlFor="trackInventory" className="text-xs text-slate-300 cursor-pointer">
-                    Enable real-time inventory tracking for this item
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 6: Publish & Visibility */}
-            {activeTab === "publish" && (
-              <div className="rounded-2xl border border-white/10 bg-[#0B0F19]/70 backdrop-blur-xl p-6 space-y-4">
-                <h2 className="text-sm font-bold uppercase font-mono tracking-wider text-emerald-400 flex items-center gap-2">
-                  <Eye size={16} />
-                  <span>Catalog Status & Live Visibility</span>
-                </h2>
-
-                <div className="space-y-3">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Product Lifecycle Status
-                  </label>
-                  <div className="flex gap-3">
-                    {(["published", "draft", "archived"] as const).map((st) => (
-                      <button
-                        key={st}
-                        type="button"
-                        onClick={() => setProductStatus(st)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold uppercase font-mono tracking-wider transition-all ${
-                          productStatus === st
-                            ? "bg-brand-yellow text-black shadow-lg"
-                            : "bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10"
-                        }`}
-                      >
-                        {st}
-                      </button>
+                  <div className="flex flex-wrap gap-1.5 p-2 rounded-lg bg-white/[0.03] border border-border-subtle min-h-[36px]">
+                    {opt.values.map((val) => (
+                      <span key={val} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.06] text-xs text-text-secondary">
+                        {val}<button onClick={() => { const u = [...variantOptions]; u[idx] = { ...u[idx], values: u[idx].values.filter((v) => v !== val) }; setVariantOptions(u); }} className="hover:text-white"><X size={12} /></button>
+                      </span>
                     ))}
+                    <input type="text" placeholder="Add value…" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const val = (e.target as HTMLInputElement).value.trim(); if (val && !opt.values.includes(val)) { const u = [...variantOptions]; u[idx] = { ...u[idx], values: [...u[idx].values, val] }; setVariantOptions(u); (e.target as HTMLInputElement).value = ''; } } }} className="flex-1 min-w-[80px] bg-transparent text-xs text-white placeholder:text-slate-600 focus:outline-none" />
                   </div>
                 </div>
-
-                <div className="pt-4 border-t border-white/10">
-                  <a
-                    href={`/shop/${slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md"
-                  >
-                    <span>Preview Live Storefront View</span>
-                    <ExternalLink size={13} />
-                  </a>
-                </div>
+              ))}
+              <button onClick={() => setVariantOptions([...variantOptions, { name: '', values: [] }])} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-brand-yellow hover:bg-brand-yellow/10 border border-brand-yellow/20 transition-colors"><Plus size={14} /> Add Option</button>
+            </div>
+          )}
+          {activeTab === 'shipping' && (
+            <div className="space-y-5">
+              <h2 className="text-sm font-semibold text-white mb-4">Shipping</h2>
+              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={requiresShipping} onChange={(e) => setRequiresShipping(e.target.checked)} className="w-4 h-4 rounded accent-brand-yellow" /><span className="text-sm text-text-secondary">Requires shipping</span></label>
+              {requiresShipping && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <InputGroup label="Weight (g)"><input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} className={inputClass} /></InputGroup>
+                    <InputGroup label="Shipping Class"><select value={shippingClass} onChange={(e) => setShippingClass(e.target.value)} className={inputClass + ' cursor-pointer'}><option value="standard">Standard</option><option value="oversized">Oversized</option><option value="fragile">Fragile</option></select></InputGroup>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <InputGroup label="Length (cm)"><input type="number" value={dimensions.length} onChange={(e) => setDimensions({ ...dimensions, length: e.target.value })} className={inputClass} /></InputGroup>
+                    <InputGroup label="Width (cm)"><input type="number" value={dimensions.width} onChange={(e) => setDimensions({ ...dimensions, width: e.target.value })} className={inputClass} /></InputGroup>
+                    <InputGroup label="Height (cm)"><input type="number" value={dimensions.height} onChange={(e) => setDimensions({ ...dimensions, height: e.target.value })} className={inputClass} /></InputGroup>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={fragile} onChange={(e) => setFragile(e.target.checked)} className="w-4 h-4 rounded accent-brand-yellow" /><span className="text-sm text-text-secondary">Fragile item</span></label>
+                </>
+              )}
+            </div>
+          )}
+          {activeTab === 'seo' && (
+            <div className="space-y-5">
+              <h2 className="text-sm font-semibold text-white mb-4">SEO</h2>
+              <InputGroup label="SEO Title" hint={`${(seoTitle || name).length}/60`}><input type="text" value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} placeholder={name} maxLength={60} className={inputClass} /></InputGroup>
+              <InputGroup label="Meta Description" hint={`${seoDescription.length}/160`}><textarea value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={3} maxLength={160} className={textareaClass} /></InputGroup>
+              <InputGroup label="URL Slug">
+                <div className="flex"><span className="h-9 px-3 flex items-center rounded-l-lg bg-white/[0.02] border border-r-0 border-border-subtle text-xs text-text-muted">starpress.in/shop/</span><input type="text" value={seoSlug} onChange={(e) => setSeoSlug(e.target.value)} className={inputClass + ' rounded-l-none'} /></div>
+              </InputGroup>
+              <div className="p-4 rounded-lg bg-white/[0.02] border border-border-subtle">
+                <p className="text-xs text-text-muted mb-2 font-medium">Search Preview</p>
+                <p className="text-sm text-blue-400 font-medium truncate">{seoTitle || name} | Star Press</p>
+                <p className="text-xs text-emerald-500 mt-0.5">starpress.in/shop/{seoSlug}</p>
+                <p className="text-xs text-text-muted mt-1 line-clamp-2">{seoDescription || shortDescription}</p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+          {activeTab === 'publishing' && (
+            <div className="space-y-5">
+              <h2 className="text-sm font-semibold text-white mb-4">Publishing</h2>
+              <InputGroup label="Status">
+                <div className="flex items-center gap-3">
+                  {(['draft', 'published', 'archived'] as const).map((s) => (
+                    <label key={s} className="flex items-center gap-2 cursor-pointer"><input type="radio" name="status" value={s} checked={status === s} onChange={() => setStatus(s)} className="accent-brand-yellow" /><StatusBadge status={s} size="md" /></label>
+                  ))}
+                </div>
+              </InputGroup>
+              <InputGroup label="Visibility">
+                <div className="space-y-2">
+                  {([{ key: 'onlineStore', label: 'Online Store' }, { key: 'pos', label: 'Point of Sale' }, { key: 'shop', label: 'Shop' }] as const).map((ch) => (
+                    <label key={ch.key} className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={visibility[ch.key]} onChange={(e) => setVisibility({ ...visibility, [ch.key]: e.target.checked })} className="w-4 h-4 rounded accent-brand-yellow" /><span className="text-sm text-text-secondary">{ch.label}</span></label>
+                  ))}
+                </div>
+              </InputGroup>
+              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="w-4 h-4 rounded accent-brand-yellow" /><span className="text-sm text-text-secondary">Featured product</span></label>
+            </div>
+          )}
         </div>
-      </main>
-    </div>
-  );
-}
+      </div>
 
-export default function ProductDetailPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#07090E] text-white">
-          <Loader2 size={32} className="animate-spin text-brand-yellow" />
-        </div>
-      }
-    >
-      <ProductEditContent />
-    </Suspense>
+      <ConfirmDialog open={deleteDialog} title="Delete Product" message={`Delete "${name}"? This action cannot be undone.`} confirmLabel="Delete" onConfirm={handleDelete} onCancel={() => setDeleteDialog(false)} />
+    </div>
   );
 }
