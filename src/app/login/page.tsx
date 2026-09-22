@@ -85,7 +85,7 @@ function LoginSkeleton() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { session, status, isHydrated, signInWithGoogle, isConfigured } = useAuthSession();
+  const { session, status, isHydrated, signInWithGoogle } = useAuthSession();
   const callbackUrl = searchParams.get("callbackUrl") || "/account";
   const registered = searchParams.get("registered");
   const errorParam = searchParams.get("error");
@@ -317,18 +317,6 @@ function LoginForm() {
           </p>
         </div>
 
-        {/* Configuration notice if Supabase keys not set */}
-        {!isConfigured && (
-          <div className="mb-2.5 p-2 sm:p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/15 text-amber-200 text-xs backdrop-blur-md relative z-10">
-            <p className="font-semibold text-amber-300 mb-0.5 flex items-center gap-1.5 text-[11px]">
-              <AlertCircle size={13} className="shrink-0" />
-              <span>Supabase Setup Notice</span>
-            </p>
-            <p className="text-[10px] text-amber-200/90 leading-relaxed">
-              Add <code className="px-1 py-0.2 rounded bg-black/40 text-amber-300 font-mono">NEXT_PUBLIC_SUPABASE_URL</code> and <code className="px-1 py-0.2 rounded bg-black/40 text-amber-300 font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your <code className="font-mono">.env.local</code> to activate live Supabase Auth.
-            </p>
-          </div>
-        )}
 
         {/* Registration success banner */}
         {registered && (

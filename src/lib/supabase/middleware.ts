@@ -2,8 +2,8 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://imfehlnarkbclnplhvuz.supabase.co";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_3Oxh-fmrfNSWrEgLfhzUpQ_kKRQOvzW";
 
 /**
  * Refreshes session tokens and provides authenticated user state for Next.js Middleware.
