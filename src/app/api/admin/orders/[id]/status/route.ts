@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateOrderStatus } from "@/server/orders";
 import { OrderStatus } from "@prisma/client";
+import { getAuthenticatedUser } from "@/lib/supabase/server";
 
 interface RouteParams {
   params: {
@@ -10,6 +11,25 @@ interface RouteParams {
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    // 1. Authenticate user session with Supabase server client
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized: Authentication session required." },
+        { status: 401 }
+      );
+    }
+
+    // 2. Cryptographically verify ADMIN role in app_metadata
+    const isAdmin = user.app_metadata?.role === "ADMIN";
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Forbidden: Star Press administrative privileges required." },
+        { status: 403 }
+      );
+    }
+
+    // 3. Process authorized admin order status update
     const { status, trackingNumber, courierPartner } = await request.json();
 
     if (!status || !Object.values(OrderStatus).includes(status)) {
