@@ -36,7 +36,7 @@ function AdminLoginForm() {
   // If already authenticated as an Admin, redirect immediately
   useEffect(() => {
     if (isHydrated && status === "authenticated" && isAdmin) {
-      const callback = searchParams.get("callbackUrl") || "/admin/orders";
+      const callback = searchParams.get("callbackUrl") || "/admin/dashboard";
       router.replace(callback);
     }
   }, [isHydrated, status, isAdmin, router, searchParams]);
@@ -117,7 +117,7 @@ function AdminLoginForm() {
       setAttempts(0);
 
       // Successfully authenticated as administrator
-      const callbackUrl = searchParams.get("callbackUrl") || "/admin/orders";
+      const callbackUrl = searchParams.get("callbackUrl") || "/admin/dashboard";
       router.push(callbackUrl);
       router.refresh();
     } catch (err: any) {
@@ -131,10 +131,11 @@ function AdminLoginForm() {
     setErrorMessage(null);
     try {
       const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const target = searchParams.get("callbackUrl") || "/admin/dashboard";
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${origin}/auth/callback?next=/admin/orders`,
+          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(target)}`,
         },
       });
       if (error) {

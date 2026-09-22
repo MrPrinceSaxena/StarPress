@@ -43,7 +43,7 @@ export async function GET(request: Request) {
       let destination = next;
 
       if (destination === "/account" && isAdmin) {
-        destination = "/admin/orders";
+        destination = "/admin/dashboard";
       }
 
       if (destination.startsWith("/") && !destination.startsWith("//")) {
