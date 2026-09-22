@@ -110,6 +110,17 @@ export async function middleware(req: NextRequest) {
       return createRedirect(loginUrl);
     }
 
+    // A3.1 Subdomain products route ("/products")
+    if (pathname === "/products" || pathname.startsWith("/products/")) {
+      const dest = pathname.replace(/^\/products/, "/admin/products");
+      if (isAuthenticated && isAdmin) {
+        return createRewrite(new URL(dest, req.url));
+      }
+      const loginUrl = new URL("/admin/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return createRedirect(loginUrl);
+    }
+
     // A4. Admin login page reverse guard
     if (pathname === "/admin/login") {
       if (isAuthenticated && isAdmin) {

@@ -13,7 +13,7 @@ import {
 import { useAuthSession } from "@/hooks/useAuthSession";
 
 interface AdminHeaderProps {
-  activeSection?: "orders" | "inquiries" | "analytics";
+  activeSection?: "orders" | "products" | "inquiries" | "analytics";
 }
 
 export default function AdminHeader({ activeSection = "orders" }: AdminHeaderProps) {
@@ -78,7 +78,7 @@ export default function AdminHeader({ activeSection = "orders" }: AdminHeaderPro
           </div>
 
           {/* Quick Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1.5">
             <Link
               href="/admin/orders"
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
@@ -89,6 +89,22 @@ export default function AdminHeader({ activeSection = "orders" }: AdminHeaderPro
             >
               Orders & Dispatch
             </Link>
+            <Link
+              href="/admin/products"
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeSection === "products"
+                  ? "bg-white/10 text-white border border-white/15 shadow-inner"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              Product Catalog
+            </Link>
+            <Link
+              href="/admin/products/new"
+              className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-brand-yellow bg-brand-yellow/10 hover:bg-brand-yellow/20 border border-brand-yellow/30 transition-all flex items-center gap-1"
+            >
+              <span>+ New Product</span>
+            </Link>
             <a
               href="https://wa.me/919999999999?text=StarPress%20Operations%20Support"
               target="_blank"
@@ -96,7 +112,7 @@ export default function AdminHeader({ activeSection = "orders" }: AdminHeaderPro
               className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1"
             >
               <HelpCircle size={13} />
-              Support Desk
+              Support
             </a>
           </nav>
 
