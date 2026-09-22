@@ -2,8 +2,26 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const requestUrl = new URL(request.url);
+  const searchParams = requestUrl.searchParams;
+
+  // Resolve true public origin from reverse proxy headers (Vercel strips external origin from request.url)
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
+  const host = forwardedHost || request.headers.get("host");
+
+  let origin = host
+    ? `${forwardedProto}://${host}`
+    : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || requestUrl.origin;
+
+  // Safeguard: Never redirect to localhost in production environments
+  if (origin.includes("localhost") && (process.env.NODE_ENV === "production" || process.env.VERCEL)) {
+    origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://star-press.vercel.app";
+  }
+
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
