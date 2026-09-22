@@ -11,7 +11,8 @@ export async function GET(request: Request) {
   // Resolve true public origin from reverse proxy headers (Vercel strips external origin from request.url)
   const forwardedHost = request.headers.get("x-forwarded-host");
   const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
-  const host = forwardedHost || request.headers.get("host");
+  const rawHost = forwardedHost || request.headers.get("host") || "";
+  const host = rawHost.toLowerCase().split(":")[0].replace(/^admin\.www\./, "admin.");
 
   let origin = host
     ? `${forwardedProto}://${host}`
