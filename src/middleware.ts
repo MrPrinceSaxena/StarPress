@@ -82,7 +82,7 @@ export async function middleware(req: NextRequest) {
     // A1. Root access ("/")
     if (pathname === "/" || pathname === "") {
       if (isAuthenticated && isAdmin) {
-        const rewriteUrl = new URL("/admin/orders", req.url);
+        const rewriteUrl = new URL("/admin/dashboard", req.url);
         rewriteUrl.search = req.nextUrl.search;
         return createRewrite(rewriteUrl);
       } else {
@@ -95,24 +95,24 @@ export async function middleware(req: NextRequest) {
     // A2. Subdomain login route ("/login")
     if (pathname === "/login") {
       if (isAuthenticated && isAdmin) {
-        return createRedirect(new URL("/admin/orders", req.url));
+        return createRedirect(new URL("/admin/dashboard", req.url));
       }
       return createRewrite(new URL("/admin/login", req.url));
     }
 
-    // A3. Subdomain orders route ("/orders")
-    if (pathname === "/orders") {
-      if (isAuthenticated && isAdmin) {
-        return createRewrite(new URL("/admin/orders", req.url));
-      }
-      const loginUrl = new URL("/admin/login", req.url);
-      loginUrl.searchParams.set("callbackUrl", "/orders");
-      return createRedirect(loginUrl);
-    }
+    // A3. All admin sections on subdomain (e.g. /dashboard, /orders, /products, /customers, etc.)
+    const ADMIN_SUBDOMAIN_SECTIONS = [
+      "dashboard", "orders", "products", "customers",
+      "finances", "analytics", "marketing", "discounts",
+      "content", "settings"
+    ];
 
-    // A3.1 Subdomain products route ("/products")
-    if (pathname === "/products" || pathname.startsWith("/products/")) {
-      const dest = pathname.replace(/^\/products/, "/admin/products");
+    const matchedSection = ADMIN_SUBDOMAIN_SECTIONS.find(
+      (sec) => pathname === `/${sec}` || pathname.startsWith(`/${sec}/`)
+    );
+
+    if (matchedSection) {
+      const dest = `/admin${pathname}`;
       if (isAuthenticated && isAdmin) {
         return createRewrite(new URL(dest, req.url));
       }
@@ -124,7 +124,7 @@ export async function middleware(req: NextRequest) {
     // A4. Admin login page reverse guard
     if (pathname === "/admin/login") {
       if (isAuthenticated && isAdmin) {
-        return createRedirect(new URL("/admin/orders", req.url));
+        return createRedirect(new URL("/admin/dashboard", req.url));
       }
       return addSecurityHeaders(response);
     }
@@ -186,7 +186,7 @@ export async function middleware(req: NextRequest) {
     } else {
       // Visiting /admin/login while already an admin
       if (isAuthenticated && isAdmin) {
-        return createRedirect(new URL("/admin/orders", req.url));
+        return createRedirect(new URL("/admin/dashboard", req.url));
       }
     }
   }

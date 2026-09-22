@@ -175,20 +175,6 @@ export default function MobileNavDrawer({
                     <ChevronRight size={15} className="text-zinc-500" />
                   </Link>
 
-                  {session.user.role === "ADMIN" && (
-                    <Link
-                      href="/admin/orders"
-                      onClick={onClose}
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-brand-cyan hover:text-white hover:bg-brand-cyan/10 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <ShieldCheck size={16} />
-                        <span>Admin Console</span>
-                      </div>
-                      <ChevronRight size={15} className="text-zinc-500" />
-                    </Link>
-                  )}
-
                   <button
                     type="button"
                     onClick={() => {

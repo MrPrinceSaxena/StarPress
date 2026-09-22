@@ -26,7 +26,7 @@ import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import MobileNavDrawer from "./MobileNavDrawer";
 import { useCart } from "@/context/CartContext";
-import { useAuthSession, useIsAdmin } from "@/hooks/useAuthSession";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 export interface HeaderProps {
   cartCount?: number;
@@ -36,7 +36,7 @@ interface MenuItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  description?: string;
+  description: string;
   divider?: boolean;
   highlight?: boolean;
 }
@@ -44,7 +44,6 @@ interface MenuItem {
 export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const router = useRouter();
   const { session, status, isHydrated, signOut: authSignOut } = useAuthSession();
-  const isAdmin = useIsAdmin();
   const { totalCount: dynamicCartCount } = useCart();
   const cartCount = propCartCount !== undefined ? propCartCount : dynamicCartCount;
 
@@ -146,18 +145,6 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
       icon: <Settings size={17} className="text-slate-400 shrink-0" />,
       description: "Notification & account preferences",
     },
-    ...(isAdmin
-      ? [
-          {
-            label: "Admin Console",
-            href: "/admin/orders",
-            icon: <ShieldAlert size={17} className="text-brand-cyan shrink-0" />,
-            description: "Manage orders, users & products",
-            divider: true,
-            highlight: true,
-          },
-        ]
-      : []),
   ];
 
   return (

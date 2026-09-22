@@ -87,7 +87,7 @@ function RegisterForm() {
   // Redirect if already authenticated
   useEffect(() => {
     if (status === "authenticated" && session) {
-      const redirectUrl = session.user?.role === "ADMIN" ? "/admin/orders" : callbackUrl;
+      const redirectUrl = session.user?.role === "ADMIN" ? "/admin/dashboard" : callbackUrl;
       router.replace(redirectUrl);
     }
   }, [status, session, router, callbackUrl]);

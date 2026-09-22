@@ -7,7 +7,6 @@ import {
   Package,
   MapPin,
   User,
-  ShieldAlert,
   LogOut,
   Clock,
   CheckCircle2,
@@ -264,8 +263,6 @@ function AccountContent() {
     return <AccountSkeleton />;
   }
 
-  const isAdmin = session.user.role === "ADMIN";
-
   return (
     <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">
       <Header />
@@ -282,11 +279,6 @@ function AccountContent() {
                 <h1 className="font-display font-black text-xl sm:text-2xl text-white">
                   {session.user.name}
                 </h1>
-                {isAdmin && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-brand-yellow text-black font-black text-[10px] uppercase tracking-wider">
-                    Admin
-                  </span>
-                )}
               </div>
               <p className="text-xs text-text-secondary mt-0.5">{session.user.email}</p>
               {session.user.phone && (
@@ -297,15 +289,6 @@ function AccountContent() {
 
           {/* Top Actions */}
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            {isAdmin && (
-              <Link
-                href="/admin/orders"
-                className="px-4 py-2 rounded-xl bg-brand-cyan/20 border border-brand-cyan/40 hover:bg-brand-cyan/30 text-brand-cyan text-xs font-bold flex items-center gap-2 transition-colors"
-              >
-                <ShieldAlert size={14} />
-                <span>Admin Console</span>
-              </Link>
-            )}
 
             <button
               type="button"

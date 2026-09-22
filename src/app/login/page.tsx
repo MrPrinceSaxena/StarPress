@@ -95,7 +95,7 @@ function LoginForm() {
     if (status === "authenticated" && session) {
       if (session.user?.role === "ADMIN") {
         const host = typeof window !== "undefined" ? window.location.host : "";
-        const target = host.includes("starpress.com") ? "https://admin.starpress.com/admin/orders" : "/admin/orders";
+        const target = host.includes("starpress.com") ? "https://admin.starpress.com/admin/dashboard" : "/admin/dashboard";
         router.replace(target);
       } else {
         router.replace(callbackUrl);
@@ -223,7 +223,7 @@ function LoginForm() {
         let dest = callbackUrl;
         if (isAdmin) {
           const host = typeof window !== "undefined" ? window.location.host : "";
-          dest = host.includes("starpress.com") ? "https://admin.starpress.com/admin/orders" : "/admin/orders";
+          dest = host.includes("starpress.com") ? "https://admin.starpress.com/admin/dashboard" : "/admin/dashboard";
         }
         window.location.href = dest;
       }
