@@ -66,6 +66,10 @@ export function useAuthSession(): AuthState {
   // EVENT-DRIVEN AUTH SYNCHRONIZATION via onAuthStateChange
   useEffect(() => {
     if (!isHydrated) return;
+    if (!isConfigured) {
+      setStatus('unauthenticated');
+      return;
+    }
 
     // 1. Initial session load
     supabase.auth
@@ -116,7 +120,7 @@ export function useAuthSession(): AuthState {
     return () => {
       subscription.unsubscribe();
     };
-  }, [isHydrated]);
+  }, [isHydrated, isConfigured]);
 
   // Sign out helper
   const handleSignOut = useCallback(async () => {
