@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import {
   ArrowLeft, Save, Eye, Trash2, Copy, Archive, MoreHorizontal,
   Package, ImageIcon, IndianRupee, BoxSelect, Layers, Truck,
@@ -27,8 +27,9 @@ const TABS = [
 
 type TabKey = typeof TABS[number]['key'];
 
-export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function ProductDetailPage({ params }: { params?: { id?: string } }) {
+  const routeParams = useParams();
+  const id = params?.id || (routeParams?.id as string) || '';
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>('basic');
   const [product, setProduct] = useState<AdminProduct | null>(null);
