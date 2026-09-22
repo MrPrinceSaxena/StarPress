@@ -259,7 +259,14 @@ function RegisterForm() {
       });
 
       if (error) {
-        setServerError(error.message || "Failed to create account. Please try again.");
+        const msg = (error.message || "").toLowerCase();
+        if (msg.includes("rate limit") || msg.includes("email rate limit")) {
+          setServerError(
+            "Supabase built-in email rate limit exceeded (free tier permits ~3 confirmation emails/hr). To fix this instantly: open Supabase Dashboard > Authentication > Providers > Email, and toggle off 'Confirm email'."
+          );
+        } else {
+          setServerError(error.message || "Failed to create account. Please try again.");
+        }
         setIsLoading(false);
         return;
       }
