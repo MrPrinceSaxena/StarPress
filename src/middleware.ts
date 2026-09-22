@@ -29,19 +29,28 @@ export async function middleware(req: NextRequest) {
   const isAuthenticated = !!user;
   const isAdmin = user?.app_metadata?.role === "ADMIN";
 
+  // Helper to preserve refreshed cookies across all redirects
+  const createRedirect = (url: URL | string) => {
+    const redirectRes = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((cookie) => {
+      redirectRes.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return addSecurityHeaders(redirectRes);
+  };
+
   // 2. Protected Routes Guard
-  if (PROTECTED_ROUTES.some((route) => pathname.startsWith(route))) {
+  if (PROTECTED_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
     if (!isAuthenticated) {
       const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
-      return addSecurityHeaders(NextResponse.redirect(loginUrl));
+      return createRedirect(loginUrl);
     }
 
     // Defense-in-depth: Admin routes require server-validated app_metadata.role
     if (pathname.startsWith("/admin") && !isAdmin) {
       const redirectUrl = new URL("/account", req.url);
       redirectUrl.searchParams.set("error", "AccessDenied");
-      return addSecurityHeaders(NextResponse.redirect(redirectUrl));
+      return createRedirect(redirectUrl);
     }
   }
 
@@ -55,16 +64,16 @@ export async function middleware(req: NextRequest) {
         try {
           const parsedCallback = new URL(callbackUrl, req.url);
           if (parsedCallback.origin === req.nextUrl.origin) {
-            return addSecurityHeaders(NextResponse.redirect(parsedCallback));
+            return createRedirect(parsedCallback);
           }
         } catch {
           if (callbackUrl.startsWith("/")) {
-            return addSecurityHeaders(NextResponse.redirect(new URL(callbackUrl, req.url)));
+            return createRedirect(new URL(callbackUrl, req.url));
           }
         }
       }
 
-      return addSecurityHeaders(NextResponse.redirect(new URL(destination, req.url)));
+      return createRedirect(new URL(destination, req.url));
     }
   }
 

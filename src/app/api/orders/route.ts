@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createOrder, CreateOrderInput } from "@/server/orders";
+import { getSessionUser } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +19,16 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Attach authenticated session user if present
+    try {
+      const user = await getSessionUser();
+      if (user && !body.userId) {
+        body.userId = user.id;
+        body.guestEmail = body.guestEmail || user.email;
+        body.guestName = body.guestName || user.name;
+      }
+    } catch {}
 
     const result = await createOrder(body);
 

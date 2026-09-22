@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -21,6 +21,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
 import { useCart } from "@/context/CartContext";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const INDIAN_STATES = [
   "Andhra Pradesh",
@@ -51,6 +52,7 @@ const INDIAN_STATES = [
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart, isLoaded } = useCart();
+  const { session } = useAuthSession();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -70,6 +72,18 @@ export default function CheckoutPage() {
     shippingMethod: "standard", // "standard" | "express"
     paymentMethod: "online", // "online" | "cod_proof"
   });
+
+  // Autofill checkout details when user is authenticated
+  useEffect(() => {
+    if (session?.user) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || session.user.name || "",
+        email: prev.email || session.user.email || "",
+        phone: prev.phone || session.user.phone || "",
+      }));
+    }
+  }, [session]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState<{
@@ -113,6 +127,7 @@ export default function CheckoutPage() {
 
     try {
       const payload = {
+        userId: session?.user?.id || undefined,
         guestEmail: formData.email,
         guestPhone: formData.phone,
         guestName: formData.fullName,

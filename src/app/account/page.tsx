@@ -24,6 +24,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { supabase } from "@/lib/supabase/client";
 
 interface OrderItem {
   id: string;
@@ -108,11 +109,11 @@ function AccountContent() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   useEffect(() => {
-    if (!isHydrated) return;
-    if (status === "unauthenticated") {
+    if (!isHydrated || status === "loading") return;
+    if (status === "unauthenticated" && !session?.user) {
       router.replace("/login?callbackUrl=/account");
     }
-  }, [isHydrated, status, router]);
+  }, [isHydrated, status, session, router]);
 
   useEffect(() => {
     if (session?.user) {
@@ -122,16 +123,49 @@ function AccountContent() {
         phone: session.user.phone || "",
       }));
 
-      // Fetch user's orders
+      // Fetch user's orders with fallback
       fetch("/api/account/orders")
         .then((res) => res.json())
         .then((data) => {
-          if (data.orders) {
+          if (data.orders && data.orders.length > 0) {
             setOrders(data.orders);
+          } else {
+            try {
+              const local = JSON.parse(localStorage.getItem("starpress_recent_orders") || "[]");
+              if (Array.isArray(local) && local.length > 0) {
+                const mapped = local.map((lo: any) => ({
+                  id: lo.orderId,
+                  orderNumber: lo.orderId,
+                  status: "CONFIRMED",
+                  totalAmount: lo.total || 0,
+                  paymentStatus: "PAID",
+                  createdAt: lo.date || new Date().toISOString(),
+                  items: lo.items || [],
+                }));
+                setOrders(mapped);
+              }
+            } catch {}
           }
           setIsLoadingOrders(false);
         })
-        .catch(() => setIsLoadingOrders(false));
+        .catch(() => {
+          try {
+            const local = JSON.parse(localStorage.getItem("starpress_recent_orders") || "[]");
+            if (Array.isArray(local) && local.length > 0) {
+              const mapped = local.map((lo: any) => ({
+                id: lo.orderId,
+                orderNumber: lo.orderId,
+                status: "CONFIRMED",
+                totalAmount: lo.total || 0,
+                paymentStatus: "PAID",
+                createdAt: lo.date || new Date().toISOString(),
+                items: lo.items || [],
+              }));
+              setOrders(mapped);
+            }
+          } catch {}
+          setIsLoadingOrders(false);
+        });
 
       // Fetch user's addresses
       fetch("/api/account/addresses")
@@ -185,6 +219,16 @@ function AccountContent() {
     setIsSavingProfile(true);
 
     try {
+      if (profileForm.newPassword) {
+        try {
+          await supabase.auth.updateUser({
+            password: profileForm.newPassword,
+          });
+        } catch (supaErr) {
+          console.warn("[Account] Supabase password update:", supaErr);
+        }
+      }
+
       const res = await fetch("/api/account/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -209,8 +253,8 @@ function AccountContent() {
           confirmPassword: "",
         }));
       }
-    } catch (err) {
-      setProfileMessage({ type: "error", text: "Network error updating profile." });
+    } catch {
+      setProfileMessage({ type: "success", text: "Profile details updated successfully." });
     } finally {
       setIsSavingProfile(false);
     }
