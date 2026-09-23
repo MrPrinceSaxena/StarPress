@@ -49,7 +49,7 @@ function resolveDomains(rawHost: string) {
     return {
       host,
       isAdminHost,
-      adminUrl: "http://admin.localhost:3000",
+      adminUrl: "http://localhost:3000/admin",
       storeUrl: "http://localhost:3000",
     };
   }
@@ -60,7 +60,7 @@ function resolveDomains(rawHost: string) {
     return {
       host,
       isAdminHost,
-      adminUrl: isAdminHost ? `https://${host}` : `https://${host}`,
+      adminUrl: `https://${host}/admin`,
       storeUrl: `https://${host}`,
     };
   }
@@ -78,7 +78,7 @@ function resolveDomains(rawHost: string) {
   return {
     host,
     isAdminHost,
-    adminUrl: `https://admin.${rootDomain}`,
+    adminUrl: isAdminHost ? `https://${host}` : `https://www.${rootDomain}/admin`,
     storeUrl: `https://www.${rootDomain}`,
   };
 }
@@ -124,16 +124,16 @@ export async function middleware(req: NextRequest) {
   // Fix any legacy/cached admin.www. or www.admin. requests immediately
   if (host.startsWith("admin.www.") || host.startsWith("www.admin.")) {
     const proto = req.headers.get("x-forwarded-proto") || "https";
-    const cleanHost = `admin.${host.replace(/^(admin\.www\.|www\.admin\.)/, "")}`;
-    return NextResponse.redirect(new URL(`${proto}://${cleanHost}${pathname}${req.nextUrl.search}`), {
+    const cleanHost = host.replace(/^(admin\.www\.|www\.admin\.)/, "");
+    return NextResponse.redirect(new URL(`${proto}://${cleanHost}/admin${pathname.replace(/^\/admin/, "")}${req.nextUrl.search}`), {
       status: 301,
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
     });
   }
 
   // =========================================================================
-  // SCENARIO A: Dedicated Admin Subdomain (https://admin.starpress.in)
-  // All administrative operations MUST run exclusively under this host.
+  // SCENARIO A: Dedicated Admin Subdomain (e.g. admin.starpress.in)
+  // Activated ONLY when DNS points directly to the admin subdomain.
   // =========================================================================
   if (isAdminHost) {
     // A1. Root access ("/")
@@ -210,16 +210,44 @@ export async function middleware(req: NextRequest) {
   }
 
   // =========================================================================
-  // SCENARIO B: Primary Customer Storefront (https://www.starpress.in)
-  // Admin is strictly FORBIDDEN here. Any /admin request is routed to adminUrl.
+  // SCENARIO B: Primary Storefront Domain (starpress.in, www.starpress.in, localhost)
+  // Direct path-based admin access (/admin/*).
+  // PERMANENT FIX: Never redirect /admin to a subdomain (e.g. admin.starpress.in)
+  // which causes DNS_PROBE_FINISHED_NXDOMAIN when DNS is not configured.
   // =========================================================================
 
   // B1. Admin portal requests on storefront domain:
-  // Redirect strictly to the dedicated admin subdomain (e.g. https://admin.starpress.in)
+  // Handled directly under /admin on the current domain with strict authentication.
   if (pathname.startsWith("/admin")) {
-    const targetPath = pathname === "/admin" ? "/" : pathname.replace(/^\/admin/, "");
-    const target = new URL(targetPath + req.nextUrl.search, adminUrl);
-    return createRedirect(target);
+    // Root /admin or /admin/
+    if (pathname === "/admin" || pathname === "/admin/") {
+      if (isAuthenticated && isAdmin) {
+        return createRedirect(new URL("/admin/dashboard", req.url));
+      }
+      return createRedirect(new URL("/admin/login", req.url));
+    }
+
+    // Admin login route (/admin/login)
+    if (pathname === "/admin/login") {
+      if (isAuthenticated && isAdmin) {
+        return createRedirect(new URL("/admin/dashboard", req.url));
+      }
+      return addSecurityHeaders(response);
+    }
+
+    // Protected admin routes (/admin/dashboard, /admin/orders, /admin/products, etc.)
+    if (!isAuthenticated) {
+      const loginUrl = new URL("/admin/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return createRedirect(loginUrl);
+    }
+
+    // In production, block non-admin authenticated users
+    if (!isAdmin && process.env.NODE_ENV === "production") {
+      return createRedirect(new URL("/account?error=AccessDenied", req.url));
+    }
+
+    return addSecurityHeaders(response);
   }
 
   // B2. Protected Customer Routes Guard (/account, /orders, /settings, etc.)

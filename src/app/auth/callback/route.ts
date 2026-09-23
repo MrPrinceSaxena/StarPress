@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
   // Safeguard: Never redirect to localhost in production environments
   if (origin.includes("localhost") && (process.env.NODE_ENV === "production" || process.env.VERCEL)) {
-    origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://star-press.vercel.app";
+    origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://www.starpress.in";
   }
 
   const code = searchParams.get("code");
