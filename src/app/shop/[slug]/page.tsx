@@ -12,11 +12,16 @@ import ProductTabs from "@/components/shop/ProductTabs";
 import CatalogProductCard from "@/components/shop/CatalogProductCard";
 import {
   getAllProducts,
-  getProductBySlug,
-  getProductsByCategory,
   PRODUCT_SLUG_ALIASES,
   getCategoryRedirect,
 } from "@/lib/catalog";
+import {
+  getLiveCatalogProducts,
+  getLiveProductBySlug,
+  getLiveProductsByCategory,
+} from "@/server/products";
+
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: {
@@ -32,7 +37,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const product = getProductBySlug(params.slug);
+  const product = getLiveProductBySlug(params.slug);
   if (!product) {
     const cat = getCategoryRedirect(params.slug);
     if (cat) {
@@ -70,14 +75,14 @@ export default function ProductDetailPage({ params }: PageProps) {
     redirect(`/shop?category=${categoryRedirect}`);
   }
 
-  const product = getProductBySlug(params.slug);
+  const product = getLiveProductBySlug(params.slug);
 
   if (!product) {
     notFound();
   }
 
   // Related products from the same category
-  const relatedProducts = getProductsByCategory(product.categorySlug)
+  const relatedProducts = getLiveProductsByCategory(product.categorySlug)
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
 

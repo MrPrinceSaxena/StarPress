@@ -9,5 +9,6 @@
     "currency": "INR",
     "timezone": "Asia/Kolkata",
     "gstin": "07AAAAA0000A1Z5"
-  }
+  },
+  "productOverrides": {}
 }

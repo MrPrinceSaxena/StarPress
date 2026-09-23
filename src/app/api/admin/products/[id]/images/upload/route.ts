@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
+import { persistentStore } from "@/server/storage";
+import { getAdminProductById } from "@/server/products";
 
 interface RouteParams {
   params: {
@@ -37,66 +39,33 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const altText = (formData.get("altText") as string) || "Product Image";
     const isPrimary = formData.get("isPrimary") === "true";
 
+    const newImages: any[] = [];
+
     if (!files || files.length === 0) {
-      // Also allow direct URL upload
       const directUrl = formData.get("imageUrl") as string;
       if (directUrl) {
-        try {
-          const imageRecord = await db.productImage.create({
-            data: {
-              productId: params.id,
-              url: directUrl,
-              altText,
-              isPrimary,
-              position: 0,
-            },
-          });
-          return NextResponse.json({ success: true, images: [imageRecord] });
-        } catch {
-          return NextResponse.json({
-            success: true,
-            images: [
-              {
-                id: `img-${Date.now()}`,
-                url: directUrl,
-                altText,
-                isPrimary,
-                position: 0,
-              },
-            ],
-          });
-        }
-      }
-
-      return NextResponse.json(
-        { error: "No image file or URL provided." },
-        { status: 400 }
-      );
-    }
-
-    const uploadedImages: any[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const mimeType = file.type || "image/jpeg";
-      const base64Data = `data:${mimeType};base64,${buffer.toString("base64")}`;
-
-      try {
-        const imageRecord = await db.productImage.create({
-          data: {
-            productId: params.id,
-            url: base64Data,
-            altText: `${altText} ${i + 1}`,
-            fileSize: file.size,
-            isPrimary: i === 0 && isPrimary,
-            position: i,
-          },
+        newImages.push({
+          id: `img-${Date.now()}`,
+          url: directUrl,
+          altText,
+          isPrimary,
+          position: 0,
         });
-        uploadedImages.push(imageRecord);
-      } catch {
-        uploadedImages.push({
+      } else {
+        return NextResponse.json(
+          { error: "No image file or URL provided." },
+          { status: 400 }
+        );
+      }
+    } else {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const mimeType = file.type || "image/jpeg";
+        const base64Data = `data:${mimeType};base64,${buffer.toString("base64")}`;
+
+        newImages.push({
           id: `img-${Date.now()}-${i}`,
           url: base64Data,
           altText: `${altText} ${i + 1}`,
@@ -107,9 +76,40 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    // Try Prisma DB create if possible
+    for (const img of newImages) {
+      try {
+        await db.productImage.create({
+          data: {
+            productId: params.id,
+            url: img.url,
+            altText: img.altText,
+            isPrimary: img.isPrimary,
+            position: img.position,
+          },
+        });
+      } catch {}
+    }
+
+    // Always persist to persistentStore so images show up everywhere immediately
+    const existing = await getAdminProductById(params.id);
+    const existingImages = existing?.images || [];
+    const allImages = [...existingImages, ...newImages];
+
+    persistentStore.saveProductOverride(params.id, { images: allImages });
+    if (existing?.slug) {
+      persistentStore.saveProductOverride(existing.slug, { images: allImages });
+    }
+
+    // Also update custom product if this was a custom product
+    const custom = persistentStore.getCustomProducts().find((c) => c.id === params.id || c.slug === params.id);
+    if (custom) {
+      persistentStore.saveCustomProduct({ ...custom, images: allImages });
+    }
+
     return NextResponse.json({
       success: true,
-      images: uploadedImages,
+      images: newImages,
     });
   } catch (error: any) {
     console.error("API image upload error:", error);

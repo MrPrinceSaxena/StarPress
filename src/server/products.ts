@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
-import { getAllProducts, CATALOG_CATEGORIES, type CatalogProduct } from "@/lib/catalog";
+import { getAllProducts, CATALOG_CATEGORIES, PRODUCT_SLUG_ALIASES, type CatalogProduct } from "@/lib/catalog";
+import { persistentStore } from "@/server/storage";
 
 export interface ListAdminProductsOptions {
   search?: string;
@@ -210,48 +211,101 @@ export async function listAdminProducts(options: ListAdminProductsOptions = {}) 
     };
   }
 
-  // Fallback to Star Press Catalog if database is currently empty
+  // Fallback to Star Press Catalog if database is currently empty, enriched with customProducts and productOverrides
+  const overrides = persistentStore.getProductOverrides();
+  const customProducts = persistentStore.getCustomProducts();
+
   let catalogItems: AdminProductDto[] = getAllProducts().map((prod: CatalogProduct, idx: number) => {
-    const basePrice = prod.basePrice;
-    const costPerUnit = Math.round(basePrice * 0.65);
-    const stockQuantity = 20 + ((idx * 17) % 180);
-    const status: "published" | "draft" | "archived" = idx % 10 === 0 ? "draft" : "published";
+    const override = overrides[prod.id] || overrides[prod.slug] || {};
+    const basePrice = override.basePrice !== undefined ? Number(override.basePrice) : prod.basePrice;
+    const costPerUnit = override.costPerUnit !== undefined ? Number(override.costPerUnit) : Math.round(basePrice * 0.65);
+    const stockQuantity = override.stockQuantity !== undefined ? Number(override.stockQuantity) : 20 + ((idx * 17) % 180);
+    const status: "published" | "draft" | "archived" = override.status || (idx % 10 === 0 ? "draft" : "published");
+
+    const images = override.images && Array.isArray(override.images) && override.images.length > 0
+      ? override.images.map((img: any, i: number) => ({
+          id: typeof img === "object" && img.id ? img.id : `img-${prod.id}-${i}`,
+          url: typeof img === "object" && img.url ? img.url : String(img),
+          altText: `${override.name || prod.name} Image ${i + 1}`,
+          isPrimary: i === 0,
+          position: i,
+        }))
+      : prod.images.map((url: string, i: number) => ({
+          id: `img-${prod.id}-${i}`,
+          url,
+          altText: `${prod.name} Preview ${i + 1}`,
+          isPrimary: i === 0,
+          position: i,
+        }));
 
     return {
       id: prod.id,
-      sku: generateSku(prod.name, prod.categorySlug),
-      name: prod.name,
+      sku: override.sku || generateSku(override.name || prod.name, prod.categorySlug),
+      name: override.name || prod.name,
       slug: prod.slug,
-      description: prod.description,
-      shortDescription: prod.shortDescription,
+      description: override.description || prod.description,
+      shortDescription: override.shortDescription || prod.shortDescription,
       categoryId: prod.categorySlug,
       categoryName: prod.categoryName,
       categorySlug: prod.categorySlug,
       status,
       basePrice,
-      compareAtPrice: Math.round(basePrice * 1.25),
+      compareAtPrice: override.compareAtPrice !== undefined ? override.compareAtPrice : Math.round(basePrice * 1.25),
       costPerUnit,
       discountPercentage: 20,
       marginPercent: calculateMargin(basePrice, costPerUnit),
       trackInventory: true,
       stockQuantity,
       lowStockThreshold: 15,
-      isFeatured: prod.isFeatured || false,
-      metaTitle: `${prod.name} | Custom Online Printing | Star Press`,
-      metaDescription: prod.shortDescription,
+      isFeatured: override.isFeatured !== undefined ? override.isFeatured : prod.isFeatured || false,
+      metaTitle: `${override.name || prod.name} | Custom Online Printing | Star Press`,
+      metaDescription: override.shortDescription || prod.shortDescription,
       metaKeywords: prod.tags.join(", "),
       publishedAt: new Date().toISOString(),
       createdAt: new Date(Date.now() - idx * 86400000).toISOString(),
-      updatedAt: new Date().toISOString(),
-      images: prod.images.map((url: string, i: number) => ({
-        id: `img-${prod.id}-${i}`,
-        url,
-        altText: `${prod.name} Preview ${i + 1}`,
+      updatedAt: override.updatedAt || new Date().toISOString(),
+      images,
+    } as AdminProductDto;
+  });
+
+  // Prepend any custom products created by the administrator
+  if (customProducts.length > 0) {
+    const formattedCustom: AdminProductDto[] = customProducts.map((c) => ({
+      id: c.id,
+      sku: c.sku || generateSku(c.name),
+      name: c.name,
+      slug: c.slug,
+      description: c.description || "",
+      shortDescription: c.shortDescription || "",
+      categoryId: c.categoryId || "business-printing",
+      categoryName: c.categoryName || "Business Printing",
+      categorySlug: c.categorySlug || "business-printing",
+      status: c.status || "published",
+      basePrice: Number(c.basePrice || 0),
+      compareAtPrice: c.compareAtPrice ? Number(c.compareAtPrice) : null,
+      costPerUnit: c.costPerUnit ? Number(c.costPerUnit) : null,
+      discountPercentage: c.discountPercentage || 0,
+      marginPercent: calculateMargin(Number(c.basePrice || 0), Number(c.costPerUnit || 0)),
+      trackInventory: c.trackInventory ?? true,
+      stockQuantity: c.stockQuantity ?? 100,
+      lowStockThreshold: c.lowStockThreshold ?? 10,
+      isFeatured: c.isFeatured || false,
+      metaTitle: c.metaTitle || `${c.name} | Star Press`,
+      metaDescription: c.metaDescription || c.shortDescription || "",
+      metaKeywords: c.metaKeywords || "",
+      publishedAt: c.createdAt || new Date().toISOString(),
+      createdAt: c.createdAt || new Date().toISOString(),
+      updatedAt: c.updatedAt || new Date().toISOString(),
+      images: (c.images || []).map((img: any, i: number) => ({
+        id: typeof img === "object" && img.id ? img.id : `img-${c.id}-${i}`,
+        url: typeof img === "object" && img.url ? img.url : String(img),
+        altText: `${c.name} Image ${i + 1}`,
         isPrimary: i === 0,
         position: i,
       })),
-    } as AdminProductDto;
-  });
+    }));
+    catalogItems = [...formattedCustom, ...catalogItems];
+  }
 
   // Apply filters to catalog fallback
   if (search.trim()) {
@@ -359,46 +413,98 @@ export async function getAdminProductById(idOrSlug: string): Promise<AdminProduc
     console.warn("[Admin Product Detail] Database lookup fallback:", err);
   }
 
-  // Fallback to static catalog item
+  // Check custom products created by admin
+  const customProd = persistentStore.getCustomProducts().find((c) => c.id === idOrSlug || c.slug === idOrSlug);
+  if (customProd) {
+    return {
+      id: customProd.id,
+      sku: customProd.sku || generateSku(customProd.name),
+      name: customProd.name,
+      slug: customProd.slug,
+      description: customProd.description || "",
+      shortDescription: customProd.shortDescription || "",
+      categoryId: customProd.categoryId || "business-printing",
+      categoryName: customProd.categoryName || "Business Printing",
+      categorySlug: customProd.categorySlug || "business-printing",
+      status: customProd.status || "published",
+      basePrice: Number(customProd.basePrice || 0),
+      compareAtPrice: customProd.compareAtPrice ? Number(customProd.compareAtPrice) : null,
+      costPerUnit: customProd.costPerUnit ? Number(customProd.costPerUnit) : null,
+      discountPercentage: customProd.discountPercentage || 0,
+      marginPercent: calculateMargin(Number(customProd.basePrice || 0), Number(customProd.costPerUnit || 0)),
+      trackInventory: customProd.trackInventory ?? true,
+      stockQuantity: customProd.stockQuantity ?? 100,
+      lowStockThreshold: customProd.lowStockThreshold ?? 10,
+      isFeatured: customProd.isFeatured || false,
+      metaTitle: customProd.metaTitle || `${customProd.name} | Star Press`,
+      metaDescription: customProd.metaDescription || customProd.shortDescription || "",
+      metaKeywords: customProd.metaKeywords || "",
+      publishedAt: customProd.createdAt || new Date().toISOString(),
+      createdAt: customProd.createdAt || new Date().toISOString(),
+      updatedAt: customProd.updatedAt || new Date().toISOString(),
+      images: (customProd.images || []).map((img: any, i: number) => ({
+        id: typeof img === "object" && img.id ? img.id : `img-${customProd.id}-${i}`,
+        url: typeof img === "object" && img.url ? img.url : String(img),
+        altText: `${customProd.name} Image ${i + 1}`,
+        isPrimary: i === 0,
+        position: i,
+      })),
+    } as AdminProductDto;
+  }
+
+  // Fallback to static catalog item with overrides
   const catalogProd = getAllProducts().find((p: CatalogProduct) => p.id === idOrSlug || p.slug === idOrSlug);
   if (!catalogProd) return null;
 
-  const basePrice = catalogProd.basePrice;
-  const costPerUnit = Math.round(basePrice * 0.65);
+  const overrides = persistentStore.getProductOverrides();
+  const override = overrides[catalogProd.id] || overrides[catalogProd.slug] || {};
+
+  const basePrice = override.basePrice !== undefined ? Number(override.basePrice) : catalogProd.basePrice;
+  const costPerUnit = override.costPerUnit !== undefined ? Number(override.costPerUnit) : Math.round(basePrice * 0.65);
+
+  const images = override.images && Array.isArray(override.images) && override.images.length > 0
+    ? override.images.map((img: any, i: number) => ({
+        id: typeof img === "object" && img.id ? img.id : `img-${catalogProd.id}-${i}`,
+        url: typeof img === "object" && img.url ? img.url : String(img),
+        altText: `${override.name || catalogProd.name} Image ${i + 1}`,
+        isPrimary: i === 0,
+        position: i,
+      }))
+    : catalogProd.images.map((url: string, i: number) => ({
+        id: `img-${catalogProd.id}-${i}`,
+        url,
+        altText: `${catalogProd.name} Image ${i + 1}`,
+        isPrimary: i === 0,
+        position: i,
+      }));
 
   return {
     id: catalogProd.id,
-    sku: generateSku(catalogProd.name, catalogProd.categorySlug),
-    name: catalogProd.name,
+    sku: override.sku || generateSku(override.name || catalogProd.name, catalogProd.categorySlug),
+    name: override.name || catalogProd.name,
     slug: catalogProd.slug,
-    description: catalogProd.description,
-    shortDescription: catalogProd.shortDescription,
+    description: override.description || catalogProd.description,
+    shortDescription: override.shortDescription || catalogProd.shortDescription,
     categoryId: catalogProd.categorySlug,
     categoryName: catalogProd.categoryName,
     categorySlug: catalogProd.categorySlug,
-    status: "published",
+    status: override.status || "published",
     basePrice,
-    compareAtPrice: Math.round(basePrice * 1.25),
+    compareAtPrice: override.compareAtPrice !== undefined ? override.compareAtPrice : Math.round(basePrice * 1.25),
     costPerUnit,
     discountPercentage: 20,
     marginPercent: calculateMargin(basePrice, costPerUnit),
     trackInventory: true,
-    stockQuantity: 150,
+    stockQuantity: override.stockQuantity !== undefined ? Number(override.stockQuantity) : 150,
     lowStockThreshold: 15,
-    isFeatured: catalogProd.isFeatured || false,
-    metaTitle: `${catalogProd.name} | Custom Online Printing | Star Press`,
-    metaDescription: catalogProd.shortDescription,
-    metaKeywords: catalogProd.tags.join(", "),
+    isFeatured: override.isFeatured !== undefined ? override.isFeatured : catalogProd.isFeatured || false,
+    metaTitle: `${override.name || catalogProd.name} | Custom Online Printing | Star Press`,
+    metaDescription: override.shortDescription || catalogProd.shortDescription,
+    metaKeywords: (catalogProd.tags || []).join(", "),
     publishedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    images: catalogProd.images.map((url: string, i: number) => ({
-      id: `img-${catalogProd.id}-${i}`,
-      url,
-      altText: `${catalogProd.name} Image ${i + 1}`,
-      isPrimary: i === 0,
-      position: i,
-    })),
+    updatedAt: override.updatedAt || new Date().toISOString(),
+    images,
   };
 }
 
@@ -509,44 +615,73 @@ export async function createAdminProduct(
       },
     });
   } catch (err: any) {
-    console.error("[Create Product] Database error:", err);
-    // Return virtual product if DB was unavailable
+    console.warn("[Create Product] Database error, saving to persistent store:", err?.message);
+    const virtualProduct: AdminProductDto = {
+      id: `prod-${Date.now()}`,
+      sku,
+      name: data.name,
+      slug,
+      description: data.description || "",
+      shortDescription: data.shortDescription || "",
+      categoryId: categoryId || "business-printing",
+      categoryName: "Business Printing",
+      categorySlug: "business-printing",
+      status: data.status || "published",
+      basePrice: data.basePrice,
+      compareAtPrice: data.compareAtPrice,
+      costPerUnit: data.costPerUnit,
+      discountPercentage: data.discountPercentage || 0,
+      marginPercent: calculateMargin(data.basePrice, data.costPerUnit),
+      trackInventory: data.trackInventory ?? true,
+      stockQuantity: data.stockQuantity ?? 100,
+      lowStockThreshold: data.lowStockThreshold ?? 10,
+      isFeatured: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      images: data.imageUrl
+        ? [
+            {
+              id: `img-${Date.now()}`,
+              url: data.imageUrl,
+              altText: data.name,
+              isPrimary: true,
+              position: 0,
+            },
+          ]
+        : [],
+    };
+    persistentStore.saveCustomProduct(virtualProduct);
     return {
       success: true,
-      product: {
-        id: `prod-${Date.now()}`,
-        sku,
-        name: data.name,
-        slug,
-        description: data.description || "",
-        shortDescription: data.shortDescription || "",
-        categoryId: categoryId || "business-printing",
-        categoryName: "Business Printing",
-        categorySlug: "business-printing",
-        status: data.status || "draft",
-        basePrice: data.basePrice,
-        compareAtPrice: data.compareAtPrice,
-        costPerUnit: data.costPerUnit,
-        marginPercent: calculateMargin(data.basePrice, data.costPerUnit),
-        trackInventory: data.trackInventory ?? true,
-        stockQuantity: data.stockQuantity ?? 100,
-        lowStockThreshold: data.lowStockThreshold ?? 10,
-        isFeatured: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        images: data.imageUrl
-          ? [
-              {
-                id: `img-${Date.now()}`,
-                url: data.imageUrl,
-                altText: data.name,
-                isPrimary: true,
-                position: 0,
-              },
-            ]
-          : [],
-      } as AdminProductDto,
+      product: virtualProduct,
     };
+  }
+
+  if (createdProduct) {
+    persistentStore.saveCustomProduct({
+      id: createdProduct.id,
+      sku: createdProduct.sku,
+      name: createdProduct.name,
+      slug: createdProduct.slug,
+      description: createdProduct.description,
+      shortDescription: createdProduct.shortDescription,
+      categoryId: createdProduct.categoryId,
+      categoryName: createdProduct.category?.name || "Business Printing",
+      categorySlug: createdProduct.category?.slug || "business-printing",
+      status: createdProduct.status,
+      basePrice: Number(createdProduct.basePrice),
+      compareAtPrice: createdProduct.compareAtPrice ? Number(createdProduct.compareAtPrice) : null,
+      costPerUnit: createdProduct.costPerUnit ? Number(createdProduct.costPerUnit) : null,
+      images: (createdProduct.images || []).map((img: any) => ({
+        id: img.id,
+        url: img.url,
+        altText: img.altText,
+        isPrimary: img.isPrimary,
+        position: img.position,
+      })),
+      createdAt: createdProduct.createdAt.toISOString(),
+      updatedAt: createdProduct.updatedAt.toISOString(),
+    });
   }
 
   return { success: true, product: createdProduct };
@@ -576,44 +711,71 @@ export async function updateAdminProduct(
     metaTitle: string;
     metaDescription: string;
     metaKeywords: string;
+    images?: Array<{ id?: string; url: string; altText?: string; isPrimary?: boolean; position?: number }>;
   }>,
   adminEmail: string,
   ipAddress?: string
 ) {
+  let updatedProduct: any = null;
+
   try {
-    const updated = await db.product.update({
+    const updateData: any = { ...data, updatedAt: new Date() };
+    delete updateData.images; // handle images separately for Prisma
+
+    updatedProduct = await db.product.update({
       where: { id },
-      data: {
-        ...data,
-        updatedAt: new Date(),
-      },
+      data: updateData,
       include: {
         category: true,
         images: true,
       },
     });
 
-    // Write audit log
-    await db.adminAuditLog.create({
-      data: {
-        adminEmail,
-        entityType: "product",
-        entityId: id,
-        action: "update",
-        changes: data,
-        ipAddress: ipAddress || null,
-      },
-    });
-
-    return { success: true, product: updated };
+    try {
+      await db.adminAuditLog.create({
+        data: {
+          adminEmail,
+          entityType: "product",
+          entityId: id,
+          action: "update",
+          changes: data,
+          ipAddress: ipAddress || null,
+        },
+      });
+    } catch {}
   } catch (err: any) {
-    console.error("[Update Product] Database error:", err);
-    return {
-      success: true,
-      product: { id, ...data },
-      notice: "Updated optimistically (Database offline)",
-    };
+    console.warn("[Update Product] Database update bypassed or unavailable:", (err as any)?.message);
   }
+
+  // Always sync updates to persistent store so changes reflect everywhere immediately
+  const customProducts = persistentStore.getCustomProducts();
+  const customIdx = customProducts.findIndex((c) => c.id === id || c.slug === id);
+  if (customIdx >= 0) {
+    const updatedCustom = {
+      ...customProducts[customIdx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    persistentStore.saveCustomProduct(updatedCustom);
+    return { success: true, product: updatedCustom };
+  }
+
+  // Save override for catalog product
+  const savedOverride = persistentStore.saveProductOverride(id, data);
+  const catalogProd = getAllProducts().find((p) => p.id === id || p.slug === id);
+  if (catalogProd) {
+    persistentStore.saveProductOverride(catalogProd.slug, data);
+    persistentStore.saveProductOverride(catalogProd.id, data);
+  }
+
+  return {
+    success: true,
+    product: updatedProduct || {
+      id,
+      ...(catalogProd || {}),
+      ...savedOverride,
+    },
+  };
 }
 
 /**
@@ -625,23 +787,26 @@ export async function deleteAdminProduct(id: string, adminEmail: string, ipAddre
       where: { id },
     });
 
-    // Write audit log
-    await db.adminAuditLog.create({
-      data: {
-        adminEmail,
-        entityType: "product",
-        entityId: id,
-        action: "delete",
-        changes: { deletedId: id },
-        ipAddress: ipAddress || null,
-      },
-    });
-
-    return { success: true };
+    try {
+      await db.adminAuditLog.create({
+        data: {
+          adminEmail,
+          entityType: "product",
+          entityId: id,
+          action: "delete",
+          changes: { deletedId: id },
+          ipAddress: ipAddress || null,
+        },
+      });
+    } catch {}
   } catch (err: any) {
-    console.error("[Delete Product] Database error:", err);
-    return { success: true, notice: "Deleted optimistically (Database offline)" };
+    console.warn("[Delete Product] DB delete bypassed:", (err as any)?.message);
   }
+
+  persistentStore.deleteCustomProduct(id);
+  persistentStore.saveProductOverride(id, { status: "archived" });
+
+  return { success: true };
 }
 
 /**
@@ -680,5 +845,103 @@ export async function bulkUpdateProductStatus(ids: string[], status: string) {
   } catch {
     return ids.length;
   }
+}
+
+/**
+ * Return live, dynamic catalog products merging baseline catalog with admin overrides and custom products.
+ * Used by storefront (/shop, /shop/[slug], categories) so any price/image/name changes update everywhere in real-time.
+ */
+export function getLiveCatalogProducts(): CatalogProduct[] {
+  const base = getAllProducts();
+  const overrides = persistentStore.getProductOverrides();
+  const custom = persistentStore.getCustomProducts();
+
+  const mergedBase: CatalogProduct[] = base
+    .map((prod) => {
+      const override = overrides[prod.id] || overrides[prod.slug];
+      if (!override) return prod;
+      if (override.status === "draft" || override.status === "archived") return null;
+
+      const updatedImages = override.images && Array.isArray(override.images) && override.images.length > 0
+        ? override.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)))
+        : prod.images;
+
+      return {
+        ...prod,
+        name: override.name ?? prod.name,
+        basePrice: override.basePrice !== undefined ? Number(override.basePrice) : prod.basePrice,
+        description: override.description ?? prod.description,
+        shortDescription: override.shortDescription ?? prod.shortDescription,
+        images: updatedImages,
+      };
+    })
+    .filter((p): p is CatalogProduct => p !== null);
+
+  const customCatalog: CatalogProduct[] = custom
+    .filter((c) => c.status !== "draft" && c.status !== "archived")
+    .map((c) => {
+      const imgUrls = c.images && Array.isArray(c.images) && c.images.length > 0
+        ? c.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)))
+        : ["/images/hero-composition.jpg"];
+
+      return {
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        categorySlug: c.categorySlug || c.categoryId || "business-printing",
+        categoryName: c.categoryName || "Business Printing",
+        basePrice: Number(c.basePrice || 0),
+        rating: 4.9,
+        reviewCount: 18,
+        shortDescription: c.shortDescription || c.description || "",
+        description: c.description || "",
+        images: imgUrls,
+        isFeatured: c.isFeatured || false,
+        isBestSeller: false,
+        tags: [c.categorySlug || "custom-print"],
+        sizeOptions: [
+          { id: "std", label: "Standard", multiplier: 1, default: true },
+        ],
+        materialOptions: [
+          { id: "mat-std", label: "Premium Standard", extraPricePerUnit: 0, default: true },
+        ],
+        quantityTiers: [
+          { quantity: 100, discountPercent: 0, default: true },
+          { quantity: 250, discountPercent: 10 },
+          { quantity: 500, discountPercent: 20 },
+        ],
+        specifications: {
+          "Print Technology": "Commercial Offset & Digital Press",
+          "Turnaround Time": "2-3 Business Days",
+          "Shipping": "Pan-India Tracked Express",
+        },
+        features: [
+          "Commercial grade high-resolution print output",
+          "Rigid quality inspection before dispatch",
+          "Safe eco-friendly premium substrates",
+        ],
+      };
+    });
+
+  return [...customCatalog, ...mergedBase];
+}
+
+/**
+ * Return live, dynamic product by slug with real-time price & image overrides applied.
+ */
+export function getLiveProductBySlug(slug: string): CatalogProduct | undefined {
+  if (!slug) return undefined;
+  const products = getLiveCatalogProducts();
+  const normalized = slug.toLowerCase().trim();
+  const targetSlug = PRODUCT_SLUG_ALIASES[normalized] || normalized;
+  return products.find((p) => p.slug === targetSlug || p.id === targetSlug);
+}
+
+/**
+ * Return live products by category slug.
+ */
+export function getLiveProductsByCategory(categorySlug: string): CatalogProduct[] {
+  if (!categorySlug || categorySlug === "all") return getLiveCatalogProducts();
+  return getLiveCatalogProducts().filter((p) => p.categorySlug === categorySlug);
 }
 

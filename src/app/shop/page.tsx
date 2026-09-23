@@ -5,7 +5,10 @@ import { Sparkles } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ShopClientView from "@/components/shop/ShopClientView";
-import { getAllCategories, getAllProducts } from "@/lib/catalog";
+import { getAllCategories } from "@/lib/catalog";
+import { getLiveCatalogProducts } from "@/server/products";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Commercial & Custom Printing Catalog | Star Press",
@@ -24,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function ShopPage() {
   const categories = getAllCategories();
-  const allProducts = getAllProducts();
+  const allProducts = getLiveCatalogProducts();
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">

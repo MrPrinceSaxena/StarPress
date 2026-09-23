@@ -63,6 +63,7 @@ export interface StoreSettings {
 export interface StoreData {
   orders: PersistedOrder[];
   customProducts: any[];
+  productOverrides?: Record<string, any>;
   settings: StoreSettings;
 }
 
@@ -76,36 +77,49 @@ const DEFAULT_SETTINGS: StoreSettings = {
   gstin: "07AAAAA0000A1Z5",
 };
 
+// In-memory cache for serverless environments where disk may be read-only
+let memoryStoreCache: StoreData | null = null;
+
 function ensureStoreFile(): StoreData {
+  if (memoryStoreCache) {
+    return memoryStoreCache;
+  }
   try {
     if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+      try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
     }
     if (!fs.existsSync(STORE_FILE)) {
       const initial: StoreData = {
-        orders: [], // Real clean state: ZERO seeded fake orders!
+        orders: [],
         customProducts: [],
+        productOverrides: {},
         settings: DEFAULT_SETTINGS,
       };
-      fs.writeFileSync(STORE_FILE, JSON.stringify(initial, null, 2), "utf-8");
+      try { fs.writeFileSync(STORE_FILE, JSON.stringify(initial, null, 2), "utf-8"); } catch {}
+      memoryStoreCache = initial;
       return initial;
     }
     const raw = fs.readFileSync(STORE_FILE, "utf-8");
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!parsed.productOverrides) parsed.productOverrides = {};
+    memoryStoreCache = parsed;
+    return parsed;
   } catch (err) {
-    console.error("[Store] Error reading store.json:", err);
-    return { orders: [], customProducts: [], settings: DEFAULT_SETTINGS };
+    console.warn("[Store] Falling back to memory store cache:", err);
+    memoryStoreCache = { orders: [], customProducts: [], productOverrides: {}, settings: DEFAULT_SETTINGS };
+    return memoryStoreCache;
   }
 }
 
 function saveStore(data: StoreData) {
+  memoryStoreCache = data;
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2), "utf-8");
   } catch (err) {
-    console.error("[Store] Error writing store.json:", err);
+    console.warn("[Store] Notice: Disk write skipped (ephemeral/serverless environment):", (err as any)?.message);
   }
 }
 
@@ -183,6 +197,24 @@ export const persistentStore = {
     store.customProducts = store.customProducts.filter((p) => p.id !== id);
     saveStore(store);
     return store.customProducts.length < before;
+  },
+
+  getProductOverrides(): Record<string, any> {
+    const store = ensureStoreFile();
+    return store.productOverrides || {};
+  },
+
+  saveProductOverride(idOrSlug: string, overrideData: any): any {
+    const store = ensureStoreFile();
+    if (!store.productOverrides) store.productOverrides = {};
+    const existing = store.productOverrides[idOrSlug] || {};
+    store.productOverrides[idOrSlug] = {
+      ...existing,
+      ...overrideData,
+      updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+    return store.productOverrides[idOrSlug];
   },
 
   getSettings(): StoreSettings {
