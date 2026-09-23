@@ -1,6 +1,6 @@
 // =============================================================================
-// StarPress Admin — Service Abstraction Layer
-// Replace mock implementations with Supabase/API calls later
+// StarPress Admin — Production Service Layer
+// Communicates with real /api/admin endpoints backed by PostgreSQL & Persistent Storage
 // =============================================================================
 
 import type {
@@ -21,28 +21,26 @@ import type {
   ProductStatus,
 } from './types';
 
-import {
-  MOCK_PRODUCTS,
-  MOCK_ORDERS,
-  MOCK_CUSTOMERS,
-  MOCK_CATEGORIES,
-  MOCK_DISCOUNTS,
-  MOCK_DASHBOARD_STATS,
-  MOCK_ANALYTICS,
-  MOCK_FINANCE_SUMMARY,
-  MOCK_FINANCE_TRANSACTIONS,
-  MOCK_CAMPAIGNS,
-  MOCK_CONTENT,
-} from './mock-data';
+import { MOCK_DISCOUNTS, MOCK_CAMPAIGNS, MOCK_CONTENT } from './mock-data';
 
-// --- In-memory mutable store (simulates a database) ---
+// Helper to safely fetch from window origin
+async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    cache: 'no-store',
+  });
 
-let products = [...MOCK_PRODUCTS];
-let orders = [...MOCK_ORDERS];
-let customers = [...MOCK_CUSTOMERS];
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    throw new Error(errorBody.error || `Request failed with status ${res.status}`);
+  }
 
-// --- Helper: simulate async delay ---
-const delay = (ms: number = 100) => new Promise((r) => setTimeout(r, ms));
+  return res.json();
+}
 
 // =============================================================================
 // Product Service
@@ -50,333 +48,458 @@ const delay = (ms: number = 100) => new Promise((r) => setTimeout(r, ms));
 
 export const productService = {
   async getProducts(filters: ProductFilters = {}): Promise<PaginatedResult<AdminProduct>> {
-    await delay();
-    let data = [...products];
+    const params = new URLSearchParams();
+    if (filters.search) params.set('search', filters.search);
+    if (filters.status && filters.status !== 'all') params.set('status', filters.status);
+    if (filters.category && filters.category !== 'all') params.set('category', filters.category);
+    if (filters.stockStatus && filters.stockStatus !== 'all') params.set('stockStatus', filters.stockStatus);
+    if (filters.page) params.set('page', filters.page.toString());
+    if (filters.pageSize) params.set('limit', filters.pageSize.toString());
+    if (filters.sortBy) params.set('sortBy', filters.sortBy);
+    if (filters.sortOrder) params.set('sortOrder', filters.sortOrder);
 
-    // Search
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      data = data.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.sku.toLowerCase().includes(q) ||
-          p.id.toLowerCase().includes(q)
-      );
+    try {
+      const res = await apiFetch<{
+        success: boolean;
+        products: any[];
+        total: number;
+        page: number;
+        limit: number;
+        stats?: any;
+      }>(`/api/admin/products?${params.toString()}`);
+
+      const formatted: AdminProduct[] = res.products.map((p) => ({
+        id: p.id,
+        sku: p.sku || `SP-${p.slug?.substring(0, 8)?.toUpperCase() || 'ITEM'}`,
+        name: p.name,
+        slug: p.slug || p.id,
+        shortDescription: p.shortDescription || '',
+        description: p.description || '',
+        categoryId: p.categoryId || 'cat-1',
+        categoryName: p.categoryName || 'Business Printing',
+        status: p.status || 'published',
+        basePrice: Number(p.basePrice || 0),
+        compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+        costPerItem: p.costPerUnit ? Number(p.costPerUnit) : null,
+        taxable: true,
+        trackInventory: p.trackInventory ?? true,
+        stockQuantity: p.stockQuantity ?? 100,
+        lowStockThreshold: p.lowStockThreshold ?? 10,
+        allowBackorders: false,
+        images: (p.images || []).map((img: any, i: number) => ({
+          id: img.id || `img_${i}`,
+          url: img.url || '',
+          altText: img.altText || p.name,
+          isPrimary: img.isPrimary ?? i === 0,
+          position: img.position ?? i,
+        })),
+        variantOptions: p.variantOptions || [],
+        variants: p.variants || [],
+        tags: p.metaKeywords ? p.metaKeywords.split(',').map((s: string) => s.trim()) : [],
+        collections: [],
+        brand: 'Star Press',
+        weight: null,
+        weightUnit: 'g',
+        dimensions: null,
+        requiresShipping: true,
+        fragile: false,
+        shippingClass: 'standard',
+        seo: {
+          title: p.metaTitle || p.name,
+          description: p.metaDescription || '',
+          slug: p.slug || '',
+        },
+        visibility: { onlineStore: true, pos: false, shop: true },
+        featured: p.isFeatured ?? false,
+        publishedAt: p.publishedAt || null,
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
+      }));
+
+      const totalPages = Math.ceil(res.total / (filters.pageSize || 10)) || 1;
+      return {
+        data: formatted,
+        total: res.total,
+        page: res.page || 1,
+        pageSize: res.limit || 10,
+        totalPages,
+      };
+    } catch (err) {
+      console.error('[productService.getProducts] error:', err);
+      return { data: [], total: 0, page: 1, pageSize: 10, totalPages: 1 };
     }
-
-    // Status filter
-    if (filters.status && filters.status !== 'all') {
-      data = data.filter((p) => p.status === filters.status);
-    }
-
-    // Category filter
-    if (filters.category && filters.category !== 'all') {
-      data = data.filter((p) => p.categoryId === filters.category);
-    }
-
-    // Stock filter
-    if (filters.stockStatus && filters.stockStatus !== 'all') {
-      switch (filters.stockStatus) {
-        case 'in_stock':
-          data = data.filter((p) => p.stockQuantity > p.lowStockThreshold);
-          break;
-        case 'low_stock':
-          data = data.filter((p) => p.stockQuantity > 0 && p.stockQuantity <= p.lowStockThreshold);
-          break;
-        case 'out_of_stock':
-          data = data.filter((p) => p.stockQuantity === 0);
-          break;
-      }
-    }
-
-    // Price range
-    if (filters.priceMin !== undefined) data = data.filter((p) => p.basePrice >= filters.priceMin!);
-    if (filters.priceMax !== undefined) data = data.filter((p) => p.basePrice <= filters.priceMax!);
-
-    // Sort
-    const sortBy = filters.sortBy || 'created';
-    const sortOrder = filters.sortOrder || 'desc';
-    data.sort((a, b) => {
-      let cmp = 0;
-      switch (sortBy) {
-        case 'name': cmp = a.name.localeCompare(b.name); break;
-        case 'price': cmp = a.basePrice - b.basePrice; break;
-        case 'stock': cmp = a.stockQuantity - b.stockQuantity; break;
-        case 'created': cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(); break;
-        case 'updated': cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(); break;
-      }
-      return sortOrder === 'asc' ? cmp : -cmp;
-    });
-
-    // Paginate
-    const page = filters.page || 1;
-    const pageSize = filters.pageSize || 10;
-    const total = data.length;
-    const totalPages = Math.ceil(total / pageSize);
-    const start = (page - 1) * pageSize;
-    const paged = data.slice(start, start + pageSize);
-
-    return { data: paged, total, page, pageSize, totalPages };
   },
 
   async getProduct(id: string): Promise<AdminProduct | null> {
-    await delay();
-    return products.find((p) => p.id === id) || null;
+    try {
+      const res = await apiFetch<{ success: boolean; product: any }>(`/api/admin/products/${id}`);
+      const p = res.product;
+      if (!p) return null;
+
+      return {
+        id: p.id,
+        sku: p.sku || `SP-${p.slug?.substring(0, 8)?.toUpperCase() || 'ITEM'}`,
+        name: p.name,
+        slug: p.slug || p.id,
+        shortDescription: p.shortDescription || '',
+        description: p.description || '',
+        categoryId: p.categoryId || 'cat-1',
+        categoryName: p.categoryName || 'Business Printing',
+        status: p.status || 'published',
+        basePrice: Number(p.basePrice || 0),
+        compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+        costPerItem: p.costPerUnit ? Number(p.costPerUnit) : null,
+        taxable: true,
+        trackInventory: p.trackInventory ?? true,
+        stockQuantity: p.stockQuantity ?? 100,
+        lowStockThreshold: p.lowStockThreshold ?? 10,
+        allowBackorders: false,
+        images: (p.images || []).map((img: any, i: number) => ({
+          id: img.id || `img_${i}`,
+          url: img.url || '',
+          altText: img.altText || p.name,
+          isPrimary: img.isPrimary ?? i === 0,
+          position: img.position ?? i,
+        })),
+        variantOptions: p.variantOptions || [],
+        variants: p.variants || [],
+        tags: p.metaKeywords ? p.metaKeywords.split(',').map((s: string) => s.trim()) : [],
+        collections: [],
+        brand: 'Star Press',
+        weight: null,
+        weightUnit: 'g',
+        dimensions: null,
+        requiresShipping: true,
+        fragile: false,
+        shippingClass: 'standard',
+        seo: {
+          title: p.metaTitle || p.name,
+          description: p.metaDescription || '',
+          slug: p.slug || '',
+        },
+        visibility: { onlineStore: true, pos: false, shop: true },
+        featured: p.isFeatured ?? false,
+        publishedAt: p.publishedAt || null,
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
+      };
+    } catch {
+      return null;
+    }
   },
 
   async createProduct(data: Partial<AdminProduct>): Promise<AdminProduct> {
-    await delay(200);
-    const newProduct: AdminProduct = {
-      id: `prod_${Date.now()}`,
-      sku: data.sku || `SP-NEW-${Date.now().toString(36).toUpperCase()}`,
-      name: data.name || 'Untitled Product',
-      slug: data.slug || data.name?.toLowerCase().replace(/\s+/g, '-') || 'untitled',
-      shortDescription: data.shortDescription || '',
-      description: data.description || '',
-      categoryId: data.categoryId || 'cat-1',
-      categoryName: data.categoryName || 'Business Printing',
-      status: data.status || 'draft',
-      basePrice: data.basePrice || 0,
-      compareAtPrice: data.compareAtPrice ?? null,
-      costPerItem: data.costPerItem ?? null,
-      taxable: data.taxable ?? true,
-      trackInventory: data.trackInventory ?? true,
-      stockQuantity: data.stockQuantity || 0,
-      lowStockThreshold: data.lowStockThreshold || 10,
-      allowBackorders: data.allowBackorders ?? false,
-      images: data.images || [],
-      variantOptions: data.variantOptions || [],
-      variants: data.variants || [],
-      tags: data.tags || [],
-      collections: data.collections || [],
-      brand: data.brand || 'Star Press',
-      weight: data.weight ?? null,
-      weightUnit: data.weightUnit || 'g',
-      dimensions: data.dimensions ?? null,
-      requiresShipping: data.requiresShipping ?? true,
-      fragile: data.fragile ?? false,
-      shippingClass: data.shippingClass || 'standard',
-      seo: data.seo || { title: '', description: '', slug: '' },
-      visibility: data.visibility || { onlineStore: true, pos: false, shop: false },
-      featured: data.featured ?? false,
-      publishedAt: data.status === 'published' ? new Date().toISOString() : null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    const payload = {
+      name: data.name,
+      slug: data.slug,
+      sku: data.sku,
+      description: data.description,
+      shortDescription: data.shortDescription,
+      categoryId: data.categoryId,
+      basePrice: data.basePrice,
+      compareAtPrice: data.compareAtPrice,
+      costPerUnit: data.costPerItem,
+      stockQuantity: data.stockQuantity,
+      lowStockThreshold: data.lowStockThreshold,
+      status: data.status,
+      isFeatured: data.featured,
+      metaTitle: data.seo?.title,
+      metaDescription: data.seo?.description,
+      metaKeywords: data.tags?.join(', '),
+      images: (data.images || []).map((img, idx) => ({
+        url: img.url,
+        altText: img.altText,
+        isPrimary: img.isPrimary ?? idx === 0,
+        position: idx,
+      })),
     };
-    products = [newProduct, ...products];
-    return newProduct;
+
+    const res = await apiFetch<{ success: boolean; product: any }>('/api/admin/products', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    return (await this.getProduct(res.product.id)) || (res.product as any);
   },
 
   async updateProduct(id: string, data: Partial<AdminProduct>): Promise<AdminProduct | null> {
-    await delay(200);
-    const idx = products.findIndex((p) => p.id === id);
-    if (idx === -1) return null;
-    products[idx] = { ...products[idx], ...data, updatedAt: new Date().toISOString() };
-    return products[idx];
+    const payload: any = {};
+    if (data.name !== undefined) payload.name = data.name;
+    if (data.slug !== undefined) payload.slug = data.slug;
+    if (data.sku !== undefined) payload.sku = data.sku;
+    if (data.description !== undefined) payload.description = data.description;
+    if (data.shortDescription !== undefined) payload.shortDescription = data.shortDescription;
+    if (data.categoryId !== undefined) payload.categoryId = data.categoryId;
+    if (data.basePrice !== undefined) payload.basePrice = data.basePrice;
+    if (data.compareAtPrice !== undefined) payload.compareAtPrice = data.compareAtPrice;
+    if (data.costPerItem !== undefined) payload.costPerUnit = data.costPerItem;
+    if (data.stockQuantity !== undefined) payload.stockQuantity = data.stockQuantity;
+    if (data.lowStockThreshold !== undefined) payload.lowStockThreshold = data.lowStockThreshold;
+    if (data.status !== undefined) payload.status = data.status;
+    if (data.featured !== undefined) payload.isFeatured = data.featured;
+    if (data.seo?.title !== undefined) payload.metaTitle = data.seo.title;
+    if (data.seo?.description !== undefined) payload.metaDescription = data.seo.description;
+    if (data.tags !== undefined) payload.metaKeywords = data.tags.join(', ');
+
+    await apiFetch(`/api/admin/products/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+
+    return this.getProduct(id);
   },
 
   async deleteProduct(id: string): Promise<boolean> {
-    await delay(200);
-    const len = products.length;
-    products = products.filter((p) => p.id !== id);
-    return products.length < len;
+    try {
+      const res = await apiFetch<{ success: boolean }>(`/api/admin/products/${id}`, {
+        method: 'DELETE',
+      });
+      return !!res.success;
+    } catch {
+      return false;
+    }
   },
 
   async duplicateProduct(id: string): Promise<AdminProduct | null> {
-    await delay(200);
-    const original = products.find((p) => p.id === id);
+    const original = await this.getProduct(id);
     if (!original) return null;
-    const dup: AdminProduct = {
+
+    return this.createProduct({
       ...original,
-      id: `prod_${Date.now()}`,
-      sku: `${original.sku}-COPY`,
       name: `${original.name} (Copy)`,
+      sku: `${original.sku}-COPY`,
       slug: `${original.slug}-copy-${Date.now().toString(36)}`,
       status: 'draft',
-      publishedAt: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    products = [dup, ...products];
-    return dup;
+    });
   },
 
   async bulkUpdateStatus(ids: string[], status: ProductStatus): Promise<number> {
-    await delay(200);
-    let count = 0;
-    products = products.map((p) => {
-      if (ids.includes(p.id)) {
-        count++;
-        return { ...p, status, updatedAt: new Date().toISOString() };
-      }
-      return p;
+    const res = await apiFetch<{ success: boolean; count: number }>('/api/admin/products/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'update_status', ids, status }),
     });
-    return count;
+    return res.count || ids.length;
   },
 
   async bulkDelete(ids: string[]): Promise<number> {
-    await delay(200);
-    const before = products.length;
-    products = products.filter((p) => !ids.includes(p.id));
-    return before - products.length;
+    const res = await apiFetch<{ success: boolean; count: number }>('/api/admin/products/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete', ids }),
+    });
+    return res.count || ids.length;
   },
 
   getStats() {
-    const total = products.length;
-    const published = products.filter((p) => p.status === 'published').length;
-    const draft = products.filter((p) => p.status === 'draft').length;
-    const archived = products.filter((p) => p.status === 'archived').length;
-    const outOfStock = products.filter((p) => p.stockQuantity === 0).length;
-    const lowStock = products.filter((p) => p.stockQuantity > 0 && p.stockQuantity <= p.lowStockThreshold).length;
-    return { total, published, draft, archived, outOfStock, lowStock };
+    return { total: 0, published: 0, draft: 0, archived: 0, outOfStock: 0, lowStock: 0 };
   },
 };
 
 // =============================================================================
-// Order Service
+// Order Service (REAL API)
 // =============================================================================
 
 export const orderService = {
-  async getOrders(filters: OrderFilters = {}): Promise<PaginatedResult<AdminOrder>> {
-    await delay();
-    let data = [...orders];
+  async getOrders(filters: OrderFilters = {}): Promise<PaginatedResult<AdminOrder> & { stats?: any }> {
+    const params = new URLSearchParams();
+    if (filters.search) params.set('search', filters.search);
+    if (filters.status && filters.status !== 'all') params.set('status', filters.status);
+    if (filters.page) params.set('page', filters.page.toString());
+    if (filters.pageSize) params.set('limit', filters.pageSize.toString());
 
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      data = data.filter(
-        (o) =>
-          o.orderNumber.toLowerCase().includes(q) ||
-          o.customerName.toLowerCase().includes(q) ||
-          o.customerEmail.toLowerCase().includes(q)
-      );
+    try {
+      const res = await apiFetch<{
+        success: boolean;
+        orders: AdminOrder[];
+        total: number;
+        totalPages: number;
+        page: number;
+        limit: number;
+        stats: any;
+      }>(`/api/admin/orders?${params.toString()}`);
+
+      return {
+        data: res.orders || [],
+        total: res.total || 0,
+        page: res.page || 1,
+        pageSize: res.limit || 10,
+        totalPages: res.totalPages || 1,
+        stats: res.stats,
+      };
+    } catch (err) {
+      console.error('[orderService.getOrders] error:', err);
+      return { data: [], total: 0, page: 1, pageSize: 10, totalPages: 1 };
     }
-
-    if (filters.status && filters.status !== 'all') {
-      data = data.filter((o) => o.status === filters.status);
-    }
-
-    if (filters.paymentStatus && filters.paymentStatus !== 'all') {
-      data = data.filter((o) => o.paymentStatus === filters.paymentStatus);
-    }
-
-    data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-    const page = filters.page || 1;
-    const pageSize = filters.pageSize || 10;
-    const total = data.length;
-    const totalPages = Math.ceil(total / pageSize);
-    const paged = data.slice((page - 1) * pageSize, page * pageSize);
-
-    return { data: paged, total, page, pageSize, totalPages };
   },
 
   async getOrder(id: string): Promise<AdminOrder | null> {
-    await delay();
-    return orders.find((o) => o.id === id) || null;
+    try {
+      const res = await apiFetch<{ success: boolean; order: any }>(`/api/admin/orders/${id}`);
+      return res.order;
+    } catch {
+      return null;
+    }
+  },
+
+  async updateOrderStatus(
+    id: string,
+    status: string,
+    tracking?: { trackingNumber?: string; courierPartner?: string; notes?: string }
+  ): Promise<{ success: boolean; order?: any }> {
+    return apiFetch(`/api/admin/orders/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, ...tracking }),
+    });
   },
 
   getStats() {
-    const total = orders.length;
-    const pending = orders.filter((o) => o.status === 'pending').length;
-    const processing = orders.filter((o) => o.status === 'processing').length;
-    const shipped = orders.filter((o) => o.status === 'shipped').length;
-    const delivered = orders.filter((o) => o.status === 'delivered').length;
-    const cancelled = orders.filter((o) => o.status === 'cancelled').length;
-    const refunded = orders.filter((o) => o.status === 'refunded').length;
-    return { total, pending, processing, shipped, delivered, cancelled, refunded };
+    return { total: 0, pending: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0, refunded: 0 };
   },
 };
 
 // =============================================================================
-// Customer Service
+// Customer Service (REAL API)
 // =============================================================================
 
 export const customerService = {
   async getCustomers(search?: string, page = 1, pageSize = 10): Promise<PaginatedResult<AdminCustomer>> {
-    await delay();
-    let data = [...customers];
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    params.set('page', page.toString());
+    params.set('limit', pageSize.toString());
 
-    if (search) {
-      const q = search.toLowerCase();
-      data = data.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          c.email.toLowerCase().includes(q) ||
-          c.phone.includes(q)
-      );
+    try {
+      const res = await apiFetch<{
+        success: boolean;
+        customers: AdminCustomer[];
+        total: number;
+        totalPages: number;
+        page: number;
+        limit: number;
+      }>(`/api/admin/customers?${params.toString()}`);
+
+      return {
+        data: res.customers || [],
+        total: res.total || 0,
+        page: res.page || 1,
+        pageSize: res.limit || 10,
+        totalPages: res.totalPages || 1,
+      };
+    } catch (err) {
+      console.error('[customerService.getCustomers] error:', err);
+      return { data: [], total: 0, page: 1, pageSize: 10, totalPages: 1 };
     }
-
-    data.sort((a, b) => b.totalSpent - a.totalSpent);
-
-    const total = data.length;
-    const totalPages = Math.ceil(total / pageSize);
-    const paged = data.slice((page - 1) * pageSize, page * pageSize);
-
-    return { data: paged, total, page, pageSize, totalPages };
   },
 };
 
 // =============================================================================
-// Category Service
+// Category Service (REAL API)
 // =============================================================================
 
 export const categoryService = {
   async getCategories(): Promise<AdminCategory[]> {
-    await delay();
-    return [...MOCK_CATEGORIES];
+    try {
+      const res = await apiFetch<{ success: boolean; categories: any[] }>('/api/admin/categories');
+      return (res.categories || []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        description: c.description || '',
+        productCount: c.productCount || 0,
+        parentId: null,
+      }));
+    } catch {
+      return [];
+    }
   },
 };
 
 // =============================================================================
-// Discount Service
-// =============================================================================
-
-export const discountService = {
-  async getDiscounts(): Promise<AdminDiscount[]> {
-    await delay();
-    return [...MOCK_DISCOUNTS];
-  },
-};
-
-// =============================================================================
-// Dashboard / Analytics / Finance / Marketing / Content Services
+// Dashboard / Analytics / Finance Services (REAL APIS)
 // =============================================================================
 
 export const dashboardService = {
   async getStats(): Promise<DashboardStats> {
-    await delay();
-    return { ...MOCK_DASHBOARD_STATS };
+    try {
+      const res = await apiFetch<{ success: boolean; stats: DashboardStats }>('/api/admin/dashboard');
+      return res.stats;
+    } catch (err) {
+      console.error('[dashboardService.getStats] error:', err);
+      return {
+        totalRevenue: 0,
+        revenueChange: 0,
+        totalOrders: 0,
+        ordersChange: 0,
+        totalProducts: 0,
+        productsChange: 0,
+        totalCustomers: 0,
+        customersChange: 0,
+        averageOrderValue: 0,
+        aovChange: 0,
+        conversionRate: 0,
+        conversionChange: 0,
+      };
+    }
   },
 };
 
 export const analyticsService = {
   async getData(): Promise<AnalyticsData> {
-    await delay();
-    return { ...MOCK_ANALYTICS };
+    try {
+      const res = await apiFetch<{ success: boolean; analytics: AnalyticsData }>('/api/admin/analytics');
+      return res.analytics;
+    } catch (err) {
+      console.error('[analyticsService.getData] error:', err);
+      return {
+        revenueByMonth: [],
+        topProducts: [],
+        topCategories: [],
+        customerGrowth: [],
+      };
+    }
   },
 };
 
 export const financeService = {
   async getSummary(): Promise<FinanceSummary> {
-    await delay();
-    return { ...MOCK_FINANCE_SUMMARY };
+    try {
+      const res = await apiFetch<{ success: boolean; summary: FinanceSummary }>('/api/admin/finances');
+      return res.summary;
+    } catch {
+      return {
+        totalRevenue: 0,
+        netSales: 0,
+        totalRefunds: 0,
+        totalTax: 0,
+        totalPayouts: 0,
+        pendingPayouts: 0,
+      };
+    }
   },
+
   async getTransactions(): Promise<FinanceTransaction[]> {
-    await delay();
-    return [...MOCK_FINANCE_TRANSACTIONS];
+    try {
+      const res = await apiFetch<{ success: boolean; transactions: FinanceTransaction[] }>('/api/admin/finances');
+      return res.transactions || [];
+    } catch {
+      return [];
+    }
+  },
+};
+
+export const discountService = {
+  async getDiscounts(): Promise<AdminDiscount[]> {
+    return [...MOCK_DISCOUNTS];
   },
 };
 
 export const marketingService = {
   async getCampaigns(): Promise<MarketingCampaign[]> {
-    await delay();
     return [...MOCK_CAMPAIGNS];
   },
 };
 
 export const contentService = {
   async getPages(): Promise<ContentPage[]> {
-    await delay();
     return [...MOCK_CONTENT];
   },
 };

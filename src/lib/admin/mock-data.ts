@@ -504,152 +504,11 @@ export const MOCK_PRODUCTS: AdminProduct[] = [
 
 // --- Orders ---
 
-export const MOCK_ORDERS: AdminOrder[] = [
-  {
-    id: 'ord_001', orderNumber: 'SP-2409-001', customerName: 'Rajesh Sharma', customerEmail: 'rajesh.sharma@example.com', customerPhone: '+91 98765 43210',
-    date: '2024-09-22T08:30:00Z',
-    items: [
-      { id: 'oi_001', productId: 'prod_001', productName: 'Premium Business Cards', sku: 'SP-BC-001-STD-MAT', quantity: 2, unitPrice: 499, total: 998, image: '/images/cat-business-cards.jpg' },
-      { id: 'oi_002', productId: 'prod_005', productName: 'Corporate Letterheads', sku: 'SP-LH-001', quantity: 1, unitPrice: 699, total: 699, image: '' },
-    ],
-    itemCount: 3, subtotal: 1697, tax: 305, shipping: 99, discount: 0, total: 2101,
-    paymentStatus: 'paid', fulfillmentStatus: 'unfulfilled', status: 'processing',
-    shippingAddress: '42, Connaught Place, New Delhi 110001', notes: 'Urgent delivery needed',
-  },
-  {
-    id: 'ord_002', orderNumber: 'SP-2409-002', customerName: 'Priya Patel', customerEmail: 'priya.patel@company.in', customerPhone: '+91 87654 32109',
-    date: '2024-09-21T14:15:00Z',
-    items: [
-      { id: 'oi_003', productId: 'prod_007', productName: 'Luxury Wedding Cards', sku: 'SP-WC-001-CLS-GLD', quantity: 5, unitPrice: 1999, total: 9995, image: '' },
-    ],
-    itemCount: 5, subtotal: 9995, tax: 1799, shipping: 199, discount: 500, total: 11493,
-    paymentStatus: 'paid', fulfillmentStatus: 'partial', status: 'processing',
-    shippingAddress: '15, MG Road, Bangalore 560001', notes: 'Wedding on Oct 15. Deliver by Oct 5.',
-  },
-  {
-    id: 'ord_003', orderNumber: 'SP-2409-003', customerName: 'Amit Kumar', customerEmail: 'amit.k@startup.io', customerPhone: '+91 76543 21098',
-    date: '2024-09-20T10:45:00Z',
-    items: [
-      { id: 'oi_004', productId: 'prod_004', productName: 'Custom Die-Cut Stickers', sku: 'SP-CS-001-2x2-G', quantity: 10, unitPrice: 349, total: 3490, image: '' },
-      { id: 'oi_005', productId: 'prod_009', productName: 'Custom T-Shirt Printing', sku: 'SP-TS-001-M-WHT', quantity: 25, unitPrice: 399, total: 9975, image: '' },
-    ],
-    itemCount: 35, subtotal: 13465, tax: 2424, shipping: 299, discount: 1347, total: 14841,
-    paymentStatus: 'paid', fulfillmentStatus: 'fulfilled', status: 'shipped',
-    shippingAddress: '88, Sector 18, Noida 201301', notes: '',
-  },
-  {
-    id: 'ord_004', orderNumber: 'SP-2409-004', customerName: 'Sneha Reddy', customerEmail: 'sneha.r@design.co', customerPhone: '+91 65432 10987',
-    date: '2024-09-19T16:20:00Z',
-    items: [
-      { id: 'oi_006', productId: 'prod_002', productName: 'A4 Flyers & Leaflets', sku: 'SP-FL-001-130', quantity: 20, unitPrice: 299, total: 5980, image: '' },
-      { id: 'oi_007', productId: 'prod_006', productName: 'Tri-Fold Brochures', sku: 'SP-BR-001-170', quantity: 10, unitPrice: 599, total: 5990, image: '' },
-    ],
-    itemCount: 30, subtotal: 11970, tax: 2155, shipping: 149, discount: 0, total: 14274,
-    paymentStatus: 'paid', fulfillmentStatus: 'fulfilled', status: 'delivered',
-    shippingAddress: '23, Jubilee Hills, Hyderabad 500033', notes: 'Corporate event materials',
-  },
-  {
-    id: 'ord_005', orderNumber: 'SP-2409-005', customerName: 'Vikram Singh', customerEmail: 'vikram.s@law.firm', customerPhone: '+91 54321 09876',
-    date: '2024-09-18T09:00:00Z',
-    items: [
-      { id: 'oi_008', productId: 'prod_014', productName: 'Business Envelopes', sku: 'SP-EN-001-DL', quantity: 5, unitPrice: 399, total: 1995, image: '' },
-      { id: 'oi_009', productId: 'prod_016', productName: 'Duplicate Bill Books', sku: 'SP-BB-001-DUP', quantity: 10, unitPrice: 349, total: 3490, image: '' },
-    ],
-    itemCount: 15, subtotal: 5485, tax: 987, shipping: 99, discount: 0, total: 6571,
-    paymentStatus: 'paid', fulfillmentStatus: 'fulfilled', status: 'delivered',
-    shippingAddress: '7, Lajpat Nagar, New Delhi 110024', notes: '',
-  },
-  {
-    id: 'ord_006', orderNumber: 'SP-2409-006', customerName: 'Meera Joshi', customerEmail: 'meera.j@cafe.in', customerPhone: '+91 43210 98765',
-    date: '2024-09-17T12:30:00Z',
-    items: [
-      { id: 'oi_010', productId: 'prod_003', productName: 'Vinyl Banners', sku: 'SP-VB-001-6x3', quantity: 2, unitPrice: 2999, total: 5998, image: '' },
-      { id: 'oi_011', productId: 'prod_011', productName: 'Retractable Standees', sku: 'SP-SD-001-3x6', quantity: 3, unitPrice: 1299, total: 3897, image: '' },
-    ],
-    itemCount: 5, subtotal: 9895, tax: 1781, shipping: 399, discount: 990, total: 11085,
-    paymentStatus: 'paid', fulfillmentStatus: 'unfulfilled', status: 'pending',
-    shippingAddress: '56, Park Street, Kolkata 700016', notes: 'New cafe opening. Need by Sept 25.',
-  },
-  {
-    id: 'ord_007', orderNumber: 'SP-2409-007', customerName: 'Arjun Mehta', customerEmail: 'arjun.m@corp.com', customerPhone: '+91 32109 87654',
-    date: '2024-09-16T15:45:00Z',
-    items: [
-      { id: 'oi_012', productId: 'prod_010', productName: 'Branded Notebooks', sku: 'SP-NB-001-HB', quantity: 100, unitPrice: 249, total: 24900, image: '' },
-      { id: 'oi_013', productId: 'prod_013', productName: 'Custom Ceramic Mugs', sku: 'SP-MP-001-WHT', quantity: 50, unitPrice: 299, total: 14950, image: '' },
-    ],
-    itemCount: 150, subtotal: 39850, tax: 7173, shipping: 599, discount: 3985, total: 43637,
-    paymentStatus: 'paid', fulfillmentStatus: 'partial', status: 'processing',
-    shippingAddress: '101, BKC, Mumbai 400051', notes: 'Corporate gifts for annual event. Notebooks ready, mugs pending.',
-  },
-  {
-    id: 'ord_008', orderNumber: 'SP-2409-008', customerName: 'Kavitha Nair', customerEmail: 'kavitha@boutique.in', customerPhone: '+91 21098 76543',
-    date: '2024-09-15T11:00:00Z',
-    items: [
-      { id: 'oi_014', productId: 'prod_022', productName: 'Hang Tags', sku: 'SP-HT-001-ART', quantity: 50, unitPrice: 249, total: 12450, image: '' },
-      { id: 'oi_015', productId: 'prod_008', productName: 'Custom Packaging Boxes', sku: 'SP-PB-001-3P-1C', quantity: 20, unitPrice: 2499, total: 49980, image: '' },
-    ],
-    itemCount: 70, subtotal: 62430, tax: 11237, shipping: 799, discount: 6243, total: 68223,
-    paymentStatus: 'pending', fulfillmentStatus: 'unfulfilled', status: 'pending',
-    shippingAddress: '33, Anna Salai, Chennai 600002', notes: 'New clothing line launch. Need premium quality.',
-  },
-  {
-    id: 'ord_009', orderNumber: 'SP-2409-009', customerName: 'Rahul Gupta', customerEmail: 'rahul.g@events.co', customerPhone: '+91 10987 65432',
-    date: '2024-09-14T09:15:00Z',
-    items: [
-      { id: 'oi_016', productId: 'prod_017', productName: 'Posters (A3/A2/A1)', sku: 'SP-PS-001-A2-MAT', quantity: 50, unitPrice: 349, total: 17450, image: '' },
-    ],
-    itemCount: 50, subtotal: 17450, tax: 3141, shipping: 199, discount: 1745, total: 19045,
-    paymentStatus: 'paid', fulfillmentStatus: 'fulfilled', status: 'delivered',
-    shippingAddress: '78, Koregaon Park, Pune 411001', notes: '',
-  },
-  {
-    id: 'ord_010', orderNumber: 'SP-2409-010', customerName: 'Ananya Das', customerEmail: 'ananya@startup.tech', customerPhone: '+91 09876 54321',
-    date: '2024-09-13T14:00:00Z',
-    items: [
-      { id: 'oi_017', productId: 'prod_001', productName: 'Premium Business Cards', sku: 'SP-BC-001-STD-UV', quantity: 3, unitPrice: 699, total: 2097, image: '/images/cat-business-cards.jpg' },
-      { id: 'oi_018', productId: 'prod_023', productName: 'PVC ID Cards', sku: 'SP-ID-001-STD', quantity: 50, unitPrice: 149, total: 7450, image: '' },
-    ],
-    itemCount: 53, subtotal: 9547, tax: 1718, shipping: 99, discount: 0, total: 11364,
-    paymentStatus: 'failed', fulfillmentStatus: 'unfulfilled', status: 'cancelled',
-    shippingAddress: '12, Indiranagar, Bangalore 560038', notes: 'Payment failed — customer contacted',
-  },
-  {
-    id: 'ord_011', orderNumber: 'SP-2409-011', customerName: 'Deepak Chopra', customerEmail: 'deepak@food.brand', customerPhone: '+91 98123 45678',
-    date: '2024-09-12T10:30:00Z',
-    items: [
-      { id: 'oi_019', productId: 'prod_012', productName: 'Bottle Labels', sku: 'SP-BL-001-VIN', quantity: 100, unitPrice: 449, total: 44900, image: '' },
-      { id: 'oi_020', productId: 'prod_018', productName: 'Custom Paper Bags', sku: 'SP-CPB-001-KFT-M', quantity: 50, unitPrice: 799, total: 39950, image: '' },
-    ],
-    itemCount: 150, subtotal: 84850, tax: 15273, shipping: 499, discount: 8485, total: 92137,
-    paymentStatus: 'paid', fulfillmentStatus: 'fulfilled', status: 'delivered',
-    shippingAddress: '45, Hauz Khas, New Delhi 110016', notes: 'Food brand packaging — reorder expected monthly',
-  },
-  {
-    id: 'ord_012', orderNumber: 'SP-2409-012', customerName: 'Pooja Kapoor', customerEmail: 'pooja@wedding.planner', customerPhone: '+91 87234 56789',
-    date: '2024-09-11T08:00:00Z',
-    items: [
-      { id: 'oi_021', productId: 'prod_007', productName: 'Luxury Wedding Cards', sku: 'SP-WC-001-ROY-SLV', quantity: 10, unitPrice: 2499, total: 24990, image: '' },
-    ],
-    itemCount: 10, subtotal: 24990, tax: 4498, shipping: 299, discount: 2499, total: 27288,
-    paymentStatus: 'refunded', fulfillmentStatus: 'returned', status: 'refunded',
-    shippingAddress: '9, Civil Lines, Jaipur 302006', notes: 'Client changed wedding date. Full refund processed.',
-  },
-];
+export const MOCK_ORDERS: AdminOrder[] = [];
 
 // --- Customers ---
 
-export const MOCK_CUSTOMERS: AdminCustomer[] = [
-  { id: 'cust_001', name: 'Rajesh Sharma', email: 'rajesh.sharma@example.com', phone: '+91 98765 43210', totalOrders: 12, totalSpent: 45600, lastOrderDate: '2024-09-22T08:30:00Z', status: 'active', createdAt: '2023-06-15T10:00:00Z', address: '42, Connaught Place, New Delhi 110001', avatar: null },
-  { id: 'cust_002', name: 'Priya Patel', email: 'priya.patel@company.in', phone: '+91 87654 32109', totalOrders: 8, totalSpent: 78450, lastOrderDate: '2024-09-21T14:15:00Z', status: 'active', createdAt: '2023-08-20T09:00:00Z', address: '15, MG Road, Bangalore 560001', avatar: null },
-  { id: 'cust_003', name: 'Amit Kumar', email: 'amit.k@startup.io', phone: '+91 76543 21098', totalOrders: 15, totalSpent: 62300, lastOrderDate: '2024-09-20T10:45:00Z', status: 'active', createdAt: '2023-04-10T08:00:00Z', address: '88, Sector 18, Noida 201301', avatar: null },
-  { id: 'cust_004', name: 'Sneha Reddy', email: 'sneha.r@design.co', phone: '+91 65432 10987', totalOrders: 6, totalSpent: 34200, lastOrderDate: '2024-09-19T16:20:00Z', status: 'active', createdAt: '2024-01-05T10:00:00Z', address: '23, Jubilee Hills, Hyderabad 500033', avatar: null },
-  { id: 'cust_005', name: 'Vikram Singh', email: 'vikram.s@law.firm', phone: '+91 54321 09876', totalOrders: 20, totalSpent: 89700, lastOrderDate: '2024-09-18T09:00:00Z', status: 'active', createdAt: '2023-02-28T09:00:00Z', address: '7, Lajpat Nagar, New Delhi 110024', avatar: null },
-  { id: 'cust_006', name: 'Meera Joshi', email: 'meera.j@cafe.in', phone: '+91 43210 98765', totalOrders: 3, totalSpent: 15800, lastOrderDate: '2024-09-17T12:30:00Z', status: 'active', createdAt: '2024-05-12T08:00:00Z', address: '56, Park Street, Kolkata 700016', avatar: null },
-  { id: 'cust_007', name: 'Arjun Mehta', email: 'arjun.m@corp.com', phone: '+91 32109 87654', totalOrders: 25, totalSpent: 234500, lastOrderDate: '2024-09-16T15:45:00Z', status: 'active', createdAt: '2022-11-01T10:00:00Z', address: '101, BKC, Mumbai 400051', avatar: null },
-  { id: 'cust_008', name: 'Kavitha Nair', email: 'kavitha@boutique.in', phone: '+91 21098 76543', totalOrders: 4, totalSpent: 128900, lastOrderDate: '2024-09-15T11:00:00Z', status: 'active', createdAt: '2024-03-15T08:00:00Z', address: '33, Anna Salai, Chennai 600002', avatar: null },
-  { id: 'cust_009', name: 'Deepak Chopra', email: 'deepak@food.brand', phone: '+91 98123 45678', totalOrders: 18, totalSpent: 456000, lastOrderDate: '2024-09-12T10:30:00Z', status: 'active', createdAt: '2023-01-10T10:00:00Z', address: '45, Hauz Khas, New Delhi 110016', avatar: null },
-  { id: 'cust_010', name: 'Ananya Das', email: 'ananya@startup.tech', phone: '+91 09876 54321', totalOrders: 1, totalSpent: 0, lastOrderDate: '2024-09-13T14:00:00Z', status: 'inactive', createdAt: '2024-09-10T08:00:00Z', address: '12, Indiranagar, Bangalore 560038', avatar: null },
-];
+export const MOCK_CUSTOMERS: AdminCustomer[] = [];
 
 // --- Discounts ---
 
@@ -725,20 +584,7 @@ export const MOCK_FINANCE_SUMMARY: FinanceSummary = {
   pendingPayouts: 318375,
 };
 
-export const MOCK_FINANCE_TRANSACTIONS: FinanceTransaction[] = [
-  { id: 'txn_001', date: '2024-09-22T08:30:00Z', type: 'sale', description: 'Order SP-2409-001 — Rajesh Sharma', amount: 2101, status: 'completed', reference: 'SP-2409-001' },
-  { id: 'txn_002', date: '2024-09-21T14:15:00Z', type: 'sale', description: 'Order SP-2409-002 — Priya Patel', amount: 11493, status: 'completed', reference: 'SP-2409-002' },
-  { id: 'txn_003', date: '2024-09-20T10:45:00Z', type: 'sale', description: 'Order SP-2409-003 — Amit Kumar', amount: 14841, status: 'completed', reference: 'SP-2409-003' },
-  { id: 'txn_004', date: '2024-09-19T16:20:00Z', type: 'sale', description: 'Order SP-2409-004 — Sneha Reddy', amount: 14274, status: 'completed', reference: 'SP-2409-004' },
-  { id: 'txn_005', date: '2024-09-18T09:00:00Z', type: 'sale', description: 'Order SP-2409-005 — Vikram Singh', amount: 6571, status: 'completed', reference: 'SP-2409-005' },
-  { id: 'txn_006', date: '2024-09-17T12:30:00Z', type: 'sale', description: 'Order SP-2409-006 — Meera Joshi', amount: 11085, status: 'pending', reference: 'SP-2409-006' },
-  { id: 'txn_007', date: '2024-09-16T15:45:00Z', type: 'sale', description: 'Order SP-2409-007 — Arjun Mehta', amount: 43637, status: 'completed', reference: 'SP-2409-007' },
-  { id: 'txn_008', date: '2024-09-15T00:00:00Z', type: 'payout', description: 'Weekly payout — Sept W3', amount: -125000, status: 'completed', reference: 'PAY-W3-SEP' },
-  { id: 'txn_009', date: '2024-09-12T10:30:00Z', type: 'sale', description: 'Order SP-2409-011 — Deepak Chopra', amount: 92137, status: 'completed', reference: 'SP-2409-011' },
-  { id: 'txn_010', date: '2024-09-11T08:00:00Z', type: 'refund', description: 'Refund for SP-2409-012 — Pooja Kapoor', amount: -27288, status: 'completed', reference: 'SP-2409-012' },
-  { id: 'txn_011', date: '2024-09-08T00:00:00Z', type: 'payout', description: 'Weekly payout — Sept W2', amount: -118000, status: 'completed', reference: 'PAY-W2-SEP' },
-  { id: 'txn_012', date: '2024-09-01T00:00:00Z', type: 'payout', description: 'Weekly payout — Sept W1', amount: -95000, status: 'completed', reference: 'PAY-W1-SEP' },
-];
+export const MOCK_FINANCE_TRANSACTIONS: FinanceTransaction[] = [];
 
 // --- Marketing Campaigns ---
 

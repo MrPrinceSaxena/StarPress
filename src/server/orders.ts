@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { Prisma, OrderStatus } from "@prisma/client";
+import { persistentStore, PersistedOrder } from "@/server/storage";
 
 export interface CreateOrderItemInput {
   productId?: string;
@@ -57,6 +58,7 @@ function generateOrderNumber(): string {
 export async function createOrder(input: CreateOrderInput) {
   const orderNumber = generateOrderNumber();
 
+  // Try Prisma first
   try {
     const order = await (db.order as any).create({
       data: {
@@ -96,25 +98,89 @@ export async function createOrder(input: CreateOrderInput) {
       },
     });
 
+    // Also mirror to persistent store for high availability
+    persistentStore.saveOrder({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      userId: order.userId,
+      guestEmail: order.guestEmail,
+      guestPhone: order.guestPhone,
+      guestName: order.guestName,
+      status: order.status,
+      subtotal: Number(order.subtotal),
+      gstAmount: order.gstAmount ? Number(order.gstAmount) : null,
+      shippingFee: Number(order.shippingFee || 0),
+      discountAmount: Number(order.discountAmount || 0),
+      totalAmount: Number(order.totalAmount),
+      shippingAddress: order.shippingAddress,
+      billingAddress: order.billingAddress,
+      paymentMethod: order.paymentMethod || "MANUAL_PROOF",
+      paymentStatus: order.paymentStatus || "UNPAID",
+      notes: order.notes,
+      items: order.items.map((i: any) => ({
+        id: i.id,
+        productId: i.productId,
+        productName: i.productName,
+        productSlug: i.productSlug,
+        quantity: i.quantity,
+        unitPrice: Number(i.unitPrice),
+        lineTotal: Number(i.lineTotal),
+        specs: i.specs,
+        customText: i.customText,
+        artworkUrl: i.artworkUrl,
+        previewUrl: i.previewUrl,
+      })),
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
+    });
+
     return { success: true, order };
   } catch (error) {
-    console.error("Database error creating order, fallback to mock order reference:", error);
-    // Graceful fallback if database is not yet provisioned in dev
-    const fallbackOrder = {
-      id: `mock-${Date.now()}`,
+    console.warn("Database offline or unavailable, saving to persistent JSON store:", (error as any)?.message);
+
+    // Save permanently to persistent file storage
+    const newPersistedOrder: PersistedOrder = {
+      id: `ord_${Date.now()}`,
       orderNumber,
+      userId: input.userId || null,
+      guestEmail: input.guestEmail || input.shippingAddress.email,
+      guestPhone: input.guestPhone || input.shippingAddress.phone,
+      guestName: input.guestName || input.shippingAddress.fullName,
       status: "PENDING",
+      subtotal: input.subtotal,
+      gstAmount: input.gstAmount !== undefined ? input.gstAmount : null,
+      shippingFee: input.shippingFee || 0,
+      discountAmount: input.discountAmount || 0,
       totalAmount: input.totalAmount,
       shippingAddress: input.shippingAddress,
+      billingAddress: input.billingAddress,
+      paymentMethod: input.paymentMethod || "MANUAL_PROOF",
       paymentStatus: "UNPAID",
+      notes: input.notes || null,
+      items: input.items.map((item, idx) => ({
+        id: `oi_${Date.now()}_${idx}`,
+        productId: item.productId || null,
+        productName: item.productName,
+        productSlug: item.productSlug,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        lineTotal: item.lineTotal,
+        specs: item.specs,
+        customText: item.customText || null,
+        artworkUrl: item.artworkUrl || null,
+        previewUrl: item.previewUrl || null,
+      })),
       createdAt: new Date().toISOString(),
-      items: input.items,
+      updatedAt: new Date().toISOString(),
     };
-    return { success: true, order: fallbackOrder, isFallback: true };
+
+    persistentStore.saveOrder(newPersistedOrder);
+    return { success: true, order: newPersistedOrder, isFallback: true };
   }
 }
 
 export async function getOrderById(idOrNumber: string) {
+  // 1. Try Prisma DB
   try {
     const order = await db.order.findFirst({
       where: {
@@ -125,19 +191,23 @@ export async function getOrderById(idOrNumber: string) {
         transactions: true,
       },
     });
-    return order;
+    if (order) return order;
   } catch (error) {
-    console.error("Error querying order by id:", error);
-    return null;
+    // DB unreachable, check persistent store
   }
+
+  // 2. Check persistent store
+  return persistentStore.getOrderById(idOrNumber);
 }
 
 export async function trackOrder(orderNumber: string, phoneOrEmail: string) {
+  const normalizedInput = phoneOrEmail.trim().toLowerCase();
+  const normalizedOrderNumber = orderNumber.trim().toUpperCase();
+
   try {
-    const normalizedInput = phoneOrEmail.trim().toLowerCase();
     const order = await (db.order as any).findFirst({
       where: {
-        orderNumber: orderNumber.trim().toUpperCase(),
+        orderNumber: normalizedOrderNumber,
         OR: [
           { guestEmail: { equals: normalizedInput, mode: "insensitive" } },
           { guestPhone: { contains: normalizedInput } },
@@ -147,55 +217,123 @@ export async function trackOrder(orderNumber: string, phoneOrEmail: string) {
         items: true,
       },
     });
-    return order;
+    if (order) return order;
   } catch (error) {
-    console.error("Error tracking order:", error);
-    return null;
+    // DB unreachable, check persistent store
   }
+
+  const storedOrder = persistentStore.getOrderById(normalizedOrderNumber);
+  if (storedOrder) {
+    const matchesEmail = storedOrder.guestEmail?.toLowerCase() === normalizedInput;
+    const matchesPhone = storedOrder.guestPhone?.includes(normalizedInput);
+    if (matchesEmail || matchesPhone) {
+      return storedOrder;
+    }
+  }
+
+  return null;
 }
 
 export async function listOrders(options?: {
-  status?: OrderStatus;
+  status?: string;
+  search?: string;
   limit?: number;
   skip?: number;
 }) {
+  let dbOrders: any[] = [];
+  let dbTotal = 0;
+
   try {
-    const where = options?.status ? { status: options.status } : {};
-    const orders = await db.order.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: options?.limit || 50,
-      skip: options?.skip || 0,
-      include: {
-        items: true,
-      },
-    });
-    const total = await db.order.count({ where });
-    return { orders, total };
+    const where: any = {};
+    if (options?.status && options.status !== "all" && options.status !== "ALL") {
+      where.status = options.status.toUpperCase();
+    }
+    if (options?.search?.trim()) {
+      const q = options.search.trim();
+      where.OR = [
+        { orderNumber: { contains: q, mode: "insensitive" } },
+        { guestName: { contains: q, mode: "insensitive" } },
+        { guestEmail: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const [orders, total] = await Promise.all([
+      db.order.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: options?.limit || 50,
+        skip: options?.skip || 0,
+        include: {
+          items: true,
+        },
+      }),
+      db.order.count({ where }),
+    ]);
+
+    dbOrders = orders;
+    dbTotal = total;
   } catch (error) {
-    console.error("Error listing orders:", error);
-    return { orders: [], total: 0 };
+    // Fallback to persistent storage
   }
+
+  // Combine or fallback to persistentStore
+  if (dbOrders.length === 0 && dbTotal === 0) {
+    let stored = persistentStore.getOrders();
+
+    if (options?.search?.trim()) {
+      const q = options.search.trim().toLowerCase();
+      stored = stored.filter(
+        (o) =>
+          o.orderNumber.toLowerCase().includes(q) ||
+          (o.guestName && o.guestName.toLowerCase().includes(q)) ||
+          (o.guestEmail && o.guestEmail.toLowerCase().includes(q))
+      );
+    }
+
+    if (options?.status && options.status !== "all" && options.status !== "ALL") {
+      const s = options.status.toUpperCase();
+      stored = stored.filter((o) => o.status.toUpperCase() === s);
+    }
+
+    stored.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const total = stored.length;
+    const skip = options?.skip || 0;
+    const limit = options?.limit || 50;
+    const paged = stored.slice(skip, skip + limit);
+
+    return { orders: paged, total };
+  }
+
+  return { orders: dbOrders, total: dbTotal };
 }
 
 export async function updateOrderStatus(
   id: string,
-  status: OrderStatus,
-  tracking?: { trackingNumber?: string; courierPartner?: string }
+  status: string,
+  tracking?: { trackingNumber?: string; courierPartner?: string; notes?: string }
 ) {
+  // First try Prisma DB
   try {
-    const order = await db.order.update({
+    const updated = await db.order.update({
       where: { id },
       data: {
-        status,
+        status: status.toUpperCase() as OrderStatus,
         ...(tracking?.trackingNumber ? { trackingNumber: tracking.trackingNumber } : {}),
         ...(tracking?.courierPartner ? { courierPartner: tracking.courierPartner } : {}),
+        ...(tracking?.notes ? { notes: tracking.notes } : {}),
       },
       include: { items: true },
     });
-    return { success: true, order };
+
+    persistentStore.updateOrderStatus(id, status.toUpperCase(), tracking);
+    return { success: true, order: updated };
   } catch (error) {
-    console.error("Error updating order status:", error);
+    // Try persistent store
+    const stored = persistentStore.updateOrderStatus(id, status.toUpperCase(), tracking);
+    if (stored) {
+      return { success: true, order: stored };
+    }
     return { success: false, error: (error as Error).message };
   }
 }

@@ -31,9 +31,9 @@ interface NavItem {
   children?: { label: string; href: string }[];
 }
 
-const MAIN_NAV: NavItem[] = [
+const BASE_MAIN_NAV: Omit<NavItem, 'badge'>[] = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { label: 'Orders', href: '/admin/orders', icon: ShoppingCart, badge: 3 },
+  { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { label: 'Products', href: '/admin/products', icon: Package },
   { label: 'Customers', href: '/admin/customers', icon: Users },
   { label: 'Content', href: '/admin/content', icon: FileText },
@@ -61,6 +61,27 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState<number>(0);
+
+  React.useEffect(() => {
+    fetch('/api/admin/orders?status=pending&limit=1')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.stats?.pending !== undefined) {
+          setPendingOrdersCount(data.stats.pending);
+        } else if (data.total !== undefined) {
+          setPendingOrdersCount(data.total);
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
+
+  const mainNav: NavItem[] = BASE_MAIN_NAV.map((item) => {
+    if (item.label === 'Orders') {
+      return { ...item, badge: pendingOrdersCount > 0 ? pendingOrdersCount : undefined };
+    }
+    return item;
+  });
 
   const isActive = (href: string) => {
     if (href === '/admin/dashboard') return pathname === '/admin/dashboard' || pathname === '/admin';
@@ -195,7 +216,7 @@ export default function AdminSidebar() {
               </span>
             </div>
           )}
-          {MAIN_NAV.map(renderNavItem)}
+          {mainNav.map(renderNavItem)}
         </div>
 
         <div className="mt-6 space-y-0.5">

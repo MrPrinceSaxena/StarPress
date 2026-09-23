@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthenticatedUser } from "@/lib/supabase/server";
+import { verifyAdminAccess } from "@/lib/admin/auth-check";
 import {
   getAdminProductById,
   updateAdminProduct,
@@ -20,20 +20,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized: Authentication session required." },
-        { status: 401 }
-      );
-    }
-
-    const isAdmin = user.app_metadata?.role === "ADMIN";
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Forbidden: Star Press administrative privileges required." },
-        { status: 403 }
-      );
+    const auth = await verifyAdminAccess(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const product = await getAdminProductById(params.id);
@@ -60,20 +49,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized: Authentication session required." },
-        { status: 401 }
-      );
-    }
-
-    const isAdmin = user.app_metadata?.role === "ADMIN";
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Forbidden: Star Press administrative privileges required." },
-        { status: 403 }
-      );
+    const auth = await verifyAdminAccess(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const body = await request.json();
@@ -81,7 +59,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const result = await updateAdminProduct(
       params.id,
       body,
-      user.email || "admin@starpress.in",
+      auth.user?.email || "admin@starpress.in",
       ipAddress
     );
 
@@ -101,26 +79,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized: Authentication session required." },
-        { status: 401 }
-      );
-    }
-
-    const isAdmin = user.app_metadata?.role === "ADMIN";
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Forbidden: Star Press administrative privileges required." },
-        { status: 403 }
-      );
+    const auth = await verifyAdminAccess(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const ipAddress = request.headers.get("x-forwarded-for") || undefined;
     const result = await deleteAdminProduct(
       params.id,
-      user.email || "admin@starpress.in",
+      auth.user?.email || "admin@starpress.in",
       ipAddress
     );
 

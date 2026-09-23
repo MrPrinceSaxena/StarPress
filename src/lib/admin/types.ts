@@ -117,6 +117,8 @@ export interface AdminOrder {
   fulfillmentStatus: FulfillmentStatus;
   status: OrderStatus;
   shippingAddress: string;
+  trackingNumber?: string | null;
+  courierPartner?: string | null;
   notes: string;
 }
 

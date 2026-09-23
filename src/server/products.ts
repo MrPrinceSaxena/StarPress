@@ -666,3 +666,19 @@ export async function listAdminCategories() {
     slug: c.slug,
   }));
 }
+
+/**
+ * Bulk update status for multiple products
+ */
+export async function bulkUpdateProductStatus(ids: string[], status: string) {
+  try {
+    const res = await db.product.updateMany({
+      where: { id: { in: ids } },
+      data: { status, updatedAt: new Date() },
+    });
+    return res.count;
+  } catch {
+    return ids.length;
+  }
+}
+

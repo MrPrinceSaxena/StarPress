@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateOrderStatus } from "@/server/orders";
-import { OrderStatus } from "@prisma/client";
-import { getAuthenticatedUser } from "@/lib/supabase/server";
+import { verifyAdminAccess } from "@/lib/admin/auth-check";
 
 interface RouteParams {
   params: {
@@ -11,37 +10,24 @@ interface RouteParams {
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    // 1. Authenticate user session with Supabase server client
-    const user = await getAuthenticatedUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized: Authentication session required." },
-        { status: 401 }
-      );
+    const auth = await verifyAdminAccess(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    // 2. Cryptographically verify ADMIN role in app_metadata
-    const isAdmin = user.app_metadata?.role === "ADMIN";
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Forbidden: Star Press administrative privileges required." },
-        { status: 403 }
-      );
-    }
+    const { status, trackingNumber, courierPartner, notes } = await request.json();
 
-    // 3. Process authorized admin order status update
-    const { status, trackingNumber, courierPartner } = await request.json();
-
-    if (!status || !Object.values(OrderStatus).includes(status)) {
+    if (!status) {
       return NextResponse.json(
-        { error: "Valid OrderStatus is required." },
+        { error: "Order status is required." },
         { status: 400 }
       );
     }
 
-    const result = await updateOrderStatus(params.id, status as OrderStatus, {
+    const result = await updateOrderStatus(params.id, status, {
       trackingNumber,
       courierPartner,
+      notes,
     });
 
     if (!result.success) {

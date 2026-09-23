@@ -141,9 +141,16 @@ export default function NewProductPage() {
     setVariantOptions([...variantOptions, { name: '', values: [] }]);
   };
 
-  const addMockImage = () => {
-    const id = `img_new_${Date.now()}`;
-    setImages([...images, { id, url: '', altText: '', isPrimary: images.length === 0, position: images.length }]);
+  const [newImageUrl, setNewImageUrl] = useState('');
+
+  const addImage = (url: string, alt: string = '') => {
+    if (!url.trim()) return;
+    const id = `img_${Date.now()}_${images.length}`;
+    setImages([
+      ...images,
+      { id, url: url.trim(), altText: alt || name, isPrimary: images.length === 0, position: images.length },
+    ]);
+    setNewImageUrl('');
   };
 
   const InputGroup = ({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) => (
@@ -276,15 +283,46 @@ export default function NewProductPage() {
           {activeTab === 'media' && (
             <div className="space-y-5">
               <h2 className="text-sm font-semibold text-white mb-4">Product Media</h2>
-              {/* Upload Zone */}
-              <div
-                onClick={addMockImage}
-                className="border-2 border-dashed border-border-subtle rounded-xl p-10 text-center hover:border-brand-yellow/30 hover:bg-brand-yellow/[0.02] transition-colors cursor-pointer"
-              >
-                <Upload size={32} className="mx-auto text-text-muted mb-3" />
-                <p className="text-sm font-medium text-text-secondary">Drag and drop images here</p>
-                <p className="text-xs text-text-muted mt-1">or <span className="text-brand-yellow">browse from your device</span></p>
-                <p className="text-[11px] text-text-muted mt-2">PNG, JPG, WEBP up to 10MB</p>
+              {/* Image Input & Upload Zone */}
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="Enter image URL (e.g. /images/cat-business-cards.jpg or https://...)"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    className="flex-1 h-9 px-3 rounded-lg bg-white/[0.03] border border-border-subtle text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-yellow/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => addImage(newImageUrl)}
+                    className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors"
+                  >
+                    Add URL
+                  </button>
+                </div>
+                <label className="border-2 border-dashed border-border-subtle rounded-xl p-8 text-center hover:border-brand-yellow/30 hover:bg-brand-yellow/[0.02] transition-colors cursor-pointer block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          if (ev.target?.result) {
+                            addImage(ev.target.result as string, file.name);
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <Upload size={28} className="mx-auto text-text-muted mb-2" />
+                  <p className="text-xs font-medium text-text-secondary">Upload product photo from your device</p>
+                  <p className="text-[11px] text-text-muted mt-0.5">PNG, JPG, WEBP</p>
+                </label>
               </div>
               {/* Image Grid */}
               {images.length > 0 && (

@@ -47,8 +47,14 @@ export default function ProductsPage() {
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
 
   // Product stats
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const stats = useMemo(() => productService.getStats(), [products]);
+  const stats = useMemo(() => {
+    const total = products.length;
+    const published = products.filter((p) => p.status === 'published').length;
+    const draft = products.filter((p) => p.status === 'draft').length;
+    const archived = products.filter((p) => p.status === 'archived').length;
+    const outOfStock = products.filter((p) => (p.stockQuantity ?? 0) <= 0).length;
+    return { total, published, draft, archived, outOfStock };
+  }, [products]);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);

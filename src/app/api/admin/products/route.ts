@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthenticatedUser } from "@/lib/supabase/server";
+import { verifyAdminAccess } from "@/lib/admin/auth-check";
 import { listAdminProducts, createAdminProduct } from "@/server/products";
 
 export const dynamic = "force-dynamic";
@@ -10,20 +10,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized: Authentication session required." },
-        { status: 401 }
-      );
-    }
-
-    const isAdmin = user.app_metadata?.role === "ADMIN";
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Forbidden: Star Press administrative privileges required." },
-        { status: 403 }
-      );
+    const auth = await verifyAdminAccess(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const { searchParams } = new URL(request.url);
@@ -70,20 +59,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized: Authentication session required." },
-        { status: 401 }
-      );
-    }
-
-    const isAdmin = user.app_metadata?.role === "ADMIN";
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Forbidden: Star Press administrative privileges required." },
-        { status: 403 }
-      );
+    const auth = await verifyAdminAccess(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const body = await request.json();
@@ -95,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     const ipAddress = request.headers.get("x-forwarded-for") || undefined;
-    const result = await createAdminProduct(body, user.email || "admin@starpress.in", ipAddress);
+    const result = await createAdminProduct(body, auth.user?.email || "admin@starpress.in", ipAddress);
 
     return NextResponse.json(result);
   } catch (error: any) {
