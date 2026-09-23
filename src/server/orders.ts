@@ -234,6 +234,73 @@ export async function trackOrder(orderNumber: string, phoneOrEmail: string) {
   return null;
 }
 
+export async function getOrderStats() {
+  let allOrders: { id?: string; orderNumber?: string; status: string }[] = [];
+
+  try {
+    const dbOrders = await db.order.findMany({
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+      },
+    });
+    if (Array.isArray(dbOrders)) {
+      allOrders = dbOrders.map((o) => ({
+        id: o.id,
+        orderNumber: o.orderNumber,
+        status: String(o.status || "").toUpperCase(),
+      }));
+    }
+  } catch (error) {
+    // Database query failed or unavailable
+  }
+
+  // Merge from persistentStore
+  try {
+    const local = persistentStore.getOrders();
+    for (const lo of local) {
+      const exists = allOrders.some(
+        (ao) =>
+          (ao.id && lo.id && ao.id === lo.id) ||
+          (ao.orderNumber && lo.orderNumber && ao.orderNumber.toUpperCase() === lo.orderNumber.toUpperCase())
+      );
+      if (!exists) {
+        allOrders.push({
+          id: lo.id,
+          orderNumber: lo.orderNumber,
+          status: String(lo.status || "").toUpperCase(),
+        });
+      }
+    }
+  } catch {}
+
+  const norm = (s?: string) => {
+    const v = (s || "").toUpperCase().trim();
+    if (v === "DISPATCHED") return "SHIPPED";
+    if (v === "CONFIRMED" || v === "IN_PRODUCTION") return "PROCESSING";
+    return v;
+  };
+
+  const total = allOrders.length;
+  const pending = allOrders.filter((o) => norm(o.status) === "PENDING").length;
+  const processing = allOrders.filter((o) => norm(o.status) === "PROCESSING").length;
+  const shipped = allOrders.filter((o) => norm(o.status) === "SHIPPED").length;
+  const delivered = allOrders.filter((o) => norm(o.status) === "DELIVERED").length;
+  const cancelled = allOrders.filter((o) => norm(o.status) === "CANCELLED").length;
+  const refunded = allOrders.filter((o) => norm(o.status) === "REFUNDED").length;
+
+  return {
+    total,
+    pending,
+    processing,
+    shipped,
+    delivered,
+    cancelled,
+    refunded,
+  };
+}
+
 export async function listOrders(options?: {
   status?: string;
   search?: string;
@@ -241,14 +308,18 @@ export async function listOrders(options?: {
   skip?: number;
 }) {
   let dbOrders: any[] = [];
-  let dbTotal = 0;
 
   try {
     const where: any = {};
     if (options?.status && options.status !== "all" && options.status !== "ALL") {
-      let st = options.status.toUpperCase();
-      if (st === "SHIPPED") st = "DISPATCHED";
-      where.status = st;
+      const st = options.status.toUpperCase();
+      if (st === "SHIPPED") {
+        where.status = { in: ["DISPATCHED", "SHIPPED"] as any };
+      } else if (st === "PROCESSING") {
+        where.status = { in: ["CONFIRMED", "IN_PRODUCTION", "PROCESSING"] as any };
+      } else {
+        where.status = st as any;
+      }
     }
     if (options?.search?.trim()) {
       const q = options.search.trim();
@@ -259,55 +330,66 @@ export async function listOrders(options?: {
       ];
     }
 
-    const [orders, total] = await Promise.all([
-      db.order.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        take: options?.limit || 50,
-        skip: options?.skip || 0,
-        include: {
-          items: true,
-        },
-      }),
-      db.order.count({ where }),
-    ]);
-
-    dbOrders = orders;
-    dbTotal = total;
+    dbOrders = await db.order.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        items: true,
+      },
+    });
   } catch (error) {
-    // Fallback to persistent storage
+    // Database query failed or unavailable
   }
 
-  // Combine or fallback to persistentStore
-  if (dbOrders.length === 0 && dbTotal === 0) {
-    let stored = persistentStore.getOrders();
+  // Also query persistent storage
+  let localOrders: any[] = [];
+  try {
+    localOrders = persistentStore.getOrders();
+  } catch {}
 
-    if (options?.search?.trim()) {
-      const q = options.search.trim().toLowerCase();
-      stored = stored.filter(
-        (o) =>
-          o.orderNumber.toLowerCase().includes(q) ||
-          (o.guestName && o.guestName.toLowerCase().includes(q)) ||
-          (o.guestEmail && o.guestEmail.toLowerCase().includes(q))
-      );
-    }
-
-    if (options?.status && options.status !== "all" && options.status !== "ALL") {
-      const s = options.status.toUpperCase();
-      stored = stored.filter((o) => o.status.toUpperCase() === s);
-    }
-
-    stored.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    const total = stored.length;
-    const skip = options?.skip || 0;
-    const limit = options?.limit || 50;
-    const paged = stored.slice(skip, skip + limit);
-
-    return { orders: paged, total };
+  // Filter local orders
+  if (options?.search?.trim()) {
+    const q = options.search.trim().toLowerCase();
+    localOrders = localOrders.filter(
+      (o) =>
+        o.orderNumber?.toLowerCase().includes(q) ||
+        o.guestName?.toLowerCase().includes(q) ||
+        o.guestEmail?.toLowerCase().includes(q)
+    );
   }
 
-  return { orders: dbOrders, total: dbTotal };
+  if (options?.status && options.status !== "all" && options.status !== "ALL") {
+    const s = options.status.toUpperCase();
+    localOrders = localOrders.filter((o) => {
+      const st = (o.status || "").toUpperCase();
+      if (s === "SHIPPED") return st === "SHIPPED" || st === "DISPATCHED";
+      if (s === "PROCESSING") return st === "PROCESSING" || st === "CONFIRMED" || st === "IN_PRODUCTION";
+      return st === s;
+    });
+  }
+
+  // Deduplicate: merge dbOrders and localOrders
+  const combinedOrders = [...dbOrders];
+  for (const lo of localOrders) {
+    const exists = combinedOrders.some(
+      (co) =>
+        (co.id && lo.id && co.id === lo.id) ||
+        (co.orderNumber && lo.orderNumber && co.orderNumber.toUpperCase() === lo.orderNumber.toUpperCase())
+    );
+    if (!exists) {
+      combinedOrders.push(lo);
+    }
+  }
+
+  // Sort descending by date
+  combinedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const total = combinedOrders.length;
+  const skip = options?.skip || 0;
+  const limit = options?.limit || 50;
+  const paged = combinedOrders.slice(skip, skip + limit);
+
+  return { orders: paged, total };
 }
 
 export async function updateOrderStatus(
@@ -317,6 +399,7 @@ export async function updateOrderStatus(
 ) {
   let normalizedStatus = status.toUpperCase();
   if (normalizedStatus === "SHIPPED") normalizedStatus = "DISPATCHED";
+  if (normalizedStatus === "PROCESSING") normalizedStatus = "IN_PRODUCTION";
 
   // First try Prisma DB
   try {

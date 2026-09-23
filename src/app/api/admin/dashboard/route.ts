@@ -13,15 +13,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    // 1. Fetch real orders
-    let orders: any[] = [];
+    // 1. Fetch real orders across DB and persistent storage
+    let dbOrders: any[] = [];
     try {
-      orders = await db.order.findMany({
+      dbOrders = await db.order.findMany({
         orderBy: { createdAt: "desc" },
         include: { items: true },
       });
-    } catch {
-      orders = persistentStore.getOrders();
+    } catch {}
+
+    let localOrders: any[] = [];
+    try {
+      localOrders = persistentStore.getOrders();
+    } catch {}
+
+    const orders = [...dbOrders];
+    for (const lo of localOrders) {
+      const exists = orders.some(
+        (o) =>
+          (o.id && lo.id && o.id === lo.id) ||
+          (o.orderNumber && lo.orderNumber && o.orderNumber.toUpperCase() === lo.orderNumber.toUpperCase())
+      );
+      if (!exists) {
+        orders.push(lo);
+      }
     }
 
     // 2. Fetch products count

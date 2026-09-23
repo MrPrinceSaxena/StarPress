@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listOrders } from "@/server/orders";
+import { listOrders, getOrderStats } from "@/server/orders";
 import { verifyAdminAccess } from "@/lib/admin/auth-check";
-import { persistentStore } from "@/server/storage";
-import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -27,23 +25,22 @@ export async function GET(request: NextRequest) {
       skip,
     });
 
-    // Compute dynamic status counts from all orders
-    let allOrders: any[] = [];
-    try {
-      allOrders = await db.order.findMany({ select: { status: true } });
-    } catch {
-      allOrders = persistentStore.getOrders();
-    }
+    // Compute dynamic status counts across all real orders
+    const stats = await getOrderStats();
 
-    const stats = {
-      total: allOrders.length,
-      pending: allOrders.filter((o) => o.status.toLowerCase() === "pending").length,
-      processing: allOrders.filter((o) => o.status.toLowerCase() === "processing" || o.status.toLowerCase() === "confirmed" || o.status.toLowerCase() === "in_production").length,
-      shipped: allOrders.filter((o) => o.status.toLowerCase() === "shipped" || o.status.toLowerCase() === "dispatched").length,
-      delivered: allOrders.filter((o) => o.status.toLowerCase() === "delivered").length,
-      cancelled: allOrders.filter((o) => o.status.toLowerCase() === "cancelled").length,
-      refunded: allOrders.filter((o) => o.status.toLowerCase() === "refunded").length,
-    };
+    // Safety fallback: if stats.total is 0 but we have orders in result, derive stats immediately
+    if (stats.total === 0 && (result.total > 0 || result.orders.length > 0)) {
+      stats.total = Math.max(result.total, result.orders.length);
+      for (const o of result.orders) {
+        const s = String(o.status || "").toLowerCase();
+        if (s === "delivered") stats.delivered++;
+        else if (s === "shipped" || s === "dispatched") stats.shipped++;
+        else if (s === "pending") stats.pending++;
+        else if (s === "processing" || s === "confirmed" || s === "in_production") stats.processing++;
+        else if (s === "cancelled") stats.cancelled++;
+        else if (s === "refunded") stats.refunded++;
+      }
+    }
 
     // Format orders for Admin UI
     const formattedOrders = result.orders.map((o: any) => {

@@ -58,7 +58,27 @@ export default function OrdersPage() {
     setOrders(result.data);
     setTotal(result.total);
     setTotalPages(result.totalPages);
-    if (result.stats) {
+    if (result.stats && result.stats.total > 0) {
+      setOrderStats(result.stats);
+    } else if (result.data.length > 0 || result.total > 0) {
+      const totalCount = Math.max(result.total, result.data.length);
+      const pendingCount = result.data.filter((o) => o.status === 'pending').length;
+      const processingCount = result.data.filter((o) => o.status === 'processing').length;
+      const shippedCount = result.data.filter((o) => o.status === 'shipped').length;
+      const deliveredCount = result.data.filter((o) => o.status === 'delivered').length;
+      const cancelledCount = result.data.filter((o) => o.status === 'cancelled').length;
+      const refundedCount = result.data.filter((o) => o.status === 'refunded').length;
+
+      setOrderStats((prev) => ({
+        total: Math.max(prev.total, totalCount),
+        pending: prev.pending || pendingCount,
+        processing: prev.processing || processingCount,
+        shipped: prev.shipped || shippedCount,
+        delivered: prev.delivered || deliveredCount,
+        cancelled: prev.cancelled || cancelledCount,
+        refunded: prev.refunded || refundedCount,
+      }));
+    } else if (result.stats) {
       setOrderStats(result.stats);
     }
     setLoading(false);
@@ -110,8 +130,10 @@ export default function OrdersPage() {
 
   const formatPrice = (n: number) => new Intl.NumberFormat('en-IN').format(n);
 
+  const totalDisplay = Math.max(orderStats.total, total, orders.length);
+
   const STATUS_TABS: { key: StatusTab; label: string; count: number }[] = [
-    { key: 'all', label: 'All', count: orderStats.total },
+    { key: 'all', label: 'All', count: totalDisplay },
     { key: 'pending', label: 'Pending', count: orderStats.pending },
     { key: 'processing', label: 'Processing', count: orderStats.processing },
     { key: 'shipped', label: 'Shipped', count: orderStats.shipped },
@@ -131,10 +153,10 @@ export default function OrdersPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard icon={ShoppingCart} title="Total Orders" value={orderStats.total.toString()} iconColor="text-blue-400" />
-        <StatCard icon={Clock} title="Pending" value={orderStats.pending.toString()} iconColor="text-amber-400" />
-        <StatCard icon={Truck} title="Shipped" value={orderStats.shipped.toString()} iconColor="text-cyan-400" />
-        <StatCard icon={CheckCircle2} title="Delivered" value={orderStats.delivered.toString()} iconColor="text-emerald-400" />
+        <StatCard icon={ShoppingCart} title="Total Orders" value={totalDisplay.toString()} iconColor="text-blue-400" />
+        <StatCard icon={Clock} title="Pending" value={(orderStats.pending || (statusTab === 'pending' ? totalDisplay : 0)).toString()} iconColor="text-amber-400" />
+        <StatCard icon={Truck} title="Shipped" value={(orderStats.shipped || (statusTab === 'shipped' ? totalDisplay : 0)).toString()} iconColor="text-cyan-400" />
+        <StatCard icon={CheckCircle2} title="Delivered" value={(orderStats.delivered || (statusTab === 'delivered' ? totalDisplay : 0)).toString()} iconColor="text-emerald-400" />
       </div>
 
       <div className="bg-bg-surface border border-border-subtle rounded-xl">
