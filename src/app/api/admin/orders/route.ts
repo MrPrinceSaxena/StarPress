@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
         total,
         paymentStatus: (o.paymentStatus || "unpaid").toLowerCase(),
         fulfillmentStatus: (o.status === "DELIVERED" || o.status === "DISPATCHED" ? "fulfilled" : o.status === "IN_PRODUCTION" ? "partial" : "unfulfilled"),
-        status: o.status.toLowerCase(),
+        status: o.status === "DISPATCHED" ? "shipped" : o.status.toLowerCase(),
         shippingAddress: shippingAddrStr,
         trackingNumber: o.trackingNumber || null,
         courierPartner: o.courierPartner || null,

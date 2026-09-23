@@ -246,7 +246,9 @@ export async function listOrders(options?: {
   try {
     const where: any = {};
     if (options?.status && options.status !== "all" && options.status !== "ALL") {
-      where.status = options.status.toUpperCase();
+      let st = options.status.toUpperCase();
+      if (st === "SHIPPED") st = "DISPATCHED";
+      where.status = st;
     }
     if (options?.search?.trim()) {
       const q = options.search.trim();
@@ -313,24 +315,27 @@ export async function updateOrderStatus(
   status: string,
   tracking?: { trackingNumber?: string; courierPartner?: string; notes?: string }
 ) {
+  let normalizedStatus = status.toUpperCase();
+  if (normalizedStatus === "SHIPPED") normalizedStatus = "DISPATCHED";
+
   // First try Prisma DB
   try {
     const updated = await db.order.update({
       where: { id },
       data: {
-        status: status.toUpperCase() as OrderStatus,
-        ...(tracking?.trackingNumber ? { trackingNumber: tracking.trackingNumber } : {}),
-        ...(tracking?.courierPartner ? { courierPartner: tracking.courierPartner } : {}),
-        ...(tracking?.notes ? { notes: tracking.notes } : {}),
+        status: normalizedStatus as OrderStatus,
+        ...(tracking?.trackingNumber !== undefined ? { trackingNumber: tracking.trackingNumber } : {}),
+        ...(tracking?.courierPartner !== undefined ? { courierPartner: tracking.courierPartner } : {}),
+        ...(tracking?.notes !== undefined ? { notes: tracking.notes } : {}),
       },
       include: { items: true },
     });
 
-    persistentStore.updateOrderStatus(id, status.toUpperCase(), tracking);
+    persistentStore.updateOrderStatus(id, normalizedStatus, tracking);
     return { success: true, order: updated };
   } catch (error) {
     // Try persistent store
-    const stored = persistentStore.updateOrderStatus(id, status.toUpperCase(), tracking);
+    const stored = persistentStore.updateOrderStatus(id, normalizedStatus, tracking);
     if (stored) {
       return { success: true, order: stored };
     }
