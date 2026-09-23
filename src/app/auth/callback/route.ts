@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") || "/account";
+  const next = searchParams.get("next") || "/";
   const errorMsg = searchParams.get("error_description") || searchParams.get("error");
 
   if (errorMsg) {
@@ -40,6 +40,20 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data?.user) {
+      // Synchronize authenticated user to database to guarantee foreign key integrity
+      try {
+        const { ensureDbUser } = await import("@/lib/user-sync");
+        await ensureDbUser({
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.user_metadata?.name || data.user.user_metadata?.full_name,
+          phone: data.user.phone || data.user.user_metadata?.phone,
+          role: data.user.app_metadata?.role || data.user.user_metadata?.role,
+        });
+      } catch (syncErr) {
+        console.warn("[Auth Callback] User sync notice:", syncErr);
+      }
+
       let destination = next;
 
       if (destination.startsWith("/") && !destination.startsWith("//")) {
@@ -53,7 +67,7 @@ export async function GET(request: Request) {
         }
       } catch {}
 
-      return NextResponse.redirect(`${origin}/account`);
+      return NextResponse.redirect(`${origin}/`);
     }
     console.error("[Auth Callback] Error exchanging code for session:", error);
   }
@@ -64,7 +78,20 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.verifyOtp({ token_hash, type });
 
     if (!error && data?.user) {
-      return NextResponse.redirect(`${origin}${next.startsWith("/") ? next : "/account"}`);
+      try {
+        const { ensureDbUser } = await import("@/lib/user-sync");
+        await ensureDbUser({
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.user_metadata?.name || data.user.user_metadata?.full_name,
+          phone: data.user.phone || data.user.user_metadata?.phone,
+          role: data.user.app_metadata?.role || data.user.user_metadata?.role,
+        });
+      } catch (syncErr) {
+        console.warn("[Auth Callback] User sync notice:", syncErr);
+      }
+
+      return NextResponse.redirect(`${origin}${next.startsWith("/") ? next : "/"}`);
     }
     console.error("[Auth Callback] Error verifying OTP token_hash:", error);
   }

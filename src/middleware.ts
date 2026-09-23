@@ -89,7 +89,13 @@ export async function middleware(req: NextRequest) {
   // 1. Refresh Supabase session and retrieve authenticated user
   const { response, user } = await updateSession(req);
   const isAuthenticated = !!user;
-  const isAdmin = user?.app_metadata?.role === "ADMIN";
+  const userEmail = (user?.email || "").toLowerCase().trim();
+  const isAdmin =
+    user?.app_metadata?.role === "ADMIN" ||
+    user?.user_metadata?.role === "ADMIN" ||
+    userEmail === "admin@starpress.in" ||
+    userEmail === "mrdigitalmarketerpro@gmail.com" ||
+    Boolean(userEmail.endsWith("@starpress.in"));
 
   // 2. Extract and resolve domain details
   const rawHost = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
@@ -250,7 +256,21 @@ export async function middleware(req: NextRequest) {
     return addSecurityHeaders(response);
   }
 
-  // B2. Protected Customer Routes Guard (/account, /orders, /settings, etc.)
+  // Friendly route redirects for common customer shortcuts
+  if (pathname === "/orders" || pathname === "/orders/") {
+    return createRedirect(new URL("/account?tab=orders", req.url));
+  }
+  if (pathname === "/settings" || pathname === "/settings/") {
+    return createRedirect(new URL(isAdmin ? "/admin/settings" : "/account?tab=profile", req.url));
+  }
+  if (pathname === "/saved-addresses" || pathname === "/saved-addresses/") {
+    return createRedirect(new URL("/account?tab=addresses", req.url));
+  }
+  if (pathname === "/dashboard" || pathname === "/dashboard/") {
+    return createRedirect(new URL(isAdmin ? "/admin/dashboard" : "/account", req.url));
+  }
+
+  // B2. Protected Customer Routes Guard (/account)
   if (
     PROTECTED_CUSTOMER_ROUTES.some(
       (route) => pathname === route || pathname.startsWith(`${route}/`)
@@ -288,7 +308,8 @@ export async function middleware(req: NextRequest) {
         }
       }
 
-      return createRedirect(new URL("/account", req.url));
+      // Default redirect to homepage
+      return createRedirect(new URL("/", req.url));
     }
   }
 

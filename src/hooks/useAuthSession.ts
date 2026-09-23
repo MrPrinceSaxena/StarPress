@@ -39,8 +39,16 @@ function sanitizeUser(supabaseUser: User | null): AuthUser | null {
     metadata.full_name ||
     (email ? email.split('@')[0] : 'Customer');
 
-  const phone = supabaseUser.phone || metadata.phone || null;
-  const role = appMetadata.role || metadata.role || 'CUSTOMER';
+  const cleanEmail = email.toLowerCase().trim();
+  const isDeclaredAdmin =
+    appMetadata.role === 'ADMIN' ||
+    metadata.role === 'ADMIN' ||
+    cleanEmail === 'admin@starpress.in' ||
+    cleanEmail === 'mrdigitalmarketerpro@gmail.com' ||
+    Boolean(cleanEmail && cleanEmail.endsWith('@starpress.in'));
+  const role = isDeclaredAdmin ? 'ADMIN' : (appMetadata.role || metadata.role || 'CUSTOMER');
+
+  const phone = (supabaseUser.phone || metadata.phone || null) as string | null;
 
   return {
     id: supabaseUser.id,
@@ -139,7 +147,7 @@ export function useAuthSession(): AuthState {
 
   // Google OAuth sign-in helper
   const handleSignInWithGoogle = useCallback(
-    async (redirectTo = '/account') => {
+    async (redirectTo = '/') => {
       try {
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
         const callbackUrl = `${origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`;
@@ -170,7 +178,11 @@ export function useAuthSession(): AuthState {
     []
   );
 
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin =
+    user?.role === 'ADMIN' ||
+    user?.email?.toLowerCase() === 'admin@starpress.in' ||
+    user?.email?.toLowerCase() === 'mrdigitalmarketerpro@gmail.com' ||
+    Boolean(user?.email?.toLowerCase().endsWith('@starpress.in'));
   const session = user ? { user } : null;
 
   return {

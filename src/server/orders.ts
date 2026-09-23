@@ -60,10 +60,26 @@ export async function createOrder(input: CreateOrderInput) {
 
   // Try Prisma first
   try {
+    let validUserId: string | null = null;
+    if (input.userId) {
+      try {
+        const { ensureDbUser } = await import("@/lib/user-sync");
+        const synced = await ensureDbUser({
+          id: input.userId,
+          email: input.guestEmail || input.shippingAddress.email,
+          name: input.guestName || input.shippingAddress.fullName,
+          phone: input.guestPhone || input.shippingAddress.phone,
+        });
+        if (synced) validUserId = synced.id;
+      } catch {
+        validUserId = null;
+      }
+    }
+
     const order = await (db.order as any).create({
       data: {
         orderNumber,
-        userId: input.userId || null,
+        userId: validUserId,
         guestEmail: input.guestEmail || input.shippingAddress.email,
         guestPhone: input.guestPhone || input.shippingAddress.phone,
         guestName: input.guestName || input.shippingAddress.fullName,

@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { authOptions } from "@/lib/auth";
 import { getSessionUser } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
+import { ensureDbUser } from "@/lib/user-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +16,11 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
     }
 
+    await ensureDbUser(user);
+
     try {
-      const dbUser = await db.user.findUnique({
-        where: { id: user.id },
+      const dbUser = await db.user.findFirst({
+        where: user.email ? { OR: [{ id: user.id }, { email: user.email.toLowerCase().trim() }] } : { id: user.id },
         select: {
           id: true,
           name: true,
@@ -71,9 +74,13 @@ export async function PATCH(request: NextRequest) {
     const { name, phone, currentPassword, newPassword } = await request.json();
 
     try {
-      const existingUser = await db.user.findUnique({
-        where: { id: user.id },
+      let existingUser = await db.user.findFirst({
+        where: user.email ? { OR: [{ id: user.id }, { email: user.email.toLowerCase().trim() }] } : { id: user.id },
       });
+
+      if (!existingUser) {
+        existingUser = await ensureDbUser(user);
+      }
 
       if (!existingUser) {
         return NextResponse.json({ error: "User not found." }, { status: 404 });
@@ -117,7 +124,7 @@ export async function PATCH(request: NextRequest) {
       }
 
       const updated = await db.user.update({
-        where: { id: user.id },
+        where: { id: existingUser.id },
         data: updateData,
         select: {
           id: true,

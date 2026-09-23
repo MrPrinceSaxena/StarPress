@@ -31,6 +31,12 @@ export default function MobileNavDrawer({
   onClose,
 }: MobileNavDrawerProps) {
   const { session, signOut } = useAuthSession();
+  const userEmail = (session?.user?.email || "").toLowerCase().trim();
+  const isAdminUser =
+    session?.user?.role === "ADMIN" ||
+    userEmail === "admin@starpress.in" ||
+    userEmail === "mrdigitalmarketerpro@gmail.com" ||
+    Boolean(userEmail.endsWith("@starpress.in"));
 
   // Prevent body scroll and handle Escape key when drawer is open
   useEffect(() => {
@@ -132,12 +138,26 @@ export default function MobileNavDrawer({
                       <p className="text-xs font-semibold text-white truncate">{session.user.name || "Customer"}</p>
                       <p className="text-[10px] text-text-muted truncate">{session.user.email}</p>
                     </div>
-                    {session.user.role === "ADMIN" && (
+                    {isAdminUser && (
                       <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30">
                         Admin
                       </span>
                     )}
                   </div>
+
+                  {isAdminUser && (
+                    <Link
+                      href="/admin/dashboard"
+                      onClick={onClose}
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-brand-cyan bg-brand-cyan/10 border border-brand-cyan/20 hover:bg-brand-cyan/20 transition-colors mb-1"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <ShieldCheck size={16} />
+                        <span>Admin Portal</span>
+                      </div>
+                      <ChevronRight size={15} />
+                    </Link>
+                  )}
 
                   <Link
                     href="/account?tab=orders"

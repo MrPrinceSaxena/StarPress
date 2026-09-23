@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getSessionUser } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
+import { ensureDbUser } from "@/lib/user-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,8 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
     }
+
+    await ensureDbUser(user);
 
     try {
       const addresses = await db.address.findMany({
@@ -37,6 +40,8 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
     }
+
+    await ensureDbUser(user);
 
     const body = await request.json();
     const { label, line1, line2, city, state, pincode, phone, isDefault } = body;

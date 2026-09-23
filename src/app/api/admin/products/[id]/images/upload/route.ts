@@ -26,7 +26,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const isAdmin = user.app_metadata?.role === "ADMIN";
+    const { isUserAdmin } = await import("@/lib/admin/auth-check");
+    const isAdmin = isUserAdmin(user);
     if (!isAdmin) {
       return NextResponse.json(
         { error: "Forbidden: Star Press administrative privileges required." },

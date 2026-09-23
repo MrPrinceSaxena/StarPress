@@ -54,7 +54,7 @@ function AuthenticatedRedirectScreen({ session }: { session: any }) {
         Welcome back, <span className="font-semibold text-brand-yellow">{session?.user?.name || session?.user?.email}</span>
       </p>
       <p className="text-xs text-slate-500">
-        Redirecting to your account dashboard…
+        Redirecting to homepage…
       </p>
     </div>
   );
@@ -86,7 +86,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { session, status, isHydrated, signInWithGoogle } = useAuthSession();
-  const callbackUrl = searchParams.get("callbackUrl") || "/account";
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
   const registered = searchParams.get("registered");
   const errorParam = searchParams.get("error");
 
