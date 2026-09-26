@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { isUserAdmin } from "@/lib/admin/auth-check";
 
 function AdminLoginForm() {
   const router = useRouter();
@@ -101,10 +102,9 @@ function AdminLoginForm() {
       }
 
       // Cryptographically verify administrative role
-      const userRole = data.user.app_metadata?.role;
-      const isUserAdmin = userRole === "ADMIN";
+      const isAuthorized = isUserAdmin(data.user);
 
-      if (!isUserAdmin) {
+      if (!isAuthorized) {
         // Immediate session revocation for unauthorized accounts
         await supabase.auth.signOut();
         setErrorMessage(

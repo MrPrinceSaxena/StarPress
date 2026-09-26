@@ -213,22 +213,11 @@ export async function middleware(req: NextRequest) {
   }
 
   // =========================================================================
-  // SCENARIO B: Primary Storefront Domain (starpress.in, www.starpress.in)
-  // Admin panel is strictly prohibited on the public storefront domain in production.
+  // SCENARIO B: Storefront Domain Admin Handling (/admin/*)
+  // Protected with strict authentication and admin clearance.
+  // Completely isolated & hidden from all public navigation and search engines.
   // =========================================================================
   if (pathname.startsWith("/admin")) {
-    if (process.env.NODE_ENV === "production" && !host.includes("localhost") && host !== "127.0.0.1") {
-      // In production, bounce all /admin requests directly to https://www.admin.starpress.in
-      const cleanPath = pathname.replace(/^\/admin/, "") || "/";
-      const targetUrl = new URL(cleanPath, "https://www.admin.starpress.in");
-      targetUrl.search = req.nextUrl.search;
-      return NextResponse.redirect(targetUrl, {
-        status: 302,
-        headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
-      });
-    }
-
-    // In local development only, allow direct /admin for testing
     if (pathname === "/admin" || pathname === "/admin/") {
       if (isAuthenticated && isAdmin) {
         return createRedirect(new URL("/admin/dashboard", req.url));
@@ -249,7 +238,7 @@ export async function middleware(req: NextRequest) {
       return createRedirect(loginUrl);
     }
 
-    if (!isAdmin && process.env.NODE_ENV === "production") {
+    if (!isAdmin) {
       return createRedirect(new URL("/account?error=AccessDenied", req.url));
     }
 
