@@ -473,7 +473,7 @@ export default function BulkOrdersPage() {
 
               <div className="space-y-3">
                 <a
-                  href="https://wa.me/919876543210?text=Hi%20Star%20Press%20Procurement%20Team,%20I%20have%20an%20urgent%20bulk%20print%20inquiry."
+                  href="https://wa.me/917456849955?text=Hi%20Star%20Press%20Procurement%20Team,%20I%20have%20an%20urgent%20bulk%20print%20inquiry."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider bg-[#25D366] text-black hover:bg-[#20bd5a] transition-colors shadow-lg"
@@ -485,11 +485,11 @@ export default function BulkOrdersPage() {
                 <div className="rounded-xl border border-border-subtle bg-bg-surface-alt p-4 space-y-2 text-xs">
                   <div className="flex items-center justify-between text-text-secondary">
                     <span>Hotline:</span>
-                    <span className="text-white font-mono font-bold">+91 98765 43210</span>
+                    <span className="text-white font-mono font-bold">+91 74568 49955</span>
                   </div>
                   <div className="flex items-center justify-between text-text-secondary">
                     <span>Procurement Email:</span>
-                    <span className="text-white font-mono">bulk@starpress.in</span>
+                    <span className="text-white font-mono">starpress.print@gmail.com</span>
                   </div>
                   <div className="flex items-center justify-between text-text-secondary">
                     <span>Working Hours:</span>

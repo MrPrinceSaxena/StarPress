@@ -38,8 +38,8 @@ const envSchema = z.object({
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
-  NOTIFICATION_EMAIL: z.string().optional().default("orders@starpress.in"),
-  OWNER_ALERT_EMAIL: z.string().optional().default("owner@starpress.in"),
+  NOTIFICATION_EMAIL: z.string().optional().default("starpress.print@gmail.com"),
+  OWNER_ALERT_EMAIL: z.string().optional().default("starpress.print@gmail.com"),
 });
 
 const rawValues = {
@@ -82,6 +82,6 @@ export const env = parsed.success
       RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
       RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
       RESEND_API_KEY: process.env.RESEND_API_KEY,
-      NOTIFICATION_EMAIL: process.env.NOTIFICATION_EMAIL || "orders@starpress.in",
-      OWNER_ALERT_EMAIL: process.env.OWNER_ALERT_EMAIL || "owner@starpress.in",
+      NOTIFICATION_EMAIL: process.env.NOTIFICATION_EMAIL || "starpress.print@gmail.com",
+      OWNER_ALERT_EMAIL: process.env.OWNER_ALERT_EMAIL || "starpress.print@gmail.com",
     };

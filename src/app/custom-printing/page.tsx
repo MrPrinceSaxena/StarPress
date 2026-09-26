@@ -198,7 +198,7 @@ export default function CustomPrintingPage() {
     const text = encodeURIComponent(
       `Hi Star Press! I am configuring a custom print job:\n- Product: ${selectedProduct.name}\n- Specs: ${selectedSize} | ${selectedFinish}\n- Quantity: ${quantity} units\n- Total Quote: ₹${totalPrice.toLocaleString("en-IN")}\n- Artwork: ${uploadedFile ? uploadedFile.name : "Will share on chat"}`
     );
-    return `https://wa.me/919876543210?text=${text}`;
+    return `https://wa.me/917456849955?text=${text}`;
   }, [selectedProduct, selectedSize, selectedFinish, quantity, totalPrice, uploadedFile]);
 
   return (

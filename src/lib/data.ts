@@ -1,6 +1,6 @@
-export const CONTACT_PHONE = "+91 98765 43210";
-export const WHATSAPP_NUMBER = "919876543210";
-export const SUPPORT_EMAIL = "support@starpress.in";
+export const CONTACT_PHONE = "+91 74568 49955";
+export const WHATSAPP_NUMBER = "917456849955";
+export const SUPPORT_EMAIL = "starpress.print@gmail.com";
 
 export interface NavLink {
   label: string;

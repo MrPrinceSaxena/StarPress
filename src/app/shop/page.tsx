@@ -11,16 +11,24 @@ import { getLiveCatalogProducts } from "@/server/products";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Commercial & Custom Printing Catalog | Star Press",
+  title: "Commercial & Custom Printing Catalog | Star Press Khatima",
   description:
-    "Explore our complete range of business cards, marketing flyers, flex banners, corporate stationery, stickers, and packaging with real-time multi-quantity pricing.",
+    "Explore our complete range of business cards, marketing flyers, flex banners, 3D acrylic letters, LED boards, stationery, and packaging available at Star Press, Khatima (Uttarakhand) with Pan-India delivery.",
+  keywords: [
+    "printing press catalog Khatima",
+    "visiting cards Khatima",
+    "flex banners Khatima",
+    "3D letter boards Khatima",
+    "neon signs Khatima",
+    "Star Press store",
+  ],
   alternates: {
-    canonical: "/shop",
+    canonical: "https://starpress.in/shop",
   },
   openGraph: {
-    title: "Commercial & Custom Printing Catalog | Star Press",
+    title: "Commercial & Custom Printing Catalog | Star Press Khatima",
     description:
-      "Explore our complete range of business cards, marketing flyers, flex banners, corporate stationery, stickers, and packaging with real-time multi-quantity pricing.",
+      "Explore our complete range of business cards, marketing flyers, flex banners, 3D acrylic letters, LED boards, and packaging from Star Press, Khatima.",
     url: "https://starpress.in/shop",
   },
 };

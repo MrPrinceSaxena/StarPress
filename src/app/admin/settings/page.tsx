@@ -21,9 +21,9 @@ export default function SettingsPage() {
 
   // Settings form state
   const [storeName, setStoreName] = useState('Star Press');
-  const [storeEmail, setStoreEmail] = useState('hello@starpress.in');
-  const [storePhone, setStorePhone] = useState('+91 98765 43210');
-  const [storeAddress, setStoreAddress] = useState('42, Connaught Place, New Delhi 110001');
+  const [storeEmail, setStoreEmail] = useState('starpress.print@gmail.com');
+  const [storePhone, setStorePhone] = useState('+91 74568 49955');
+  const [storeAddress, setStoreAddress] = useState('Amoun, Khatima (Uttarakhand)');
   const [currency, setCurrency] = useState('INR');
   const [timezone, setTimezone] = useState('Asia/Kolkata');
   const [gstin, setGstin] = useState('07AAAAA0000A1Z5');
@@ -45,9 +45,9 @@ export default function SettingsPage() {
           const data = await res.json();
           if (data.settings) {
             setStoreName(data.settings.storeName || 'Star Press');
-            setStoreEmail(data.settings.storeEmail || 'hello@starpress.in');
-            setStorePhone(data.settings.storePhone || '+91 98765 43210');
-            setStoreAddress(data.settings.storeAddress || '42, Connaught Place, New Delhi 110001');
+            setStoreEmail(data.settings.storeEmail || 'starpress.print@gmail.com');
+            setStorePhone(data.settings.storePhone || '+91 74568 49955');
+            setStoreAddress(data.settings.storeAddress || 'Amoun, Khatima (Uttarakhand)');
             setCurrency(data.settings.currency || 'INR');
             setTimezone(data.settings.timezone || 'Asia/Kolkata');
             setGstin(data.settings.gstin || '07AAAAA0000A1Z5');

@@ -167,10 +167,10 @@ export default function PrivacyPolicyPage() {
                 <strong className="text-white">Grievance & Privacy Officer:</strong> Star Press Media Pvt Ltd
               </div>
               <div>
-                <strong className="text-white">Email:</strong> privacy@starpress.in
+                <strong className="text-white">Email:</strong> starpress.print@gmail.com
               </div>
               <div>
-                <strong className="text-white">Address:</strong> Plot 42, Okhla Industrial Area Phase-III, New Delhi 110020
+                <strong className="text-white">Address:</strong> Amoun, Khatima (Uttarakhand)
               </div>
             </div>
           </section>

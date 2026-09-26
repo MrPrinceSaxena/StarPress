@@ -10,6 +10,7 @@ export function isUserAdmin(user: { email?: string | null; app_metadata?: any; u
   const email = (user.email || "").toLowerCase().trim();
   if (!email) return false;
   if (email === "admin@starpress.in") return true;
+  if (email === "starpress.print@gmail.com") return true;
   if (email === "mrdigitalmarketerpro@gmail.com") return true;
   if (email.endsWith("@starpress.in")) return true;
 

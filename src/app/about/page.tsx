@@ -18,9 +18,9 @@ import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
 
 export const metadata: Metadata = {
-  title: "About Star Press | Commercial Offset & Digital Printing Excellence",
+  title: "About Star Press | Premier Printing Press in Khatima, Uttarakhand",
   description:
-    "Learn about Star Press: 15+ years of industrial print craftsmanship, Heidelberg offset presses, HP Indigo digital technology, and eco-friendly printing in India.",
+    "Learn about Star Press in Khatima, Uttarakhand: Advanced commercial offset, HP Indigo digital printing, custom signage fabrication, and fast Pan-India dispatch.",
 };
 
 const STATS = [
@@ -103,10 +103,9 @@ export default function AboutPage() {
             </h1>
 
             <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
-              Founded with a passion for ink, paper, and mechanical precision, Star Press
-              has grown into India&apos;s most reliable commercial and bespoke printing facility.
-              We combine legendary German offset engineering with bleeding-edge digital print
-              technology.
+              Based in Amoun, Khatima (Uttarakhand), Star Press is an advanced commercial and bespoke printing facility.
+              We combine legendary German offset engineering with bleeding-edge digital print technology, serving businesses
+              across Khatima, Kumaon, Uttarakhand and shipping nationwide.
             </p>
           </div>
         </div>

@@ -66,6 +66,9 @@ export default function Footer() {
             <p className="text-sm text-text-secondary leading-relaxed max-w-xs">
               Turning Ideas Into Print
             </p>
+            <p className="text-xs text-text-muted leading-relaxed max-w-xs">
+              📍 Amoun, Khatima, Uttarakhand • Pan-India Delivery
+            </p>
 
             {/* Social Icons Row */}
             <div className="flex items-center gap-3 pt-2">

@@ -25,7 +25,7 @@ export default function JsonLd() {
         ],
         "contactPoint": {
           "@type": "ContactPoint",
-          "telephone": "+91-98765-43210",
+          "telephone": "+91-74568-49955",
           "contactType": "customer service",
           "areaServed": "IN",
           "availableLanguage": ["English", "Hindi"],
@@ -50,18 +50,55 @@ export default function JsonLd() {
         },
       },
       {
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "PrintShop"],
         "@id": "https://starpress.in/#localbusiness",
-        "name": "Star Press (Star Printing Press)",
+        "name": "Star Press",
+        "alternateName": [
+          "Star Press Khatima",
+          "Star Printing Press Khatima",
+          "Star Press Print Hub",
+          "Star Press Amoun"
+        ],
         "image": "https://starpress.in/images/hero-composition.jpg",
+        "logo": "https://starpress.in/images/Logo.png",
+        "url": "https://starpress.in",
+        "telephone": "+91-74568-49955",
+        "email": "starpress.print@gmail.com",
         "priceRange": "₹₹",
-        "telephone": "+91-98765-43210",
+        "currenciesAccepted": "INR",
+        "paymentAccepted": "Cash, UPI, Credit Card, Debit Card, Net Banking",
+        "hasMap": "https://maps.google.com/?q=Amoun,+Khatima,+Uttarakhand",
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 28.9197,
+          "longitude": 79.9723
+        },
         "address": {
           "@type": "PostalAddress",
-          "addressLocality": "New Delhi",
-          "addressRegion": "Delhi",
-          "addressCountry": "IN",
+          "streetAddress": "Amoun",
+          "addressLocality": "Khatima",
+          "addressRegion": "Uttarakhand",
+          "postalCode": "262308",
+          "addressCountry": "IN"
         },
+        "areaServed": [
+          {
+            "@type": "City",
+            "name": "Khatima"
+          },
+          {
+            "@type": "AdministrativeArea",
+            "name": "Udham Singh Nagar"
+          },
+          {
+            "@type": "AdministrativeArea",
+            "name": "Uttarakhand"
+          },
+          {
+            "@type": "Country",
+            "name": "India"
+          }
+        ],
         "openingHoursSpecification": [
           {
             "@type": "OpeningHoursSpecification",
@@ -71,12 +108,12 @@ export default function JsonLd() {
               "Wednesday",
               "Thursday",
               "Friday",
-              "Saturday",
+              "Saturday"
             ],
             "opens": "09:00",
-            "closes": "20:00",
-          },
-        ],
+            "closes": "20:00"
+          }
+        ]
       },
     ],
   };

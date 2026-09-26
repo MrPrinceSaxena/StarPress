@@ -5,39 +5,39 @@ import Button from "@/components/ui/Button";
 export default function CTASection() {
   return (
     <section className="py-16 md:py-24 relative overflow-hidden">
-      <div className="max-w-[1280px] mx-auto px-6 lg:px-10 relative z-10">
-        <div className="relative rounded-[28px] border border-border-subtle bg-bg-surface p-8 sm:p-14 lg:p-16 text-center shadow-2xl overflow-hidden">
-          <div className="max-w-3xl mx-auto space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold tracking-wider uppercase">
+      <div className="max-w-[1280px] mx-auto px-4 xs:px-6 lg:px-10 relative z-10">
+        <div className="relative rounded-2xl sm:rounded-[28px] border border-border-subtle bg-bg-surface p-5 xs:p-7 sm:p-12 lg:p-16 text-center shadow-2xl overflow-hidden">
+          <div className="max-w-3xl mx-auto space-y-5 sm:space-y-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold tracking-wider uppercase">
               <Sparkles size={14} className="text-brand-yellow" />
               <span>Bring Your Vision to Life</span>
             </div>
 
-            <h2 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl uppercase text-white tracking-tight leading-[1.1]">
+            <h2 className="font-display font-black text-2xl xs:text-3xl sm:text-4xl lg:text-5xl uppercase text-white tracking-tight leading-[1.1]">
               Ready to Turn Your Ideas Into <span className="text-brand-yellow">High-Impact</span> Prints?
             </h2>
 
-            <p className="text-sm sm:text-base text-text-secondary leading-relaxed max-w-2xl mx-auto">
+            <p className="text-xs sm:text-sm md:text-base text-text-secondary leading-relaxed max-w-2xl mx-auto">
               Whether you need 100 premium business cards or 10,000 corporate brochures, our pre-press team ensures vibrant color fidelity, durable finishes, and expedited Pan-India delivery.
             </p>
 
             {/* Buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+            <div className="flex flex-col xs:flex-row items-stretch xs:items-center justify-center gap-3 sm:gap-4 pt-3 sm:pt-4 w-full max-w-md mx-auto xs:max-w-none">
               <Button
                 variant="primary"
                 size="lg"
                 href="/shop"
-                className="!px-8 !py-4 !text-base font-bold shadow-xl shadow-black/40"
+                className="w-full xs:w-auto justify-center text-center !px-6 sm:!px-8 !py-3 sm:!py-4 !text-xs xs:!text-sm sm:!text-base font-bold shadow-xl shadow-black/40"
               >
                 <span>Start Your Order</span>
                 <ArrowRight size={18} />
               </Button>
 
               <a
-                href="https://wa.me/919876543210?text=Hi%20Star%20Press%2C%20I%20want%20to%20place%20a%20printing%20order"
+                href="https://wa.me/917456849955?text=Hi%20Star%20Press%2C%20I%20want%20to%20place%20a%20printing%20order"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/60 text-sm font-bold transition-all shadow-md"
+                className="w-full xs:w-auto justify-center text-center inline-flex items-center gap-2.5 px-5 sm:px-6 py-3 sm:py-3.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/60 text-xs xs:text-sm font-bold transition-all shadow-md"
               >
                 <MessageCircle size={18} />
                 <span>WhatsApp Us Directly</span>

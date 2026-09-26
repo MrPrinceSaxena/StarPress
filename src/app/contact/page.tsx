@@ -22,25 +22,25 @@ const CONTACT_INFO = [
   {
     icon: MapPin,
     title: "Print Production Facility",
-    value: "Star Press Industrial Hub",
-    subtext: "Plot 42, Okhla Industrial Area Phase-III, New Delhi, 110020, India",
-    link: "https://maps.google.com",
+    value: "Star Press Printing Hub",
+    subtext: "Amoun, Khatima (Uttarakhand), India",
+    link: "https://maps.google.com/?q=Amoun,+Khatima,+Uttarakhand",
     actionLabel: "View on Google Maps",
   },
   {
     icon: Phone,
     title: "Customer Hotline",
-    value: "+91 98765 43210",
+    value: "+91 74568 49955",
     subtext: "Mon – Sat, 9:00 AM – 8:00 PM IST",
-    link: "tel:+919876543210",
+    link: "tel:+917456849955",
     actionLabel: "Call Support Desk",
   },
   {
     icon: Mail,
     title: "Email Assistance",
-    value: "support@starpress.in",
+    value: "starpress.print@gmail.com",
     subtext: "General queries, file questions & corporate POs",
-    link: "mailto:support@starpress.in",
+    link: "mailto:starpress.print@gmail.com",
     actionLabel: "Send Email",
   },
   {
@@ -365,7 +365,7 @@ export default function ContactPage() {
               </div>
 
               <a
-                href="https://wa.me/919876543210?text=Hi%20Star%20Press%20Support,%20I%20have%20an%20inquiry%20regarding%20my%20print%20order."
+                href="https://wa.me/917456849955?text=Hi%20Star%20Press%20Support,%20I%20have%20an%20inquiry%20regarding%20my%20print%20order."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider bg-[#25D366] text-black hover:bg-[#20bd5a] transition-colors shadow-lg"
@@ -380,7 +380,7 @@ export default function ContactPage() {
                   <div>
                     <strong className="text-white block">Corporate Head Office</strong>
                     <span className="text-text-secondary">
-                      Star Press Media Pvt Ltd, Okhla Phase III, New Delhi 110020
+                      Star Press, Amoun, Khatima (Uttarakhand)
                     </span>
                   </div>
                 </div>

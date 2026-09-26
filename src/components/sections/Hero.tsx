@@ -18,11 +18,11 @@ interface Slide {
 const slides: Slide[] = [
   {
     src: "/images/hero-composition.jpg",
-    alt: "Star Press custom printed products — Good Ideas Print Well packaging with branded mugs",
-    badge: "Premium Printing for Every Idea",
+    alt: "Star Press — Premier Custom Printing Press in Khatima, Uttarakhand",
+    badge: "Premier Printing Press in Khatima, Uttarakhand",
     headline: ["PRINT YOUR IDEAS", "TO LIFE"],
     highlightIndex: 1,
-    sub: "High quality prints for every idea.\nBusiness. Events. Personal. Everything Custom.",
+    sub: "High quality custom printing in Khatima & Pan-India.\nVisiting Cards • Flex Banners • 3D Letters • Neon Signs • Custom Packaging",
     cta: { label: "Shop All Products", href: "/shop" },
   },
   {
@@ -61,214 +61,170 @@ const slides: Slide[] = [
     sub: "Eye-catching neon boards for cafes, studios & events.\nBring vibrant energy to any space.",
     cta: { label: "Explore Neon Boards", href: "/shop/neon-boards" },
   },
+  {
+    src: "/images/Slider/CustomizeKeychainNamePlate.png",
+    alt: "Customized Keychains and Name Plates by Star Press",
+    badge: "Custom Merchandise & Gifts",
+    headline: ["CUSTOMIZE EVERY", "DETAIL WITH STYLE"],
+    highlightIndex: 1,
+    sub: "Personalized keychains and custom name plates crafted to perfection.\nGreat for gifts, branding, and daily use.",
+    cta: { label: "Explore Custom Keychains", href: "/shop/keychain-printing" },
+  },
 ];
 
 const AUTOPLAY_MS = 5000;
 
 export default function Hero() {
   const [current, setCurrent] = useState(0);
-  const [prev, setPrev] = useState<number | null>(null);
-  const [animating, setAnimating] = useState(false);
-  const [dir, setDir] = useState<"next" | "prev">("next");
-  const [progress, setProgress] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const clearTimers = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (progressRef.current) clearInterval(progressRef.current);
-  };
+  // Touch swipe support for native mobile feel
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
 
-  const startProgress = useCallback(() => {
-    setProgress(0);
-    if (progressRef.current) clearInterval(progressRef.current);
-    const step = 100 / (AUTOPLAY_MS / 50);
-    progressRef.current = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 100) {
-          if (progressRef.current) clearInterval(progressRef.current);
-          return 100;
-        }
-        return p + step;
-      });
-    }, 50);
+  // Navigate to next slide
+  const handleNext = useCallback(() => {
+    setCurrent((prev) => (prev + 1) % slides.length);
   }, []);
 
-  const go = useCallback(
-    (index: number, direction: "next" | "prev") => {
-      if (animating || index === current) return;
-      clearTimers();
-      setDir(direction);
-      setPrev(current);
-      setCurrent(index);
-      setAnimating(true);
-    },
-    [animating, current]
-  );
+  // Navigate to previous slide
+  const handlePrev = useCallback(() => {
+    setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
+  }, []);
 
-  const goNext = useCallback(() => {
-    go((current + 1) % slides.length, "next");
-  }, [current, go]);
+  // Directly select slide on dot click
+  const handleSelect = useCallback((index: number) => {
+    setCurrent((prev) => {
+      if (index === prev) return prev;
+      return index;
+    });
+  }, []);
 
-  const goPrev = useCallback(() => {
-    go((current - 1 + slides.length) % slides.length, "prev");
-  }, [current, go]);
+  // Touch gesture handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchEndX.current = null;
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
 
-  // Reset animation lock
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 45;
+    if (distance > minSwipeDistance) {
+      handleNext();
+    } else if (distance < -minSwipeDistance) {
+      handlePrev();
+    }
+  };
+
+  // Continuous uninterrupted autoplay: whenever current changes (either by timer or user click),
+  // a clean new 5s timer starts. It NEVER gets stuck or cancelled indefinitely.
   useEffect(() => {
-    if (!animating) return;
-    const t = setTimeout(() => {
-      setAnimating(false);
-      setPrev(null);
-    }, 750);
-    return () => clearTimeout(t);
-  }, [animating]);
-
-  // Autoplay + progress bar
-  useEffect(() => {
-    startProgress();
-    timerRef.current = setTimeout(() => {
-      goNext();
+    const timer = setTimeout(() => {
+      setCurrent((prev) => (prev + 1) % slides.length);
     }, AUTOPLAY_MS);
-    return clearTimers;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    return () => clearTimeout(timer);
   }, [current]);
 
   const slide = slides[current];
-  const prevSlide = prev !== null ? slides[prev] : null;
 
   return (
     <>
       <style>{`
-        @keyframes heroSlideInRight {
-          from { transform: translateX(8%); opacity: 0; }
-          to   { transform: translateX(0);  opacity: 1; }
-        }
-        @keyframes heroSlideInLeft {
-          from { transform: translateX(-8%); opacity: 0; }
-          to   { transform: translateX(0);   opacity: 1; }
-        }
-        @keyframes heroSlideOutLeft {
-          from { transform: translateX(0);  opacity: 1; }
-          to   { transform: translateX(-4%); opacity: 0; }
-        }
-        @keyframes heroSlideOutRight {
-          from { transform: translateX(0);  opacity: 1; }
-          to   { transform: translateX(4%); opacity: 0; }
-        }
         @keyframes heroFadeUp {
-          from { opacity: 0; transform: translateY(22px); }
+          from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .hs-enter-next { animation: heroSlideInRight 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-        .hs-enter-prev { animation: heroSlideInLeft  0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-        .hs-exit-next  { animation: heroSlideOutLeft  0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-        .hs-exit-prev  { animation: heroSlideOutRight 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-        .hs-content    { animation: heroFadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both; }
-        .hs-content-d1 { animation-delay: 0.08s; }
-        .hs-content-d2 { animation-delay: 0.18s; }
-        .hs-content-d3 { animation-delay: 0.28s; }
-        .hs-content-d4 { animation-delay: 0.38s; }
+        @keyframes heroProgressFill {
+          from { width: 0%; }
+          to   { width: 100%; }
+        }
+        .hs-content    { animation: heroFadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        .hs-content-d1 { animation-delay: 0.04s; }
+        .hs-content-d2 { animation-delay: 0.10s; }
+        .hs-content-d3 { animation-delay: 0.18s; }
+        .hs-content-d4 { animation-delay: 0.25s; }
+        .hs-progress-active {
+          animation: heroProgressFill ${AUTOPLAY_MS}ms linear forwards;
+        }
       `}</style>
 
       <section
-        className="relative w-full overflow-hidden"
-        style={{ minHeight: "clamp(480px, 88vh, 780px)" }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="relative w-full overflow-hidden select-none min-h-[560px] xs:min-h-[600px] sm:min-h-[650px] md:min-h-[700px] lg:min-h-[82vh] lg:max-h-[840px] flex items-center"
       >
-        {/* ── Slide layers ── */}
-
-        {/* Exiting slide */}
-        {animating && prevSlide && (
-          <div
-            key={`exit-${prev}`}
-            className={`absolute inset-0 ${
-              dir === "next" ? "hs-exit-next" : "hs-exit-prev"
-            }`}
-            style={{ zIndex: 1 }}
-          >
-            <Image
-              src={prevSlide.src}
-              alt={prevSlide.alt}
-              fill
-              sizes="100vw"
-              className="object-cover object-center"
-            />
-            {/* Gradient overlay on exiting */}
+        {/* ── Background Slide Images (Netflix-style smooth crossfade & scale) ── */}
+        {slides.map((s, index) => {
+          const isActive = index === current;
+          return (
             <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(11,12,16,0.97) 0%, rgba(11,12,16,0.82) 38%, rgba(11,12,16,0.45) 62%, rgba(11,12,16,0.15) 100%)",
-              }}
-            />
-          </div>
-        )}
-
-        {/* Active slide */}
-        <div
-          key={`enter-${current}`}
-          className={`absolute inset-0 ${
-            animating
-              ? dir === "next"
-                ? "hs-enter-next"
-                : "hs-enter-prev"
-              : ""
-          }`}
-          style={{ zIndex: 2 }}
-        >
-          <Image
-            src={slide.src}
-            alt={slide.alt}
-            fill
-            priority={current === 0}
-            sizes="100vw"
-            className="object-cover object-center"
-          />
-
-          {/* Left-to-right gradient: keeps text readable, fades naturally to right */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(90deg, rgba(11,12,16,0.97) 0%, rgba(11,12,16,0.85) 32%, rgba(11,12,16,0.50) 56%, rgba(11,12,16,0.10) 80%, transparent 100%)",
-            }}
-          />
-          {/* Bottom vignette */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(0deg, rgba(11,12,16,0.65) 0%, transparent 40%)",
-            }}
-          />
-        </div>
-
-        {/* ── Content overlay ── */}
-        <div
-          className="relative flex flex-col justify-center h-full px-6 sm:px-10 lg:px-20"
-          style={{
-            zIndex: 10,
-            minHeight: "clamp(480px, 88vh, 780px)",
-            paddingTop: "clamp(80px, 12vh, 120px)",
-            paddingBottom: "clamp(80px, 12vh, 120px)",
-          }}
-        >
-          <div className="max-w-[620px]">
-            {/* Badge */}
-            <div
-              key={`badge-${current}`}
-              className="hs-content hs-content-d1 inline-flex items-center gap-2 border border-white/10 bg-white/5 backdrop-blur-sm rounded-full px-4 py-1.5 text-xs text-slate-300 mb-5"
+              key={s.src}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+              }`}
             >
-              <Gem size={13} className="text-brand-yellow flex-shrink-0" />
-              <span>{slide.badge}</span>
+              <div
+                className={`relative w-full h-full transform transition-transform duration-1000 ease-out ${
+                  isActive ? "scale-100" : "scale-105"
+                }`}
+              >
+                <Image
+                  src={s.src}
+                  alt={s.alt}
+                  fill
+                  priority={index === 0}
+                  sizes="100vw"
+                  className="object-cover object-center sm:object-center"
+                />
+              </div>
+
+              {/* Full-coverage vertical vignette for mobile (guarantees text contrast on any bright image) */}
+              <div
+                className="absolute inset-0 md:hidden"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(11,12,16,0.88) 0%, rgba(11,12,16,0.72) 35%, rgba(11,12,16,0.90) 75%, #0B0C10 100%)",
+                }}
+              />
+
+              {/* Left-to-right cinematic gradient for tablet/desktop */}
+              <div
+                className="hidden md:block absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(90deg, rgba(11,12,16,0.96) 0%, rgba(11,12,16,0.88) 36%, rgba(11,12,16,0.55) 60%, rgba(11,12,16,0.12) 85%, transparent 100%)",
+                }}
+              />
+
+              {/* Bottom vignette blending seamlessly into the next page section */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(0deg, rgba(11,12,16,0.85) 0%, transparent 30%)",
+                }}
+              />
+            </div>
+          );
+        })}
+
+        {/* ── Content overlay (Staggered fade-up per slide, aligned & responsive across all devices) ── */}
+        <div className="relative z-20 w-full max-w-[1280px] mx-auto px-5 xs:px-6 sm:px-10 lg:px-16 xl:px-20 pt-16 pb-20 xs:pt-20 xs:pb-24 sm:py-24 md:py-28 lg:py-32">
+          <div key={`content-${current}`} className="max-w-[640px] w-full">
+            {/* Pill Badge */}
+            <div className="hs-content hs-content-d1 inline-flex items-center gap-1.5 sm:gap-2 border border-white/10 bg-white/5 backdrop-blur-sm rounded-full px-3 py-1 sm:px-4 sm:py-1.5 text-[11px] sm:text-xs text-slate-300 mb-3.5 sm:mb-5">
+              <Gem size={12} className="text-brand-yellow flex-shrink-0" />
+              <span className="font-medium tracking-wide">{slide.badge}</span>
             </div>
 
             {/* Headline */}
-            <h1
-              key={`h1-${current}`}
-              className="hs-content hs-content-d2 font-display font-black leading-[1.04] tracking-tight uppercase mb-5"
-              style={{ fontSize: "clamp(2rem, 5.5vw, 4rem)" }}
-            >
+            <h1 className="hs-content hs-content-d2 font-display font-black leading-[1.08] tracking-tight uppercase mb-3.5 sm:mb-5 text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-[54px]">
               {slide.headline.map((line, i) => (
                 <span
                   key={i}
@@ -284,34 +240,28 @@ export default function Hero() {
             </h1>
 
             {/* Subcopy */}
-            <div
-              key={`sub-${current}`}
-              className="hs-content hs-content-d3 text-base sm:text-lg text-slate-300 leading-relaxed mb-8 space-y-1"
-            >
+            <div className="hs-content hs-content-d3 text-xs xs:text-sm sm:text-base text-slate-200/90 leading-relaxed mb-6 sm:mb-8 space-y-0.5 sm:space-y-1 max-w-xl">
               {slide.sub.split("\n").map((line, i) => (
                 <p key={i}>{line}</p>
               ))}
             </div>
 
-            {/* CTAs */}
-            <div
-              key={`cta-${current}`}
-              className="hs-content hs-content-d4 flex flex-wrap items-center gap-4"
-            >
+            {/* CTAs — Full width stacked on narrow phones, inline row on larger screens */}
+            <div className="hs-content hs-content-d4 flex flex-col xs:flex-row items-stretch xs:items-center gap-3 sm:gap-4 w-full xs:w-auto pt-1">
               <Button
                 variant="primary"
                 size="lg"
                 href={slide.cta.href}
-                className="!px-7 !py-3.5 !text-base font-bold shadow-lg shadow-black/40"
+                className="w-full xs:w-auto justify-center text-center !px-6 sm:!px-7 !py-3 sm:!py-3.5 !text-xs xs:!text-sm sm:!text-base font-bold shadow-lg shadow-black/50"
               >
                 <span>{slide.cta.label}</span>
-                <ArrowRight size={18} />
+                <ArrowRight size={17} />
               </Button>
               <Button
                 variant="outline"
                 size="lg"
                 href="/bulk-orders"
-                className="!px-7 !py-3.5 !text-base font-semibold"
+                className="w-full xs:w-auto justify-center text-center !px-6 sm:!px-7 !py-3 sm:!py-3.5 !text-xs xs:!text-sm sm:!text-base font-semibold"
               >
                 Get a Quote
               </Button>
@@ -319,50 +269,53 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* ── Prev / Next arrows ── */}
+        {/* ── Desktop Navigation Arrows (Positioned cleanly on sides, hidden on mobile so they don't block copy) ── */}
         <button
-          onClick={() => { clearTimers(); goPrev(); }}
+          onClick={handlePrev}
           aria-label="Previous slide"
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 rounded-full bg-black/40 border border-white/10 text-white hover:bg-black/70 hover:scale-110 active:scale-95 transition-all duration-200 backdrop-blur-md"
+          className="hidden md:flex absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-11 h-11 rounded-full bg-black/45 border border-white/10 text-white hover:bg-black/75 hover:scale-110 active:scale-95 transition-all duration-200 backdrop-blur-md cursor-pointer"
         >
           <ChevronLeft size={22} />
         </button>
         <button
-          onClick={() => { clearTimers(); goNext(); }}
+          onClick={handleNext}
           aria-label="Next slide"
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 rounded-full bg-black/40 border border-white/10 text-white hover:bg-black/70 hover:scale-110 active:scale-95 transition-all duration-200 backdrop-blur-md"
+          className="hidden md:flex absolute right-4 lg:right-6 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-11 h-11 rounded-full bg-black/45 border border-white/10 text-white hover:bg-black/75 hover:scale-110 active:scale-95 transition-all duration-200 backdrop-blur-md cursor-pointer"
         >
           <ChevronRight size={22} />
         </button>
 
-        {/* ── Bottom nav: dots + progress ── */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => { clearTimers(); go(i, i > current ? "next" : "prev"); }}
-              aria-label={`Go to slide ${i + 1}`}
-              aria-current={i === current ? "true" : undefined}
-              className="relative flex items-center justify-center"
-            >
-              {i === current ? (
-                /* Active: pill with animated progress fill */
-                <span className="relative block w-10 h-2 rounded-full bg-white/20 overflow-hidden">
-                  <span
-                    className="absolute inset-y-0 left-0 bg-brand-yellow rounded-full transition-none"
-                    style={{ width: `${progress}%` }}
-                  />
-                </span>
-              ) : (
-                <span className="block w-2 h-2 rounded-full bg-white/30 hover:bg-white/60 transition-colors duration-200" />
-              )}
-            </button>
-          ))}
-        </div>
+        {/* ── Bottom Controls Dock (Dots + Slide Counter nicely aligned & fitting on all screen sizes) ── */}
+        <div className="absolute bottom-4 xs:bottom-5 sm:bottom-7 inset-x-0 z-30 flex items-center justify-between px-5 xs:px-6 sm:px-10 lg:px-16 xl:px-20 max-w-[1280px] mx-auto pointer-events-none">
+          {/* Dot indicators */}
+          <div className="flex items-center gap-2 xs:gap-2.5 pointer-events-auto">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => handleSelect(i)}
+                aria-label={`Go to slide ${i + 1}`}
+                aria-current={i === current ? "true" : undefined}
+                className="relative flex items-center justify-center p-1 cursor-pointer focus:outline-none"
+              >
+                {i === current ? (
+                  /* Active slide: pill shape with CSS progress fill */
+                  <span className="relative block w-8 xs:w-10 h-1.5 xs:h-2 rounded-full bg-white/20 overflow-hidden">
+                    <span
+                      key={`bar-${current}`}
+                      className="absolute inset-y-0 left-0 bg-brand-yellow rounded-full hs-progress-active"
+                    />
+                  </span>
+                ) : (
+                  <span className="block w-2 xs:w-2.5 h-1.5 xs:h-2 rounded-full bg-white/30 hover:bg-white/70 transition-colors duration-200" />
+                )}
+              </button>
+            ))}
+          </div>
 
-        {/* Slide counter */}
-        <div className="absolute bottom-6 right-5 z-20 text-xs text-white/50 font-medium tabular-nums select-none">
-          {String(current + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+          {/* Slide counter */}
+          <div className="pointer-events-auto text-[10px] xs:text-xs text-white/70 font-mono font-medium tabular-nums px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 select-none">
+            {String(current + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+          </div>
         </div>
       </section>
     </>

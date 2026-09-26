@@ -100,7 +100,7 @@ const FAQ_DATA: FAQItem[] = [
     category: "Shipping & Delivery",
     question: "How do I track my dispatched parcel?",
     answer:
-      "The instant your order leaves our Okhla printing hub, you receive an automated SMS and WhatsApp message with your direct courier tracking link and AWB number for live milestone tracking.",
+      "The instant your order leaves our Khatima printing hub, you receive an automated SMS and WhatsApp message with your direct courier tracking link and AWB number for live milestone tracking.",
   },
 
   // Category 4: Payments, GST & Invoicing
@@ -305,7 +305,7 @@ export default function FAQPage() {
 
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto shrink-0">
             <a
-              href="https://wa.me/919876543210?text=Hi%20Star%20Press,%20I%20have%20a%20technical%20question%20regarding%20file%20specifications."
+              href="https://wa.me/917456849955?text=Hi%20Star%20Press,%20I%20have%20a%20technical%20question%20regarding%20file%20specifications."
               target="_blank"
               rel="noopener noreferrer"
               className="py-3 px-5 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#25D366] text-black hover:bg-[#20bd5a] transition-colors text-center"

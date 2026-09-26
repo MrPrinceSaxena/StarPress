@@ -35,6 +35,7 @@ export async function ensureDbUser(user: UserInput) {
     const isAdmin =
       user.role === "ADMIN" ||
       email === "admin@starpress.in" ||
+      email === "starpress.print@gmail.com" ||
       email === "mrdigitalmarketerpro@gmail.com" ||
       email.endsWith("@starpress.in");
 

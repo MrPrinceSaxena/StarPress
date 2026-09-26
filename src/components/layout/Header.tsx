@@ -120,25 +120,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
     { name: "Custom Packaging", slug: "packaging", desc: "Boxes, Poly Mailers, Tape" },
   ];
 
-  const userEmail = (session?.user?.email || "").toLowerCase().trim();
-  const isAdminUser =
-    session?.user?.role === "ADMIN" ||
-    userEmail === "admin@starpress.in" ||
-    userEmail === "mrdigitalmarketerpro@gmail.com" ||
-    Boolean(userEmail.endsWith("@starpress.in"));
-
   const authenticatedMenuItems: MenuItem[] = [
-    ...(isAdminUser
-      ? [
-          {
-            label: "Admin Portal",
-            href: "/admin/dashboard",
-            icon: <ShieldCheck size={17} className="text-brand-cyan shrink-0" />,
-            description: "Manage orders, products, and store settings",
-            highlight: true,
-          },
-        ]
-      : []),
     {
       label: "My Orders & Tracking",
       href: "/account?tab=orders",
@@ -168,7 +150,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   return (
     <>
       <header className="sticky top-0 z-40 w-full bg-bg-base/90 backdrop-blur-md border-b border-border-subtle transition-all duration-200">
-        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 h-[72px] flex items-center justify-between gap-4">
+        <div className="max-w-[1280px] mx-auto px-4 xs:px-6 lg:px-10 h-[68px] sm:h-[72px] flex items-center justify-between gap-3 sm:gap-4">
           {/* Left: Logo */}
           <Link
             href="/"
@@ -366,19 +348,13 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   {/* User Avatar Circle */}
                   <div className="relative">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all shadow-sm ${
-                        isAdminUser
-                          ? "bg-gradient-to-br from-cyan-400 to-cyan-600 text-black font-extrabold"
-                          : "bg-brand-yellow text-black"
-                      }`}
+                      className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all shadow-sm bg-brand-yellow text-black"
                     >
                       {getUserInitial()}
                     </div>
                     {/* Status indicator dot */}
                     <span
-                      className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-bg-base ${
-                        isAdminUser ? "bg-brand-cyan" : "bg-emerald-400"
-                      }`}
+                      className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-bg-base bg-emerald-400"
                     />
                   </div>
 
@@ -430,11 +406,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                       <div className="p-4 bg-gradient-to-r from-white/[0.04] to-white/[0.01] border-b border-border-subtle">
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-11 h-11 rounded-2xl flex items-center justify-center font-display font-black text-base shrink-0 shadow-md ${
-                              isAdminUser
-                                ? "bg-gradient-to-br from-cyan-400 to-cyan-600 text-black border border-cyan-300"
-                                : "bg-brand-yellow text-black border border-yellow-300"
-                            }`}
+                            className="w-11 h-11 rounded-2xl flex items-center justify-center font-display font-black text-base shrink-0 shadow-md bg-brand-yellow text-black border border-yellow-300"
                           >
                             {getUserInitial()}
                           </div>
@@ -446,17 +418,10 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                               {session.user.email}
                             </p>
                             <div className="mt-2 flex items-center gap-2">
-                              {isAdminUser ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/40">
-                                  <ShieldCheck size={11} />
-                                  <span>Administrator</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/30">
-                                  <CheckCircle2 size={11} />
-                                  <span>Verified Customer</span>
-                                </span>
-                              )}
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/30">
+                                <CheckCircle2 size={11} />
+                                <span>Verified Customer</span>
+                              </span>
                             </div>
                           </div>
                         </div>

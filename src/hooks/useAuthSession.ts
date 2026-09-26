@@ -44,6 +44,7 @@ function sanitizeUser(supabaseUser: User | null): AuthUser | null {
     appMetadata.role === 'ADMIN' ||
     metadata.role === 'ADMIN' ||
     cleanEmail === 'admin@starpress.in' ||
+    cleanEmail === 'starpress.print@gmail.com' ||
     cleanEmail === 'mrdigitalmarketerpro@gmail.com' ||
     Boolean(cleanEmail && cleanEmail.endsWith('@starpress.in'));
   const role = isDeclaredAdmin ? 'ADMIN' : (appMetadata.role || metadata.role || 'CUSTOMER');
@@ -181,6 +182,7 @@ export function useAuthSession(): AuthState {
   const isAdmin =
     user?.role === 'ADMIN' ||
     user?.email?.toLowerCase() === 'admin@starpress.in' ||
+    user?.email?.toLowerCase() === 'starpress.print@gmail.com' ||
     user?.email?.toLowerCase() === 'mrdigitalmarketerpro@gmail.com' ||
     Boolean(user?.email?.toLowerCase().endsWith('@starpress.in'));
   const session = user ? { user } : null;

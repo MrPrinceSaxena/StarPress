@@ -303,7 +303,7 @@ export default function CheckoutPage() {
             {/* Actions */}
             <div className="space-y-3 pt-2">
               <a
-                href={`https://wa.me/919876543210?text=${whatsappProofMsg}`}
+                href={`https://wa.me/917456849955?text=${whatsappProofMsg}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 w-full max-w-md py-3.5 px-6 rounded-xl font-bold text-sm bg-[#25D366] text-black hover:bg-[#20bd5a] transition-colors shadow-lg"

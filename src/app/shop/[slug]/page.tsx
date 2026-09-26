@@ -51,17 +51,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: `${product.name} — Custom Printing & Instant Pricing | Star Press`,
-    description: product.shortDescription,
+    title: `${product.name} — Custom Printing & Pricing`,
+    description: `${product.shortDescription} Manufactured at Star Press Khatima, Uttarakhand with quick doorstep delivery.`,
+    alternates: {
+      canonical: `https://starpress.in/shop/${product.slug}`,
+    },
     openGraph: {
-      title: `${product.name} | Star Press`,
+      title: `${product.name} | Star Press Khatima`,
       description: product.shortDescription,
+      url: `https://starpress.in/shop/${product.slug}`,
       images: [
         {
           url: product.images[0] || "/images/hero-composition.jpg",
           width: 800,
           height: 600,
-          alt: product.name,
+          alt: `${product.name} - Star Press Khatima`,
         },
       ],
     },

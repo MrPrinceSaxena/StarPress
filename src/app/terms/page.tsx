@@ -153,7 +153,7 @@ export default function TermsPage() {
             <p>
               These Terms and Conditions shall be governed by and construed in accordance with the
               laws of the Republic of India. Any disputes arising under these terms shall be subject
-              to the exclusive jurisdiction of the competent courts located in New Delhi, India.
+              to the exclusive jurisdiction of the competent courts located in Uttarakhand, India.
             </p>
           </section>
         </div>

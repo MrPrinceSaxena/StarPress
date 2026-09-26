@@ -8,9 +8,12 @@ import Footer from "@/components/layout/Footer";
 import { getAllCategories, getProductsByCategory } from "@/lib/catalog";
 
 export const metadata: Metadata = {
-  title: "All Print Categories | Star Press",
+  title: "All Print Categories | Star Press Khatima",
   description:
-    "Explore Star Press commercial and custom printing categories: Business Printing, Marketing Materials, Outdoor Advertising, Stationery, Packaging, and more.",
+    "Explore Star Press commercial and custom printing categories in Khatima: Business Printing, Marketing Materials, Outdoor Advertising, 3D Signage, Stationery, and Custom Packaging.",
+  alternates: {
+    canonical: "https://starpress.in/categories",
+  },
 };
 
 export default function CategoriesPage() {

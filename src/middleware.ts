@@ -65,21 +65,18 @@ function resolveDomains(rawHost: string) {
     };
   }
 
-  // 3. Production custom domains (e.g. starpress.in, www.starpress.in, admin.starpress.in)
-  // Clean root domain by stripping any prefixes
-  const rootDomain = host
-    .replace(/^admin\.www\./, "")
-    .replace(/^www\.admin\./, "")
-    .replace(/^admin\./, "")
-    .replace(/^www\./, "");
-
-  const isAdminHost = host === `admin.${rootDomain}` || (host.startsWith("admin.") && !host.startsWith("admin.www."));
+  // 3. Production custom domains (e.g. www.admin.starpress.in, admin.starpress.in, www.starpress.in, starpress.in)
+  const isAdminHost =
+    host === "www.admin.starpress.in" ||
+    host === "admin.starpress.in" ||
+    host.startsWith("www.admin.") ||
+    (host.startsWith("admin.") && !host.startsWith("admin.www."));
 
   return {
     host,
     isAdminHost,
-    adminUrl: isAdminHost ? `https://${host}` : `https://www.${rootDomain}/admin`,
-    storeUrl: `https://www.${rootDomain}`,
+    adminUrl: "https://www.admin.starpress.in",
+    storeUrl: "https://www.starpress.in",
   };
 }
 
@@ -94,6 +91,7 @@ export async function middleware(req: NextRequest) {
     user?.app_metadata?.role === "ADMIN" ||
     user?.user_metadata?.role === "ADMIN" ||
     userEmail === "admin@starpress.in" ||
+    userEmail === "starpress.print@gmail.com" ||
     userEmail === "mrdigitalmarketerpro@gmail.com" ||
     Boolean(userEmail.endsWith("@starpress.in"));
 
@@ -127,11 +125,10 @@ export async function middleware(req: NextRequest) {
     return addSecurityHeaders(rewriteRes);
   };
 
-  // Fix any legacy/cached admin.www. or www.admin. requests immediately
-  if (host.startsWith("admin.www.") || host.startsWith("www.admin.")) {
+  // Canonicalize any alternative admin hosts (e.g. admin.starpress.in or admin.www.) to https://www.admin.starpress.in
+  if (host === "admin.starpress.in" || host.startsWith("admin.www.")) {
     const proto = req.headers.get("x-forwarded-proto") || "https";
-    const cleanHost = host.replace(/^(admin\.www\.|www\.admin\.)/, "");
-    return NextResponse.redirect(new URL(`${proto}://${cleanHost}/admin${pathname.replace(/^\/admin/, "")}${req.nextUrl.search}`), {
+    return NextResponse.redirect(new URL(`${proto}://www.admin.starpress.in${pathname}${req.nextUrl.search}`), {
       status: 301,
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
     });
@@ -216,16 +213,22 @@ export async function middleware(req: NextRequest) {
   }
 
   // =========================================================================
-  // SCENARIO B: Primary Storefront Domain (starpress.in, www.starpress.in, localhost)
-  // Direct path-based admin access (/admin/*).
-  // PERMANENT FIX: Never redirect /admin to a subdomain (e.g. admin.starpress.in)
-  // which causes DNS_PROBE_FINISHED_NXDOMAIN when DNS is not configured.
+  // SCENARIO B: Primary Storefront Domain (starpress.in, www.starpress.in)
+  // Admin panel is strictly prohibited on the public storefront domain in production.
   // =========================================================================
-
-  // B1. Admin portal requests on storefront domain:
-  // Handled directly under /admin on the current domain with strict authentication.
   if (pathname.startsWith("/admin")) {
-    // Root /admin or /admin/
+    if (process.env.NODE_ENV === "production" && !host.includes("localhost") && host !== "127.0.0.1") {
+      // In production, bounce all /admin requests directly to https://www.admin.starpress.in
+      const cleanPath = pathname.replace(/^\/admin/, "") || "/";
+      const targetUrl = new URL(cleanPath, "https://www.admin.starpress.in");
+      targetUrl.search = req.nextUrl.search;
+      return NextResponse.redirect(targetUrl, {
+        status: 302,
+        headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+      });
+    }
+
+    // In local development only, allow direct /admin for testing
     if (pathname === "/admin" || pathname === "/admin/") {
       if (isAuthenticated && isAdmin) {
         return createRedirect(new URL("/admin/dashboard", req.url));
@@ -233,7 +236,6 @@ export async function middleware(req: NextRequest) {
       return createRedirect(new URL("/admin/login", req.url));
     }
 
-    // Admin login route (/admin/login)
     if (pathname === "/admin/login") {
       if (isAuthenticated && isAdmin) {
         return createRedirect(new URL("/admin/dashboard", req.url));
@@ -241,14 +243,12 @@ export async function middleware(req: NextRequest) {
       return addSecurityHeaders(response);
     }
 
-    // Protected admin routes (/admin/dashboard, /admin/orders, /admin/products, etc.)
     if (!isAuthenticated) {
       const loginUrl = new URL("/admin/login", req.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return createRedirect(loginUrl);
     }
 
-    // In production, block non-admin authenticated users
     if (!isAdmin && process.env.NODE_ENV === "production") {
       return createRedirect(new URL("/account?error=AccessDenied", req.url));
     }
@@ -261,13 +261,13 @@ export async function middleware(req: NextRequest) {
     return createRedirect(new URL("/account?tab=orders", req.url));
   }
   if (pathname === "/settings" || pathname === "/settings/") {
-    return createRedirect(new URL(isAdmin ? "/admin/settings" : "/account?tab=profile", req.url));
+    return createRedirect(new URL("/account?tab=profile", req.url));
   }
   if (pathname === "/saved-addresses" || pathname === "/saved-addresses/") {
     return createRedirect(new URL("/account?tab=addresses", req.url));
   }
   if (pathname === "/dashboard" || pathname === "/dashboard/") {
-    return createRedirect(new URL(isAdmin ? "/admin/dashboard" : "/account", req.url));
+    return createRedirect(new URL("/account", req.url));
   }
 
   // B2. Protected Customer Routes Guard (/account)

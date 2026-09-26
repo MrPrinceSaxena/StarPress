@@ -69,9 +69,9 @@ export interface StoreData {
 
 const DEFAULT_SETTINGS: StoreSettings = {
   storeName: "Star Press",
-  storeEmail: "hello@starpress.in",
-  storePhone: "+91 98765 43210",
-  storeAddress: "42, Connaught Place, New Delhi 110001",
+  storeEmail: "starpress.print@gmail.com",
+  storePhone: "+91 74568 49955",
+  storeAddress: "Amoun, Khatima (Uttarakhand)",
   currency: "INR",
   timezone: "Asia/Kolkata",
   gstin: "07AAAAA0000A1Z5",
