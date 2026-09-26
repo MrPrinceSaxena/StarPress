@@ -6,12 +6,12 @@ export default function JsonLd() {
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://starpress.in/#organization",
+        "@id": "https://www.starpress.in/#organization",
         "name": "Star Press",
-        "url": "https://starpress.in",
+        "url": "https://www.starpress.in",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://starpress.in/images/hero-composition.jpg",
+          "url": "https://www.starpress.in/images/hero-composition.jpg",
           "width": 1200,
           "height": 630,
         },
@@ -33,25 +33,25 @@ export default function JsonLd() {
       },
       {
         "@type": "WebSite",
-        "@id": "https://starpress.in/#website",
-        "url": "https://starpress.in",
+        "@id": "https://www.starpress.in/#website",
+        "url": "https://www.starpress.in",
         "name": "Star Press",
         "description": "Turning Ideas Into Print — High Quality Custom Printing",
         "publisher": {
-          "@id": "https://starpress.in/#organization",
+          "@id": "https://www.starpress.in/#organization",
         },
         "potentialAction": {
           "@type": "SearchAction",
           "target": {
             "@type": "EntryPoint",
-            "urlTemplate": "https://starpress.in/shop?q={search_term_string}",
+            "urlTemplate": "https://www.starpress.in/shop?q={search_term_string}",
           },
           "query-input": "required name=search_term_string",
         },
       },
       {
         "@type": ["LocalBusiness", "PrintShop"],
-        "@id": "https://starpress.in/#localbusiness",
+        "@id": "https://www.starpress.in/#localbusiness",
         "name": "Star Press",
         "alternateName": [
           "Star Press Khatima",
@@ -59,9 +59,9 @@ export default function JsonLd() {
           "Star Press Print Hub",
           "Star Press Amoun"
         ],
-        "image": "https://starpress.in/images/hero-composition.jpg",
-        "logo": "https://starpress.in/images/Logo.png",
-        "url": "https://starpress.in",
+        "image": "https://www.starpress.in/images/hero-composition.jpg",
+        "logo": "https://www.starpress.in/images/Logo.png",
+        "url": "https://www.starpress.in",
         "telephone": "+91-74568-49955",
         "email": "starpress.print@gmail.com",
         "priceRange": "₹₹",

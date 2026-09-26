@@ -34,7 +34,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://starpress.in"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.starpress.in"),
   title: {
     default: "Star Press | Best Printing Press in Khatima, Uttarakhand",
     template: "%s | Star Press Khatima",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     "commercial printing India",
     "packaging boxes Khatima",
   ],
-  authors: [{ name: "Star Press", url: "https://starpress.in" }],
+  authors: [{ name: "Star Press", url: "https://www.starpress.in" }],
   creator: "Star Press",
   publisher: "Star Press",
   alternates: {
@@ -77,7 +77,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://starpress.in",
+    url: "https://www.starpress.in",
     siteName: "Star Press Khatima",
     title: "Star Press | Best Printing Press in Khatima, Uttarakhand",
     description:

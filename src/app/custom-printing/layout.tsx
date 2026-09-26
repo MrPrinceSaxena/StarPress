@@ -5,13 +5,13 @@ export const metadata: Metadata = {
   description:
     "Design and order custom acrylic nameplates, keychains, 3D letter signs, neon boards, and merchandise at Star Press, Khatima. Instant pricing and doorstep delivery.",
   alternates: {
-    canonical: "/custom-printing",
+    canonical: "https://www.starpress.in/custom-printing",
   },
   openGraph: {
     title: "Custom Printing & Fabrication Studio | Star Press Khatima",
     description:
       "Bespoke pre-press and fabrication studio by Star Press in Khatima, Uttarakhand. Custom sizes, premium finishes, and instant WhatsApp proofing.",
-    url: "https://starpress.in/custom-printing",
+    url: "https://www.starpress.in/custom-printing",
   },
 };
 

@@ -98,7 +98,7 @@ export const CATEGORIES: CategoryItem[] = [
     name: "Business Printing",
     color: "#17C3C0",
     bgColorClass: "bg-cat-teal",
-    imageSrc: "/images/cat-business-cards.jpg",
+    imageSrc: "/images/categories/business-printing.jpg",
     href: "/shop?category=business-printing",
   },
   {
@@ -106,7 +106,7 @@ export const CATEGORIES: CategoryItem[] = [
     name: "Marketing Materials",
     color: "#F97066",
     bgColorClass: "bg-cat-coral",
-    imageSrc: "/images/cat-flyers.jpg",
+    imageSrc: "/images/categories/marketing-materials.jpg",
     href: "/shop?category=marketing-materials",
   },
   {
@@ -114,7 +114,7 @@ export const CATEGORIES: CategoryItem[] = [
     name: "Outdoor Advertising",
     color: "#7A5CF0",
     bgColorClass: "bg-cat-purple",
-    imageSrc: "/images/cat-banners.jpg",
+    imageSrc: "/images/categories/outdoor-advertising.jpg",
     href: "/shop?category=outdoor-advertising",
   },
   {
@@ -122,7 +122,7 @@ export const CATEGORIES: CategoryItem[] = [
     name: "Stationery",
     color: "#2E90FA",
     bgColorClass: "bg-cat-blue",
-    imageSrc: "/images/cat-brochures.jpg",
+    imageSrc: "/images/categories/stationery.jpg",
     href: "/shop?category=stationery",
   },
   {
@@ -130,7 +130,7 @@ export const CATEGORIES: CategoryItem[] = [
     name: "Wedding & Events",
     color: "#EE4FA6",
     bgColorClass: "bg-cat-pink",
-    imageSrc: "/images/cat-stickers.jpg",
+    imageSrc: "/images/categories/wedding-events.jpg",
     href: "/shop?category=wedding-events",
   },
   {
@@ -138,7 +138,7 @@ export const CATEGORIES: CategoryItem[] = [
     name: "Packaging",
     color: "#F79A3E",
     bgColorClass: "bg-cat-orange",
-    imageSrc: "/images/cat-gifts.jpg",
+    imageSrc: "/images/categories/packaging.jpg",
     href: "/shop?category=packaging",
   },
   {
@@ -146,7 +146,7 @@ export const CATEGORIES: CategoryItem[] = [
     name: "Labels & Stickers",
     color: "#FFCF1B",
     bgColorClass: "bg-brand-yellow",
-    imageSrc: "/images/prod-stickers.jpg",
+    imageSrc: "/images/categories/labels-stickers.jpg",
     href: "/shop?category=labels-stickers",
   },
   {
@@ -154,7 +154,7 @@ export const CATEGORIES: CategoryItem[] = [
     name: "Photo & Custom",
     color: "#29C5F6",
     bgColorClass: "bg-brand-cyan",
-    imageSrc: "/images/promo-banner.jpg",
+    imageSrc: "/images/categories/photo-custom.jpg",
     href: "/shop?category=photo-custom-printing",
   },
 ];

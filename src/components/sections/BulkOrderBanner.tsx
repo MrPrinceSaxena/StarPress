@@ -124,7 +124,12 @@ export default function BulkOrderBanner() {
                 <div className="pt-2 text-center">
                   <p className="text-xs text-text-muted">
                     Custom specifications? Call our print desk directly at{" "}
-                    <span className="text-white font-semibold">+91 99999 99999</span>
+                    <a
+                      href="tel:+917456849955"
+                      className="text-white hover:text-brand-yellow font-semibold transition-colors"
+                    >
+                      +91 74568 49955
+                    </a>
                   </p>
                 </div>
               </div>

@@ -14,13 +14,13 @@ export const metadata: Metadata = {
     "Star Press bulk orders",
   ],
   alternates: {
-    canonical: "https://starpress.in/bulk-orders",
+    canonical: "https://www.starpress.in/bulk-orders",
   },
   openGraph: {
     title: "Bulk & Corporate Printing Services in Khatima | Star Press",
     description:
       "Wholesale printing partner for businesses, schools, and institutions in Khatima & Uttarakhand. Unmatched quality and tier discounts.",
-    url: "https://starpress.in/bulk-orders",
+    url: "https://www.starpress.in/bulk-orders",
   },
 };
 

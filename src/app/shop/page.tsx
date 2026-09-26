@@ -23,13 +23,13 @@ export const metadata: Metadata = {
     "Star Press store",
   ],
   alternates: {
-    canonical: "https://starpress.in/shop",
+    canonical: "https://www.starpress.in/shop",
   },
   openGraph: {
     title: "Commercial & Custom Printing Catalog | Star Press Khatima",
     description:
       "Explore our complete range of business cards, marketing flyers, flex banners, 3D acrylic letters, LED boards, and packaging from Star Press, Khatima.",
-    url: "https://starpress.in/shop",
+    url: "https://www.starpress.in/shop",
   },
 };
 

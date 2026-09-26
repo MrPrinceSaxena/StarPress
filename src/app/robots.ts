@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/", "/admin/"],
     },
-    sitemap: "https://starpress.in/sitemap.xml",
+    sitemap: "https://www.starpress.in/sitemap.xml",
   };
 }
