@@ -531,6 +531,8 @@ export async function createAdminProduct(
     metaDescription?: string;
     metaKeywords?: string;
     imageUrl?: string;
+    isFeatured?: boolean;
+    images?: Array<{ url: string; altText?: string; isPrimary?: boolean; position?: number }>;
   },
   adminEmail: string,
   ipAddress?: string
@@ -576,21 +578,32 @@ export async function createAdminProduct(
         stockQuantity: data.stockQuantity ?? 100,
         lowStockThreshold: data.lowStockThreshold ?? 10,
         status: data.status || "draft",
+        isFeatured: data.isFeatured ?? false,
         metaTitle: data.metaTitle || `${data.name} | Star Press`,
         metaDescription: data.metaDescription || data.shortDescription || "",
         metaKeywords: data.metaKeywords || "",
-        images: data.imageUrl
+        images: data.images && data.images.length > 0
           ? {
-              create: [
-                {
-                  url: data.imageUrl,
-                  altText: `${data.name} Primary Image`,
-                  isPrimary: true,
-                  position: 0,
-                },
-              ],
+              create: data.images.map((img, idx) => ({
+                url: img.url,
+                altText: img.altText || `${data.name} Image ${idx + 1}`,
+                isPrimary: img.isPrimary ?? idx === 0,
+                position: img.position ?? idx,
+                displayOrder: idx,
+              })),
             }
-          : undefined,
+          : data.imageUrl
+            ? {
+                create: [
+                  {
+                    url: data.imageUrl,
+                    altText: `${data.name} Primary Image`,
+                    isPrimary: true,
+                    position: 0,
+                  },
+                ],
+              }
+            : undefined,
       },
       include: {
         category: true,
@@ -720,6 +733,7 @@ export async function updateAdminProduct(
 
   try {
     const updateData: any = { ...data, updatedAt: new Date() };
+    const imagesToSync = updateData.images;
     delete updateData.images; // handle images separately for Prisma
 
     updatedProduct = await db.product.update({
@@ -730,6 +744,41 @@ export async function updateAdminProduct(
         images: true,
       },
     });
+
+    // Sync images if provided: delete all existing and recreate
+    if (Array.isArray(imagesToSync)) {
+      try {
+        // Delete existing images for this product
+        await db.productImage.deleteMany({
+          where: { productId: id },
+        });
+
+        // Create new images from the provided array
+        if (imagesToSync.length > 0) {
+          await db.productImage.createMany({
+            data: imagesToSync.map((img: any, idx: number) => ({
+              productId: id,
+              url: img.url,
+              altText: img.altText || '',
+              isPrimary: img.isPrimary ?? idx === 0,
+              position: img.position ?? idx,
+              displayOrder: idx,
+            })),
+          });
+        }
+
+        // Re-fetch with updated images
+        updatedProduct = await db.product.findUnique({
+          where: { id },
+          include: {
+            category: true,
+            images: { orderBy: { position: 'asc' } },
+          },
+        });
+      } catch (imgErr: any) {
+        console.warn('[Update Product] Image sync error:', imgErr?.message);
+      }
+    }
 
     try {
       await db.adminAuditLog.create({

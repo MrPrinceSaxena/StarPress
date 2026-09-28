@@ -241,6 +241,16 @@ export const productService = {
     if (data.seo?.description !== undefined) payload.metaDescription = data.seo.description;
     if (data.tags !== undefined) payload.metaKeywords = data.tags.join(', ');
 
+    // Always send images array so the server can sync them
+    if (data.images !== undefined) {
+      payload.images = (data.images || []).map((img: any, idx: number) => ({
+        url: img.url,
+        altText: img.altText || '',
+        isPrimary: img.isPrimary ?? idx === 0,
+        position: img.position ?? idx,
+      }));
+    }
+
     await apiFetch(`/api/admin/products/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
@@ -404,11 +414,79 @@ export const categoryService = {
         name: c.name,
         slug: c.slug,
         description: c.description || '',
+        imageUrl: c.imageUrl || null,
+        displayOrder: c.displayOrder || 0,
         productCount: c.productCount || 0,
         parentId: null,
       }));
     } catch {
       return [];
+    }
+  },
+
+  async createCategory(data: {
+    name: string;
+    slug?: string;
+    description?: string;
+    imageUrl?: string;
+  }): Promise<AdminCategory> {
+    const res = await apiFetch<{ success: boolean; category: any }>('/api/admin/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return {
+      id: res.category.id,
+      name: res.category.name,
+      slug: res.category.slug,
+      description: res.category.description || '',
+      imageUrl: res.category.imageUrl || null,
+      displayOrder: res.category.displayOrder || 0,
+      productCount: 0,
+      parentId: null,
+    };
+  },
+
+  async updateCategory(
+    id: string,
+    data: Partial<{ name: string; slug: string; description: string; imageUrl: string | null }>
+  ): Promise<AdminCategory> {
+    const res = await apiFetch<{ success: boolean; category: any }>(`/api/admin/categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    return {
+      id: res.category.id,
+      name: res.category.name,
+      slug: res.category.slug,
+      description: res.category.description || '',
+      imageUrl: res.category.imageUrl || null,
+      displayOrder: res.category.displayOrder || 0,
+      productCount: res.category.productCount || 0,
+      parentId: null,
+    };
+  },
+
+  async deleteCategory(id: string): Promise<boolean> {
+    try {
+      const res = await apiFetch<{ success: boolean }>(`/api/admin/categories/${id}`, {
+        method: 'DELETE',
+      });
+      return !!res.success;
+    } catch {
+      return false;
+    }
+  },
+
+  async reorderCategories(orders: Array<{ id: string; displayOrder: number }>): Promise<boolean> {
+    try {
+      // We use the [id] route POST for reorder — any id works, the body has all orders
+      const res = await apiFetch<{ success: boolean }>(`/api/admin/categories/${orders[0]?.id || 'reorder'}`, {
+        method: 'POST',
+        body: JSON.stringify({ orders }),
+      });
+      return !!res.success;
+    } catch {
+      return false;
     }
   },
 };
@@ -488,7 +566,61 @@ export const financeService = {
 
 export const discountService = {
   async getDiscounts(): Promise<AdminDiscount[]> {
-    return [...MOCK_DISCOUNTS];
+    try {
+      const res = await apiFetch<{ success: boolean; discounts: AdminDiscount[] }>('/api/admin/discounts');
+      return res.discounts || [];
+    } catch {
+      return [];
+    }
+  },
+
+  async createDiscount(data: {
+    code: string;
+    type: 'percentage' | 'fixed';
+    value: number;
+    minOrderAmount?: number | null;
+    usageLimit?: number | null;
+    startDate?: string;
+    endDate?: string | null;
+    isActive?: boolean;
+  }): Promise<AdminDiscount> {
+    const res = await apiFetch<{ success: boolean; discount: AdminDiscount }>('/api/admin/discounts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return res.discount;
+  },
+
+  async updateDiscount(
+    id: string,
+    data: Partial<{
+      code: string;
+      type: 'percentage' | 'fixed';
+      value: number;
+      minOrderAmount: number | null;
+      usageLimit: number | null;
+      startDate: string;
+      endDate: string | null;
+      isActive: boolean;
+      status: string;
+    }>
+  ): Promise<AdminDiscount> {
+    const res = await apiFetch<{ success: boolean; discount: AdminDiscount }>(`/api/admin/discounts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    return res.discount;
+  },
+
+  async deleteDiscount(id: string): Promise<boolean> {
+    try {
+      const res = await apiFetch<{ success: boolean }>(`/api/admin/discounts/${id}`, {
+        method: 'DELETE',
+      });
+      return Boolean(res.success);
+    } catch {
+      return false;
+    }
   },
 };
 

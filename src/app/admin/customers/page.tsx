@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Search, X, Mail, Phone, ShoppingCart, IndianRupee } from 'lucide-react';
+import Link from 'next/link';
+import { Users, Search, X, Mail, Phone, ShoppingCart, IndianRupee, ExternalLink } from 'lucide-react';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
 import Pagination from '@/components/admin/ui/Pagination';
 import EmptyState from '@/components/admin/ui/EmptyState';
@@ -72,7 +73,13 @@ export default function CustomersPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center text-brand-yellow font-bold text-xs">{c.name.charAt(0)}</div>
-                        <span className="text-sm font-medium text-white">{c.name}</span>
+                        <Link
+                          href={`/admin/customers/${encodeURIComponent(c.id)}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-sm font-medium text-white hover:text-brand-yellow hover:underline transition-colors"
+                        >
+                          {c.name}
+                        </Link>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-text-secondary">{c.email}</td>
@@ -97,7 +104,16 @@ export default function CustomersPage() {
           <div className="relative w-full max-w-md bg-bg-surface border-l border-border-subtle shadow-elevation-md overflow-y-auto animate-fadeIn">
             <div className="sticky top-0 bg-bg-surface border-b border-border-subtle p-5 flex items-center justify-between z-10">
               <h2 className="text-sm font-bold text-white">{selected.name}</h2>
-              <button onClick={() => setSelected(null)} className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06]"><X size={18} /></button>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/admin/customers/${encodeURIComponent(selected.id)}`}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors"
+                >
+                  <ExternalLink size={13} />
+                  Full Profile & LTV
+                </Link>
+                <button onClick={() => setSelected(null)} className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06]"><X size={18} /></button>
+              </div>
             </div>
             <div className="p-5 space-y-5">
               <div className="flex items-center gap-4">

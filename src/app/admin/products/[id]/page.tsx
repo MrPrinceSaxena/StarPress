@@ -11,6 +11,8 @@ import {
 import { showToast } from '@/components/admin/ui/Toast';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
 import ConfirmDialog from '@/components/admin/ui/ConfirmDialog';
+import ImageUploader from '@/components/admin/ui/ImageUploader';
+import type { UploadedImage } from '@/components/admin/ui/ImageUploader';
 import { productService, categoryService } from '@/lib/admin/services';
 import type { AdminProduct, AdminCategory, AdminProductImage, AdminVariantOption } from '@/lib/admin/types';
 
@@ -56,7 +58,7 @@ export default function ProductDetailPage({ params }: { params?: { id?: string }
   const [stockQuantity, setStockQuantity] = useState('');
   const [lowStockThreshold, setLowStockThreshold] = useState('');
   const [allowBackorders, setAllowBackorders] = useState(false);
-  const [images, setImages] = useState<AdminProductImage[]>([]);
+  const [images, setImages] = useState<UploadedImage[]>([]);
   const [variantOptions, setVariantOptions] = useState<AdminVariantOption[]>([]);
   const [weight, setWeight] = useState('');
   const [dimensions, setDimensions] = useState({ length: '', width: '', height: '' });
@@ -83,7 +85,14 @@ export default function ProductDetailPage({ params }: { params?: { id?: string }
         setCostPerItem(p.costPerItem?.toString() || ''); setTaxable(p.taxable);
         setTrackInventory(p.trackInventory); setStockQuantity(p.stockQuantity.toString());
         setLowStockThreshold(p.lowStockThreshold.toString()); setAllowBackorders(p.allowBackorders);
-        setImages([...p.images]); setVariantOptions([...p.variantOptions]);
+        setImages((p.images || []).map((img: any, i: number) => ({
+          id: img.id || `img_${i}`,
+          url: img.url || '',
+          altText: img.altText || p.name,
+          isPrimary: img.isPrimary ?? i === 0,
+          position: img.position ?? i,
+          storagePath: undefined,
+        }))); setVariantOptions([...p.variantOptions]);
         setWeight(p.weight?.toString() || '');
         setDimensions({
           length: p.dimensions?.length.toString() || '',
@@ -288,28 +297,15 @@ export default function ProductDetailPage({ params }: { params?: { id?: string }
           {activeTab === 'media' && (
             <div className="space-y-5">
               <h2 className="text-sm font-semibold text-white mb-4">Product Media</h2>
-              <div onClick={() => setImages([...images, { id: `img_${Date.now()}`, url: '', altText: '', isPrimary: images.length === 0, position: images.length }])} className="border-2 border-dashed border-border-subtle rounded-xl p-10 text-center hover:border-brand-yellow/30 hover:bg-brand-yellow/[0.02] transition-colors cursor-pointer">
-                <Upload size={32} className="mx-auto text-text-muted mb-3" />
-                <p className="text-sm font-medium text-text-secondary">Drag and drop images here</p>
-                <p className="text-xs text-text-muted mt-1">or <span className="text-brand-yellow">browse from your device</span></p>
-              </div>
-              {images.length > 0 && (
-                <div className="grid grid-cols-4 gap-3">
-                  {images.map((img, idx) => (
-                    <div key={img.id} className={`relative rounded-lg border overflow-hidden aspect-square bg-white/[0.03] ${img.isPrimary ? 'border-brand-yellow/40 ring-1 ring-brand-yellow/20' : 'border-border-subtle'}`}>
-                      <div className="absolute inset-0 flex items-center justify-center text-text-muted"><ImageIcon size={24} /></div>
-                      <div className="absolute top-2 left-2 flex items-center gap-1">
-                        <GripVertical size={12} className="text-text-muted cursor-grab" />
-                        {img.isPrimary && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-brand-yellow text-black">PRIMARY</span>}
-                      </div>
-                      <div className="absolute top-2 right-2 flex items-center gap-1">
-                        {!img.isPrimary && <button onClick={() => setImages(images.map((im, i) => ({ ...im, isPrimary: i === idx })))} className="p-1 rounded bg-black/50 text-white/70 hover:text-white text-[9px] font-medium">Set Primary</button>}
-                        <button onClick={() => setImages(images.filter((_, i) => i !== idx))} className="p-1 rounded bg-black/50 text-rose-400 hover:text-rose-300"><Trash2 size={12} /></button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <ImageUploader
+                images={images}
+                onChange={setImages}
+                bucket="product-images"
+                folder="products"
+                entityId={id}
+                maxImages={10}
+                maxSizeMB={5}
+              />
             </div>
           )}
           {activeTab === 'pricing' && (

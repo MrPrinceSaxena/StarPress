@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   ShoppingCart, Search, X, Package, Clock,
   Truck, CheckCircle2, XCircle, RotateCcw, Eye, Save, ExternalLink, AlertCircle
@@ -280,12 +281,21 @@ export default function OrdersPage() {
                   <StatusBadge status={selectedOrder.paymentStatus} />
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
-              >
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/admin/orders/${selectedOrder.id}`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-brand-yellow hover:bg-brand-yellow/10 border border-brand-yellow/30 transition-colors"
+                >
+                  <ExternalLink size={13} />
+                  Full Page & Invoice
+                </Link>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             <div className="p-5 space-y-6">

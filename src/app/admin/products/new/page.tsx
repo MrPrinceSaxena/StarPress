@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { showToast } from '@/components/admin/ui/Toast';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
+import ImageUploader from '@/components/admin/ui/ImageUploader';
+import type { UploadedImage } from '@/components/admin/ui/ImageUploader';
 import { productService, categoryService } from '@/lib/admin/services';
 import type { AdminProduct, AdminCategory, AdminProductImage, AdminVariantOption, AdminProductVariant } from '@/lib/admin/types';
 
@@ -43,7 +45,7 @@ export default function NewProductPage() {
   const [brand, setBrand] = useState('Star Press');
 
   // Media
-  const [images, setImages] = useState<AdminProductImage[]>([]);
+  const [images, setImages] = useState<UploadedImage[]>([]);
 
   // Pricing
   const [basePrice, setBasePrice] = useState('');
@@ -141,17 +143,8 @@ export default function NewProductPage() {
     setVariantOptions([...variantOptions, { name: '', values: [] }]);
   };
 
-  const [newImageUrl, setNewImageUrl] = useState('');
-
-  const addImage = (url: string, alt: string = '') => {
-    if (!url.trim()) return;
-    const id = `img_${Date.now()}_${images.length}`;
-    setImages([
-      ...images,
-      { id, url: url.trim(), altText: alt || name, isPrimary: images.length === 0, position: images.length },
-    ]);
-    setNewImageUrl('');
-  };
+  // Product ID for organizing uploads — use a temp ID for new products
+  const [tempEntityId] = useState(() => `new-${Date.now().toString(36)}`);
 
   const InputGroup = ({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) => (
     <div className="space-y-1.5">
@@ -283,81 +276,15 @@ export default function NewProductPage() {
           {activeTab === 'media' && (
             <div className="space-y-5">
               <h2 className="text-sm font-semibold text-white mb-4">Product Media</h2>
-              {/* Image Input & Upload Zone */}
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="Enter image URL (e.g. /images/cat-business-cards.jpg or https://...)"
-                    value={newImageUrl}
-                    onChange={(e) => setNewImageUrl(e.target.value)}
-                    className="flex-1 h-9 px-3 rounded-lg bg-white/[0.03] border border-border-subtle text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-yellow/30"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => addImage(newImageUrl)}
-                    className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors"
-                  >
-                    Add URL
-                  </button>
-                </div>
-                <label className="border-2 border-dashed border-border-subtle rounded-xl p-8 text-center hover:border-brand-yellow/30 hover:bg-brand-yellow/[0.02] transition-colors cursor-pointer block">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                          if (ev.target?.result) {
-                            addImage(ev.target.result as string, file.name);
-                          }
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                  <Upload size={28} className="mx-auto text-text-muted mb-2" />
-                  <p className="text-xs font-medium text-text-secondary">Upload product photo from your device</p>
-                  <p className="text-[11px] text-text-muted mt-0.5">PNG, JPG, WEBP</p>
-                </label>
-              </div>
-              {/* Image Grid */}
-              {images.length > 0 && (
-                <div className="grid grid-cols-4 gap-3">
-                  {images.map((img, idx) => (
-                    <div key={img.id} className={`relative rounded-lg border overflow-hidden aspect-square bg-white/[0.03] ${img.isPrimary ? 'border-brand-yellow/40 ring-1 ring-brand-yellow/20' : 'border-border-subtle'}`}>
-                      <div className="absolute inset-0 flex items-center justify-center text-text-muted">
-                        <ImageIcon size={24} />
-                      </div>
-                      <div className="absolute top-2 left-2 flex items-center gap-1">
-                        <GripVertical size={12} className="text-text-muted cursor-grab" />
-                        {img.isPrimary && (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-brand-yellow text-black">PRIMARY</span>
-                        )}
-                      </div>
-                      <div className="absolute top-2 right-2 flex items-center gap-1">
-                        {!img.isPrimary && (
-                          <button
-                            onClick={() => setImages(images.map((im, i) => ({ ...im, isPrimary: i === idx })))}
-                            className="p-1 rounded bg-black/50 text-white/70 hover:text-white text-[9px] font-medium"
-                          >
-                            Set Primary
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                          className="p-1 rounded bg-black/50 text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <ImageUploader
+                images={images}
+                onChange={setImages}
+                bucket="product-images"
+                folder="products"
+                entityId={tempEntityId}
+                maxImages={10}
+                maxSizeMB={5}
+              />
             </div>
           )}
 

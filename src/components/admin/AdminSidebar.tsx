@@ -34,7 +34,15 @@ interface NavItem {
 const BASE_MAIN_NAV: Omit<NavItem, 'badge'>[] = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-  { label: 'Products', href: '/admin/products', icon: Package },
+  {
+    label: 'Products',
+    href: '/admin/products',
+    icon: Package,
+    children: [
+      { label: 'All Products', href: '/admin/products' },
+      { label: 'Categories', href: '/admin/categories' },
+    ],
+  },
   { label: 'Customers', href: '/admin/customers', icon: Users },
   { label: 'Content', href: '/admin/content', icon: FileText },
   { label: 'Finances', href: '/admin/finances', icon: DollarSign },
@@ -90,8 +98,8 @@ export default function AdminSidebar() {
 
   const renderNavItem = (item: NavItem) => {
     const active = isActive(item.href);
-    const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedMenu === item.label;
+    const hasChildren = Boolean(item.children && item.children.length > 0);
+    const isExpanded = expandedMenu === item.label || (expandedMenu === null && (item.children?.some((c) => pathname.startsWith(c.href)) ?? false));
     const isExternal = item.href === '/' || item.href === '/shop';
 
     const linkContent = (

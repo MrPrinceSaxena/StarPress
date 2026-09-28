@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
   Plus, Search, Filter, Download, Upload, MoreHorizontal,
   Copy, Archive, Trash2, Edit3, Eye, Package, IndianRupee,
-  ShoppingCart, Users, Grid3X3, List, X, ChevronDown,
+  ShoppingCart, Users, Grid3X3, List, X, ChevronDown, Layers,
 } from 'lucide-react';
 import StatCard from '@/components/admin/ui/StatCard';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
@@ -157,6 +157,13 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/admin/categories"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-border-subtle transition-colors"
+          >
+            <Layers size={14} />
+            Categories
+          </Link>
           <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-border-subtle transition-colors">
             <Download size={14} />
             Export

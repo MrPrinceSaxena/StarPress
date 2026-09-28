@@ -82,6 +82,8 @@ export interface AdminCategory {
   name: string;
   slug: string;
   description: string;
+  imageUrl?: string | null;
+  displayOrder?: number;
   productCount: number;
   parentId: string | null;
 }
