@@ -214,10 +214,20 @@ export async function middleware(req: NextRequest) {
 
   // =========================================================================
   // SCENARIO B: Storefront Domain Admin Handling (/admin/*)
-  // Protected with strict authentication and admin clearance.
-  // Completely isolated & hidden from all public navigation and search engines.
+  // Admin panel is strictly prohibited on the public storefront domain.
+  // Redirects all admin traffic to the dedicated https://admin.starpress.in portal.
   // =========================================================================
   if (pathname.startsWith("/admin")) {
+    if (process.env.NODE_ENV === "production" && !host.includes("localhost") && host !== "127.0.0.1") {
+      const cleanPath = pathname.replace(/^\/admin/, "") || "/";
+      const targetUrl = new URL(cleanPath, "https://admin.starpress.in");
+      targetUrl.search = req.nextUrl.search;
+      return NextResponse.redirect(targetUrl, {
+        status: 302,
+        headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+      });
+    }
+
     if (pathname === "/admin" || pathname === "/admin/") {
       if (isAuthenticated && isAdmin) {
         return createRedirect(new URL("/admin/dashboard", req.url));
