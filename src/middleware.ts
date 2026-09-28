@@ -65,17 +65,17 @@ function resolveDomains(rawHost: string) {
     };
   }
 
-  // 3. Production custom domains (e.g. www.admin.starpress.in, admin.starpress.in, www.starpress.in, starpress.in)
+  // 3. Production custom domains (e.g. admin.starpress.in, www.starpress.in, starpress.in)
   const isAdminHost =
-    host === "www.admin.starpress.in" ||
     host === "admin.starpress.in" ||
-    host.startsWith("www.admin.") ||
-    (host.startsWith("admin.") && !host.startsWith("admin.www."));
+    host === "www.admin.starpress.in" ||
+    host.startsWith("admin.") ||
+    host.startsWith("www.admin.");
 
   return {
     host,
     isAdminHost,
-    adminUrl: "https://www.admin.starpress.in",
+    adminUrl: "https://admin.starpress.in",
     storeUrl: "https://www.starpress.in",
   };
 }
@@ -125,10 +125,10 @@ export async function middleware(req: NextRequest) {
     return addSecurityHeaders(rewriteRes);
   };
 
-  // Canonicalize any alternative admin hosts (e.g. admin.starpress.in or admin.www.) to https://www.admin.starpress.in
-  if (host === "admin.starpress.in" || host.startsWith("admin.www.")) {
+  // Canonicalize any accidental www.admin or admin.www. to the clean https://admin.starpress.in
+  if (host === "www.admin.starpress.in" || host.startsWith("admin.www.")) {
     const proto = req.headers.get("x-forwarded-proto") || "https";
-    return NextResponse.redirect(new URL(`${proto}://www.admin.starpress.in${pathname}${req.nextUrl.search}`), {
+    return NextResponse.redirect(new URL(`${proto}://admin.starpress.in${pathname}${req.nextUrl.search}`), {
       status: 301,
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
     });
