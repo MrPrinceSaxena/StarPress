@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
-import { isUserAdmin } from "@/lib/admin/auth-check";
+import { isUserAdmin } from "@/lib/admin/is-admin";
 
 function AdminLoginForm() {
   const router = useRouter();
