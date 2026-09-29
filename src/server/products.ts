@@ -359,9 +359,22 @@ export async function listAdminProducts(options: ListAdminProductsOptions = {}) 
  */
 export async function getAdminProductById(idOrSlug: string): Promise<AdminProductDto | null> {
   try {
+    const catalogProd = getAllProducts().find((p: CatalogProduct) => p.id === idOrSlug || p.slug === idOrSlug);
+    const candidateSlugs = [idOrSlug];
+    if (idOrSlug.startsWith("prod-")) {
+      candidateSlugs.push(idOrSlug.replace(/^prod-/, ""));
+    }
+    if (catalogProd) {
+      candidateSlugs.push(catalogProd.slug);
+    }
+
     const p = await db.product.findFirst({
       where: {
-        OR: [{ id: idOrSlug }, { slug: idOrSlug }],
+        OR: [
+          { id: idOrSlug },
+          ...candidateSlugs.map((s) => ({ slug: s })),
+          ...(catalogProd ? [{ id: catalogProd.id }] : []),
+        ],
       },
       include: {
         category: true,
@@ -542,6 +555,17 @@ export async function createAdminProduct(
 
   // Find or create category in DB
   let categoryId = data.categoryId;
+  if (categoryId) {
+    const catById = await db.category.findUnique({ where: { id: categoryId } }).catch(() => null);
+    if (!catById) {
+      const catBySlug = await db.category.findFirst({
+        where: { OR: [{ slug: categoryId }, { name: categoryId }] },
+      }).catch(() => null);
+      if (catBySlug) {
+        categoryId = catBySlug.id;
+      }
+    }
+  }
   if (!categoryId || categoryId === "general") {
     try {
       const defaultCategory = await db.category.upsert({
@@ -555,7 +579,8 @@ export async function createAdminProduct(
       });
       categoryId = defaultCategory.id;
     } catch {
-      categoryId = "business-printing";
+      const firstCat = await db.category.findFirst().catch(() => null);
+      categoryId = firstCat?.id || "cmum543r20000xtrl67lwqlou";
     }
   }
 
@@ -732,97 +757,211 @@ export async function updateAdminProduct(
   let updatedProduct: any = null;
 
   try {
-    const updateData: any = { ...data, updatedAt: new Date() };
-    const imagesToSync = updateData.images;
-    delete updateData.images; // handle images separately for Prisma
+    // 1. Locate product in DB (by CUID, by slug, or by catalog ID)
+    const catalogProd = getAllProducts().find((p) => p.id === id || p.slug === id);
+    const candidateSlugs = [id];
+    if (id.startsWith("prod-")) {
+      candidateSlugs.push(id.replace(/^prod-/, ""));
+    }
+    if (catalogProd) {
+      candidateSlugs.push(catalogProd.slug);
+    }
 
-    updatedProduct = await db.product.update({
-      where: { id },
-      data: updateData,
+    let targetProduct = await db.product.findFirst({
+      where: {
+        OR: [
+          { id },
+          ...candidateSlugs.map((s) => ({ slug: s })),
+          ...(catalogProd ? [{ id: catalogProd.id }] : []),
+        ],
+      },
       include: {
         category: true,
         images: true,
       },
     });
 
-    // Sync images if provided: delete all existing and recreate
-    if (Array.isArray(imagesToSync)) {
+    // 2. Resolve categoryId if provided
+    let resolvedCategoryId: string | undefined = undefined;
+    if (data.categoryId) {
+      const catById = await db.category.findUnique({
+        where: { id: data.categoryId },
+      }).catch(() => null);
+
+      if (catById) {
+        resolvedCategoryId = catById.id;
+      } else {
+        const catBySlug = await db.category.findFirst({
+          where: {
+            OR: [
+              { slug: data.categoryId },
+              { name: data.categoryId },
+            ],
+          },
+        }).catch(() => null);
+
+        if (catBySlug) {
+          resolvedCategoryId = catBySlug.id;
+        } else {
+          const matchedCat = CATALOG_CATEGORIES.find(
+            (c) => c.id === data.categoryId || c.slug === data.categoryId || c.name === data.categoryId
+          );
+          const catSlug = matchedCat ? matchedCat.slug : slugify(data.categoryId);
+          const catName = matchedCat ? matchedCat.name : data.categoryId;
+
+          try {
+            const upsertedCat = await db.category.upsert({
+              where: { slug: catSlug },
+              update: {},
+              create: {
+                name: catName,
+                slug: catSlug,
+                description: catName,
+              },
+            });
+            resolvedCategoryId = upsertedCat.id;
+          } catch (catErr) {
+            console.warn("[Update Product] Category upsert warning:", catErr);
+          }
+        }
+      }
+    }
+
+    // 3. Build whitelisted Prisma Product data
+    const prismaData: Record<string, any> = { updatedAt: new Date() };
+    if (data.name !== undefined) prismaData.name = data.name.trim();
+    if (data.slug !== undefined && data.slug.trim()) prismaData.slug = slugify(data.slug);
+    if (data.sku !== undefined) prismaData.sku = data.sku.trim();
+    if (data.description !== undefined) prismaData.description = data.description;
+    if (data.shortDescription !== undefined) prismaData.shortDescription = data.shortDescription;
+    if (resolvedCategoryId) prismaData.categoryId = resolvedCategoryId;
+    if (data.status !== undefined) prismaData.status = data.status;
+    if (data.isFeatured !== undefined) prismaData.isFeatured = Boolean(data.isFeatured);
+    if (data.basePrice !== undefined) prismaData.basePrice = Number(data.basePrice);
+    if (data.compareAtPrice !== undefined) prismaData.compareAtPrice = data.compareAtPrice !== null ? Number(data.compareAtPrice) : null;
+    if (data.costPerUnit !== undefined) prismaData.costPerUnit = data.costPerUnit !== null ? Number(data.costPerUnit) : null;
+    if (data.discountPercentage !== undefined) prismaData.discountPercentage = data.discountPercentage !== null ? Math.round(Number(data.discountPercentage)) : null;
+    if (data.trackInventory !== undefined) prismaData.trackInventory = Boolean(data.trackInventory);
+    if (data.stockQuantity !== undefined) prismaData.stockQuantity = Math.round(Number(data.stockQuantity));
+    if (data.lowStockThreshold !== undefined) prismaData.lowStockThreshold = Math.round(Number(data.lowStockThreshold));
+    if (data.metaTitle !== undefined) prismaData.metaTitle = data.metaTitle;
+    if (data.metaDescription !== undefined) prismaData.metaDescription = data.metaDescription;
+    if (data.metaKeywords !== undefined) prismaData.metaKeywords = data.metaKeywords;
+
+    // 4. Update or Create in DB
+    if (targetProduct) {
+      updatedProduct = await db.product.update({
+        where: { id: targetProduct.id },
+        data: prismaData,
+        include: {
+          category: true,
+          images: true,
+        },
+      });
+      console.log(`[Update Product] Updated "${updatedProduct.name}" (${updatedProduct.id}) in database.`);
+    } else {
+      const fallbackCat = resolvedCategoryId || (await db.category.findFirst())?.id || "business-printing";
+      const slug = prismaData.slug || slugify(prismaData.name || id);
+      updatedProduct = await db.product.create({
+        data: {
+          name: prismaData.name || (catalogProd?.name ?? "Custom Product"),
+          slug,
+          sku: prismaData.sku || generateSku(prismaData.name || slug),
+          description: prismaData.description || (catalogProd?.description ?? ""),
+          shortDescription: prismaData.shortDescription || (catalogProd?.shortDescription ?? ""),
+          categoryId: fallbackCat,
+          basePrice: prismaData.basePrice ?? (catalogProd?.basePrice ?? 100),
+          compareAtPrice: prismaData.compareAtPrice ?? null,
+          costPerUnit: prismaData.costPerUnit ?? null,
+          status: prismaData.status || "published",
+          isFeatured: prismaData.isFeatured ?? false,
+          trackInventory: prismaData.trackInventory ?? true,
+          stockQuantity: prismaData.stockQuantity ?? 100,
+          lowStockThreshold: prismaData.lowStockThreshold ?? 10,
+          metaTitle: prismaData.metaTitle || null,
+          metaDescription: prismaData.metaDescription || null,
+          metaKeywords: prismaData.metaKeywords || null,
+        },
+        include: {
+          category: true,
+          images: true,
+        },
+      });
+      console.log(`[Update Product] Created new product "${updatedProduct.name}" (${updatedProduct.id}) in database.`);
+    }
+
+    // 5. Handle image syncing
+    const imagesToSync = data.images;
+    if (Array.isArray(imagesToSync) && updatedProduct) {
       try {
-        // Delete existing images for this product
         await db.productImage.deleteMany({
-          where: { productId: id },
+          where: { productId: updatedProduct.id },
         });
 
-        // Create new images from the provided array
         if (imagesToSync.length > 0) {
           await db.productImage.createMany({
             data: imagesToSync.map((img: any, idx: number) => ({
-              productId: id,
-              url: img.url,
-              altText: img.altText || '',
-              isPrimary: img.isPrimary ?? idx === 0,
-              position: img.position ?? idx,
+              productId: updatedProduct.id,
+              url: typeof img === "object" && img.url ? img.url : String(img),
+              altText: typeof img === "object" && img.altText ? img.altText : `${updatedProduct.name} Image ${idx + 1}`,
+              isPrimary: typeof img === "object" && img.isPrimary !== undefined ? img.isPrimary : idx === 0,
+              position: typeof img === "object" && img.position !== undefined ? img.position : idx,
               displayOrder: idx,
             })),
           });
         }
 
-        // Re-fetch with updated images
+        // Re-fetch product with newly synced images
         updatedProduct = await db.product.findUnique({
-          where: { id },
+          where: { id: updatedProduct.id },
           include: {
             category: true,
-            images: { orderBy: { position: 'asc' } },
+            images: { orderBy: { position: "asc" } },
           },
         });
       } catch (imgErr: any) {
-        console.warn('[Update Product] Image sync error:', imgErr?.message);
+        console.error("[Update Product] Image sync error:", imgErr?.message);
       }
     }
 
-    try {
-      await db.adminAuditLog.create({
-        data: {
-          adminEmail,
-          entityType: "product",
-          entityId: id,
-          action: "update",
-          changes: data,
-          ipAddress: ipAddress || null,
-        },
-      });
-    } catch {}
+    // 6. Audit log
+    if (updatedProduct) {
+      try {
+        await db.adminAuditLog.create({
+          data: {
+            adminEmail,
+            entityType: "product",
+            entityId: updatedProduct.id,
+            action: "update",
+            changes: data,
+            ipAddress: ipAddress || null,
+          },
+        });
+      } catch (auditErr) {
+        console.warn("[Update Product] Audit log creation warning:", auditErr);
+      }
+    }
   } catch (err: any) {
-    console.warn("[Update Product] Database update bypassed or unavailable:", (err as any)?.message);
+    console.error("[Update Product] Database update failed:", err?.message || err);
   }
 
-  // Always sync updates to persistent store so changes reflect everywhere immediately
-  const customProducts = persistentStore.getCustomProducts();
-  const customIdx = customProducts.findIndex((c) => c.id === id || c.slug === id);
-  if (customIdx >= 0) {
-    const updatedCustom = {
-      ...customProducts[customIdx],
-      ...data,
-      updatedAt: new Date().toISOString(),
-    };
-    persistentStore.saveCustomProduct(updatedCustom);
-    return { success: true, product: updatedCustom };
+  // 7. Resilient sync to persistentStore
+  if (updatedProduct) {
+    persistentStore.saveProductOverride(updatedProduct.id, data);
+    persistentStore.saveProductOverride(updatedProduct.slug, data);
+  }
+  if (id !== updatedProduct?.id && id !== updatedProduct?.slug) {
+    persistentStore.saveProductOverride(id, data);
   }
 
-  // Save override for catalog product
-  const savedOverride = persistentStore.saveProductOverride(id, data);
   const catalogProd = getAllProducts().find((p) => p.id === id || p.slug === id);
-  if (catalogProd) {
-    persistentStore.saveProductOverride(catalogProd.slug, data);
-    persistentStore.saveProductOverride(catalogProd.id, data);
-  }
 
   return {
-    success: true,
+    success: !!updatedProduct,
     product: updatedProduct || {
       id,
       ...(catalogProd || {}),
-      ...savedOverride,
+      ...data,
     },
   };
 }
@@ -832,22 +971,39 @@ export async function updateAdminProduct(
  */
 export async function deleteAdminProduct(id: string, adminEmail: string, ipAddress?: string) {
   try {
-    await db.product.delete({
-      where: { id },
+    const catalogProd = getAllProducts().find((p) => p.id === id || p.slug === id);
+    const candidateSlugs = [id];
+    if (id.startsWith("prod-")) candidateSlugs.push(id.replace(/^prod-/, ""));
+    if (catalogProd) candidateSlugs.push(catalogProd.slug);
+
+    const targetProduct = await db.product.findFirst({
+      where: {
+        OR: [
+          { id },
+          ...candidateSlugs.map((s) => ({ slug: s })),
+          ...(catalogProd ? [{ id: catalogProd.id }] : []),
+        ],
+      },
     });
 
-    try {
-      await db.adminAuditLog.create({
-        data: {
-          adminEmail,
-          entityType: "product",
-          entityId: id,
-          action: "delete",
-          changes: { deletedId: id },
-          ipAddress: ipAddress || null,
-        },
+    if (targetProduct) {
+      await db.product.delete({
+        where: { id: targetProduct.id },
       });
-    } catch {}
+
+      try {
+        await db.adminAuditLog.create({
+          data: {
+            adminEmail,
+            entityType: "product",
+            entityId: targetProduct.id,
+            action: "delete",
+            changes: { deletedId: targetProduct.id },
+            ipAddress: ipAddress || null,
+          },
+        });
+      } catch {}
+    }
   } catch (err: any) {
     console.warn("[Delete Product] DB delete bypassed:", (err as any)?.message);
   }
@@ -963,6 +1119,7 @@ export async function getLiveCatalogProducts(): Promise<CatalogProduct[]> {
 
       return {
         ...prod,
+        id: dbMatch ? dbMatch.id : prod.id,
         name: finalName,
         basePrice: finalPrice,
         description: finalDesc,

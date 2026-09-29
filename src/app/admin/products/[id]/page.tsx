@@ -112,7 +112,7 @@ export default function ProductDetailPage({ params }: { params?: { id?: string }
     setSaving(true);
     try {
       const cat = categories.find((c) => c.id === categoryId);
-      await productService.updateProduct(id, {
+      const updated = await productService.updateProduct(id, {
         name, shortDescription, description, sku, categoryId,
         categoryName: cat?.name || '', status, basePrice: parseFloat(basePrice) || 0,
         compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
@@ -130,7 +130,14 @@ export default function ProductDetailPage({ params }: { params?: { id?: string }
         seo: { title: seoTitle, description: seoDescription, slug: seoSlug },
         visibility, featured,
       });
-      showToast('Product saved successfully');
+      if (updated) {
+        setProduct(updated);
+        showToast('Product saved successfully');
+      } else {
+        showToast('Failed to save product', 'error');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to save product', 'error');
     } finally {
       setSaving(false);
     }

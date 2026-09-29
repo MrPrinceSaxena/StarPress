@@ -82,6 +82,7 @@ export default function ImageUploader({
       setUploading((prev) => [...prev, ...newUploading]);
 
       // Upload each file
+      let currentImages = [...images];
       for (const entry of newUploading) {
         try {
           const formData = new FormData();
@@ -132,12 +133,13 @@ export default function ImageUploader({
             id: `img_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
             url: result.url,
             altText: entry.file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
-            isPrimary: images.length === 0 && newUploading.indexOf(entry) === 0,
-            position: images.length + newUploading.indexOf(entry),
+            isPrimary: currentImages.length === 0,
+            position: currentImages.length,
             storagePath: result.path,
           };
 
-          onChange([...images, newImage]);
+          currentImages = [...currentImages, newImage];
+          onChange(currentImages);
 
           // Remove from uploading state after brief delay (so user sees success state)
           setTimeout(() => {
