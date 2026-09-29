@@ -15,6 +15,8 @@ import Newsletter from "@/components/sections/Newsletter";
 import { getAllCategories } from "@/lib/catalog";
 import { getLiveCatalogProducts } from "@/server/products";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const categories = getAllCategories();
   const allProducts = await getLiveCatalogProducts();

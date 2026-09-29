@@ -11,7 +11,6 @@ import ProductConfigurator from "@/components/shop/ProductConfigurator";
 import ProductTabs from "@/components/shop/ProductTabs";
 import CatalogProductCard from "@/components/shop/CatalogProductCard";
 import {
-  getAllProducts,
   PRODUCT_SLUG_ALIASES,
   getCategoryRedirect,
 } from "@/lib/catalog";
@@ -27,13 +26,6 @@ interface PageProps {
   params: {
     slug: string;
   };
-}
-
-export async function generateStaticParams() {
-  const products = getAllProducts();
-  const directSlugs = products.map((product) => ({ slug: product.slug }));
-  const aliasSlugs = Object.keys(PRODUCT_SLUG_ALIASES).map((alias) => ({ slug: alias }));
-  return [...directSlugs, ...aliasSlugs];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
