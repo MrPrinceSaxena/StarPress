@@ -5,7 +5,8 @@ import { ArrowRight, Sparkles, Layers } from "lucide-react";
 import { Metadata } from "next";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { getAllCategories, getProductsByCategory } from "@/lib/catalog";
+import { getAllCategories } from "@/lib/catalog";
+import { getLiveProductsByCategory } from "@/server/products";
 
 export const metadata: Metadata = {
   title: "All Print Categories | Star Press Khatima",
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
   const categories = getAllCategories();
 
   return (
@@ -44,8 +45,8 @@ export default function CategoriesPage() {
 
         {/* E-Commerce Product Category Grid (2 cols mobile, 3 tablet, 4 desktop) */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
-          {categories.map((category) => {
-            const categoryProducts = getProductsByCategory(category.slug);
+          {await Promise.all(categories.map(async (category) => {
+            const categoryProducts = await getLiveProductsByCategory(category.slug);
             const minPrice =
               categoryProducts.length > 0
                 ? Math.min(...categoryProducts.map((p) => p.basePrice))
@@ -118,7 +119,7 @@ export default function CategoriesPage() {
                 </div>
               </Link>
             );
-          })}
+          }))}
         </div>
       </main>
 

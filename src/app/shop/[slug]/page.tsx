@@ -37,7 +37,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const product = getLiveProductBySlug(params.slug);
+  const product = await getLiveProductBySlug(params.slug);
   if (!product) {
     const cat = getCategoryRedirect(params.slug);
     if (cat) {
@@ -72,21 +72,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function ProductDetailPage({ params }: PageProps) {
+export default async function ProductDetailPage({ params }: PageProps) {
   // If the user entered a category slug in /shop/[slug], redirect to the category filter
   const categoryRedirect = getCategoryRedirect(params.slug);
   if (categoryRedirect) {
     redirect(`/shop?category=${categoryRedirect}`);
   }
 
-  const product = getLiveProductBySlug(params.slug);
+  const product = await getLiveProductBySlug(params.slug);
 
   if (!product) {
     notFound();
   }
 
   // Related products from the same category
-  const relatedProducts = getLiveProductsByCategory(product.categorySlug)
+  const relatedProducts = (await getLiveProductsByCategory(product.categorySlug))
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
 

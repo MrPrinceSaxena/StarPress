@@ -33,9 +33,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ShopPage() {
+export default async function ShopPage() {
   const categories = getAllCategories();
-  const allProducts = getLiveCatalogProducts();
+  const allProducts = await getLiveCatalogProducts();
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">

@@ -21,12 +21,14 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
 import { useCart } from "@/context/CartContext";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const FREE_SHIPPING_THRESHOLD = 999;
 const STANDARD_SHIPPING_FEE = 99;
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, subtotal, isLoaded } = useCart();
+  const { status, isHydrated } = useAuthSession();
 
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{
@@ -441,12 +443,21 @@ export default function CartPage() {
                 </div>
 
                 {/* Checkout CTA Button */}
-                <Link href="/checkout" className="block w-full">
-                  <Button variant="primary" size="lg" className="w-full justify-center">
-                    <span>Proceed to Checkout</span>
-                    <ArrowRight size={18} />
-                  </Button>
-                </Link>
+                {isHydrated && status === "authenticated" ? (
+                  <Link href="/checkout" className="block w-full">
+                    <Button variant="primary" size="lg" className="w-full justify-center">
+                      <span>Proceed to Checkout</span>
+                      <ArrowRight size={18} />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/login?callbackUrl=/checkout" className="block w-full">
+                    <Button variant="secondary" size="lg" className="w-full justify-center text-brand-yellow border-brand-yellow">
+                      <span>Sign In to Checkout</span>
+                      <ArrowRight size={18} />
+                    </Button>
+                  </Link>
+                )}
 
                 {/* Trust Guarantees */}
                 <div className="pt-3 border-t border-border-subtle space-y-2.5 text-xs text-text-secondary">

@@ -20,15 +20,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Attach authenticated session user if present
+    // Enforce authentication for production-ready orders
+    let user;
     try {
-      const user = await getSessionUser();
-      if (user && !body.userId) {
-        body.userId = user.id;
-        body.guestEmail = body.guestEmail || user.email;
-        body.guestName = body.guestName || user.name;
-      }
+      user = await getSessionUser();
     } catch {}
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized. You must be signed in to place an order." },
+        { status: 401 }
+      );
+    }
+
+    body.userId = user.id;
+    body.guestEmail = body.guestEmail || user.email;
+    body.guestName = body.guestName || user.name;
 
     const result = await createOrder(body);
 

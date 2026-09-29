@@ -12,8 +12,13 @@ import PromoBanner from "@/components/sections/PromoBanner";
 import Testimonials from "@/components/sections/Testimonials";
 import CTASection from "@/components/sections/CTASection";
 import Newsletter from "@/components/sections/Newsletter";
+import { getAllCategories } from "@/lib/catalog";
+import { getLiveCatalogProducts } from "@/server/products";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const categories = getAllCategories();
+  const allProducts = await getLiveCatalogProducts();
+
   return (
     <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">
       {/* 1. Header Navigation */}
@@ -28,7 +33,7 @@ export default function HomePage() {
         <TrustBadges />
 
         {/* 3. Shop by Category */}
-        <CategoryGrid />
+        <CategoryGrid categories={categories} products={allProducts} />
 
         {/* 4. Best Selling Products */}
         <BestSellers />

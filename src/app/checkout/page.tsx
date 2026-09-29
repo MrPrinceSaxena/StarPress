@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
   Truck,
@@ -51,8 +52,9 @@ const INDIAN_STATES = [
 ];
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const { items, subtotal, clearCart, isLoaded } = useCart();
-  const { session } = useAuthSession();
+  const { session, status, isHydrated } = useAuthSession();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -84,6 +86,13 @@ export default function CheckoutPage() {
       }));
     }
   }, [session]);
+
+  // Enforce Authentication
+  useEffect(() => {
+    if (isHydrated && status === "unauthenticated") {
+      router.replace("/login?callbackUrl=/checkout");
+    }
+  }, [isHydrated, status, router]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState<{
@@ -235,6 +244,11 @@ export default function CheckoutPage() {
         <Footer />
       </div>
     );
+  }
+
+  if (isHydrated && status === "unauthenticated") {
+    // Avoid rendering the checkout UI while redirecting
+    return null;
   }
 
   // If order was just placed, display the confirmation screen!

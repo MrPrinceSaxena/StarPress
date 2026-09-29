@@ -900,34 +900,130 @@ export async function bulkUpdateProductStatus(ids: string[], status: string) {
  * Return live, dynamic catalog products merging baseline catalog with admin overrides and custom products.
  * Used by storefront (/shop, /shop/[slug], categories) so any price/image/name changes update everywhere in real-time.
  */
-export function getLiveCatalogProducts(): CatalogProduct[] {
+export async function getLiveCatalogProducts(): Promise<CatalogProduct[]> {
   const base = getAllProducts();
+  
+  let dbProducts: any[] = [];
+  try {
+    dbProducts = await db.product.findMany({
+      where: { status: { not: "archived" } },
+      include: {
+        category: true,
+        images: { orderBy: { position: 'asc' } }
+      }
+    });
+  } catch (err) {
+    console.warn("[Live Catalog] DB fetch error:", err);
+  }
+
   const overrides = persistentStore.getProductOverrides();
   const custom = persistentStore.getCustomProducts();
 
+  const dbProdMap = new Map<string, any>();
+  dbProducts.forEach(p => {
+    dbProdMap.set(p.slug, p);
+    dbProdMap.set(p.id, p);
+  });
+
   const mergedBase: CatalogProduct[] = base
     .map((prod) => {
-      const override = overrides[prod.id] || overrides[prod.slug];
-      if (!override) return prod;
-      if (override.status === "draft" || override.status === "archived") return null;
+      const dbMatch = dbProdMap.get(prod.slug) || dbProdMap.get(prod.id);
+      
+      let finalName = prod.name;
+      let finalPrice = prod.basePrice;
+      let finalDesc = prod.description;
+      let finalShort = prod.shortDescription;
+      let finalImages = prod.images;
+      let finalStatus = "published";
 
-      const updatedImages = override.images && Array.isArray(override.images) && override.images.length > 0
-        ? override.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)))
-        : prod.images;
+      if (dbMatch) {
+         finalStatus = dbMatch.status;
+         finalName = dbMatch.name;
+         finalPrice = Number(dbMatch.basePrice);
+         finalDesc = dbMatch.description || prod.description;
+         finalShort = dbMatch.shortDescription || prod.shortDescription;
+         if (dbMatch.images && dbMatch.images.length > 0) {
+           finalImages = dbMatch.images.map((img: any) => img.url);
+         }
+      } else {
+         const override = overrides[prod.id] || overrides[prod.slug];
+         if (override) {
+           finalStatus = override.status || "published";
+           finalName = override.name ?? prod.name;
+           finalPrice = override.basePrice !== undefined ? Number(override.basePrice) : prod.basePrice;
+           finalDesc = override.description ?? prod.description;
+           finalShort = override.shortDescription ?? prod.shortDescription;
+           if (override.images && Array.isArray(override.images) && override.images.length > 0) {
+             finalImages = override.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)));
+           }
+         }
+      }
+
+      if (finalStatus === "draft" || finalStatus === "archived") return null;
 
       return {
         ...prod,
-        name: override.name ?? prod.name,
-        basePrice: override.basePrice !== undefined ? Number(override.basePrice) : prod.basePrice,
-        description: override.description ?? prod.description,
-        shortDescription: override.shortDescription ?? prod.shortDescription,
-        images: updatedImages,
+        name: finalName,
+        basePrice: finalPrice,
+        description: finalDesc,
+        shortDescription: finalShort,
+        images: finalImages,
       };
     })
     .filter((p): p is CatalogProduct => p !== null);
 
+  const baseIds = new Set([...base.map(p => p.id), ...base.map(p => p.slug)]);
+  
+  const customFromDb: CatalogProduct[] = dbProducts
+    .filter(p => !baseIds.has(p.id) && !baseIds.has(p.slug) && p.status !== "draft" && p.status !== "archived")
+    .map(c => {
+      const imgUrls = c.images && c.images.length > 0
+        ? c.images.map((img: any) => img.url)
+        : ["/images/hero-composition.jpg"];
+        
+      return {
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        categorySlug: c.category?.slug || c.categoryId || "business-printing",
+        categoryName: c.category?.name || "Business Printing",
+        basePrice: Number(c.basePrice || 0),
+        rating: 4.9,
+        reviewCount: 18,
+        shortDescription: c.shortDescription || c.description || "",
+        description: c.description || "",
+        images: imgUrls,
+        isFeatured: c.isFeatured || false,
+        isBestSeller: false,
+        tags: [c.category?.slug || "custom-print"],
+        sizeOptions: [
+          { id: "std", label: "Standard", multiplier: 1, default: true },
+        ],
+        materialOptions: [
+          { id: "mat-std", label: "Premium Standard", extraPricePerUnit: 0, default: true },
+        ],
+        quantityTiers: [
+          { quantity: 100, discountPercent: 0, default: true },
+          { quantity: 250, discountPercent: 10 },
+          { quantity: 500, discountPercent: 20 },
+        ],
+        specifications: {
+          "Print Technology": "Commercial Offset & Digital Press",
+          "Turnaround Time": "2-3 Business Days",
+          "Shipping": "Pan-India Tracked Express",
+        },
+        features: [
+          "Commercial grade high-resolution print output",
+          "Rigid quality inspection before dispatch",
+          "Safe eco-friendly premium substrates",
+        ],
+      } as CatalogProduct;
+    });
+
+  const dbCustomIds = new Set([...customFromDb.map(c => c.id), ...customFromDb.map(c => c.slug)]);
+  
   const customCatalog: CatalogProduct[] = custom
-    .filter((c) => c.status !== "draft" && c.status !== "archived")
+    .filter((c) => c.status !== "draft" && c.status !== "archived" && !dbCustomIds.has(c.id) && !dbCustomIds.has(c.slug) && !baseIds.has(c.id) && !baseIds.has(c.slug))
     .map((c) => {
       const imgUrls = c.images && Array.isArray(c.images) && c.images.length > 0
         ? c.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)))
@@ -972,15 +1068,15 @@ export function getLiveCatalogProducts(): CatalogProduct[] {
       };
     });
 
-  return [...customCatalog, ...mergedBase];
+  return [...customFromDb, ...customCatalog, ...mergedBase];
 }
 
 /**
  * Return live, dynamic product by slug with real-time price & image overrides applied.
  */
-export function getLiveProductBySlug(slug: string): CatalogProduct | undefined {
+export async function getLiveProductBySlug(slug: string): Promise<CatalogProduct | undefined> {
   if (!slug) return undefined;
-  const products = getLiveCatalogProducts();
+  const products = await getLiveCatalogProducts();
   const normalized = slug.toLowerCase().trim();
   const targetSlug = PRODUCT_SLUG_ALIASES[normalized] || normalized;
   return products.find((p) => p.slug === targetSlug || p.id === targetSlug);
@@ -989,8 +1085,9 @@ export function getLiveProductBySlug(slug: string): CatalogProduct | undefined {
 /**
  * Return live products by category slug.
  */
-export function getLiveProductsByCategory(categorySlug: string): CatalogProduct[] {
-  if (!categorySlug || categorySlug === "all") return getLiveCatalogProducts();
-  return getLiveCatalogProducts().filter((p) => p.categorySlug === categorySlug);
+export async function getLiveProductsByCategory(categorySlug: string): Promise<CatalogProduct[]> {
+  const allLive = await getLiveCatalogProducts();
+  if (!categorySlug || categorySlug === "all") return allLive;
+  return allLive.filter((p) => p.categorySlug === categorySlug);
 }
 

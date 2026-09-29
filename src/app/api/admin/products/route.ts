@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { verifyAdminAccess } from "@/lib/admin/auth-check";
 import { listAdminProducts, createAdminProduct } from "@/server/products";
 
@@ -74,6 +75,12 @@ export async function POST(request: NextRequest) {
 
     const ipAddress = request.headers.get("x-forwarded-for") || undefined;
     const result = await createAdminProduct(body, auth.user?.email || "admin@starpress.in", ipAddress);
+
+    if (result.success && result.product) {
+      revalidatePath("/shop");
+      revalidatePath("/categories");
+      revalidatePath("/");
+    }
 
     return NextResponse.json(result);
   } catch (error: any) {

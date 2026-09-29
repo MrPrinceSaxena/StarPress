@@ -4,15 +4,18 @@ import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Sparkles, Layers, Compass } from "lucide-react";
-import { getAllCategories, getProductsByCategory } from "@/lib/catalog";
+import { CatalogCategory, CatalogProduct } from "@/lib/catalog";
 
-export default function CategoryGrid() {
-  const categories = useMemo(() => getAllCategories(), []);
+export interface CategoryGridProps {
+  categories: CatalogCategory[];
+  products: CatalogProduct[];
+}
 
+export default function CategoryGrid({ categories, products }: CategoryGridProps) {
   // Enriched category data with product stats and starting prices
   const enrichedCategories = useMemo(() => {
     return categories.map((cat, idx) => {
-      const prods = getProductsByCategory(cat.slug);
+      const prods = products.filter((p) => p.categorySlug === cat.slug);
       const minPrice =
         prods.length > 0 ? Math.min(...prods.map((p) => p.basePrice)) : 199;
       const sampleNames = prods.slice(0, 3).map((p) => p.name);
@@ -26,7 +29,7 @@ export default function CategoryGrid() {
         href: `/shop?category=${cat.slug}`,
       };
     });
-  }, [categories]);
+  }, [categories, products]);
 
   // Desktop active expanded card (default to first category)
   const [activeId, setActiveId] = useState<string>(enrichedCategories[0]?.id || "cat-1");

@@ -1,16 +1,28 @@
-"use client";
 
 import React from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
-import { BEST_SELLERS, ProductItem } from "@/lib/data";
+import { CatalogProduct } from "@/lib/catalog";
+import { getLiveCatalogProducts } from "@/server/products";
 import ProductCard from "@/components/ui/ProductCard";
 
-export interface BestSellersProps {
-  onAddToCart?: (product: ProductItem) => void;
-}
+export default async function BestSellers() {
+  const allProducts = await getLiveCatalogProducts();
+  
+  // Sort by rating and review count to get best sellers
+  const bestSellers = allProducts
+    .sort((a, b) => (b.rating * b.reviewCount) - (a.rating * a.reviewCount))
+    .slice(0, 6)
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      href: `/shop/${p.slug}`,
+      imageSrc: p.images[0] || "/images/hero-composition.jpg",
+      price: p.basePrice,
+      rating: p.rating || 4.9,
+      reviewCount: p.reviewCount || 10
+    }));
 
-export default function BestSellers({ onAddToCart }: BestSellersProps) {
   return (
     <section className="py-14 md:py-18 relative">
       <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
@@ -46,11 +58,10 @@ export default function BestSellers({ onAddToCart }: BestSellersProps) {
 
         {/* Smart Compact 3×2 Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
-          {BEST_SELLERS.map((product) => (
+          {bestSellers.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
-              onAddToCart={onAddToCart}
             />
           ))}
         </div>

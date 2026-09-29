@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { verifyAdminAccess } from "@/lib/admin/auth-check";
 import {
   getAdminProductById,
@@ -63,6 +64,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       ipAddress
     );
 
+    if (result.success && result.product) {
+      // Revalidate cache for real-time storefront updates
+      revalidatePath("/shop");
+      revalidatePath(`/shop/${result.product.slug}`);
+      revalidatePath("/categories");
+      revalidatePath("/");
+    }
+
     return NextResponse.json(result);
   } catch (error: any) {
     console.error(`API /api/admin/products/${params.id} PATCH error:`, error);
@@ -90,6 +99,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       auth.user?.email || "admin@starpress.in",
       ipAddress
     );
+
+    if (result.success) {
+      revalidatePath("/shop");
+      revalidatePath("/categories");
+      revalidatePath("/");
+    }
 
     return NextResponse.json(result);
   } catch (error: any) {
