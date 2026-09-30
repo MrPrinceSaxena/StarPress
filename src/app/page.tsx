@@ -15,11 +15,24 @@ import Newsletter from "@/components/sections/Newsletter";
 import { getAllCategories } from "@/lib/catalog";
 import { getLiveCatalogProducts } from "@/server/products";
 
+import { db } from "@/lib/db";
+import type { Slide } from "@/components/sections/Hero";
+
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const categories = getAllCategories();
   const allProducts = await getLiveCatalogProducts();
+  
+  let dynamicSlides: Slide[] | undefined = undefined;
+  try {
+    const slideSetting = await db.storeSetting.findUnique({ where: { key: "HERO_SLIDER" } });
+    if (slideSetting && slideSetting.value) {
+      dynamicSlides = slideSetting.value as unknown as Slide[];
+    }
+  } catch (err) {
+    console.warn("Failed to fetch dynamic slides:", err);
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">
@@ -29,7 +42,7 @@ export default async function HomePage() {
       {/* Main Content: Exact sequence per PRD §5.1 and 00-PROJECT-OVERVIEW */}
       <main className="flex-1">
         {/* 2. Hero Section */}
-        <Hero />
+        <Hero slides={dynamicSlides} />
 
         {/* 2.1 Trust Badges Strip */}
         <TrustBadges />

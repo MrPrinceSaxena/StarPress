@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Gem, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "@/components/ui/Button";
 
-interface Slide {
+export interface Slide {
   src: string;
   alt: string;
   badge: string;
@@ -15,45 +15,18 @@ interface Slide {
   cta: { label: string; href: string };
 }
 
-const slides: Slide[] = [
+const defaultSlides: Slide[] = [
   {
-    src: "/images/hero-composition.jpg",
-    alt: "Star Press — Premier Custom Printing Press in Khatima, Uttarakhand",
-    badge: "Premier Printing Press in Khatima, Uttarakhand",
-    headline: ["PRINT YOUR IDEAS", "TO LIFE"],
-    highlightIndex: 1,
-    sub: "High quality custom printing in Khatima & Pan-India.\nVisiting Cards • Flex Banners • 3D Letters • Neon Signs • Custom Packaging",
-    cta: { label: "Shop All Products", href: "/shop" },
-  },
-  {
-    src: "/images/Slider/VisitingCards.png",
-    alt: "Premium visiting cards printed by Star Press",
-    badge: "Business Essentials",
-    headline: ["MAKE EVERY", "FIRST IMPRESSION COUNT"],
-    highlightIndex: 1,
-    sub: "Premium visiting cards that speak before you do.\nCrisp finishes. Bold designs. Fast delivery.",
-    cta: { label: "Explore Visiting Cards", href: "/shop/business-cards" },
-  },
-  {
-    src: "/images/Slider/3D_LetterBoard.png",
-    alt: "3D Letter Board custom printing by Star Press",
-    badge: "Signage & Displays",
-    headline: ["STAND OUT WITH", "3D LETTER BOARDS"],
-    highlightIndex: 1,
-    sub: "Dimensional letters that demand attention.\nPerfect for retail, events & corporate spaces.",
-    cta: { label: "Explore 3D Letter Boards", href: "/shop/3d-letter-board" },
-  },
-  {
-    src: "/images/Slider/LEDNamePlates.png",
+    src: "/images/slider/NamePlates.jpeg",
     alt: "LED Name Plates custom printing by Star Press",
     badge: "Illuminated Signage",
     headline: ["LIGHT UP YOUR", "BRAND IDENTITY"],
     highlightIndex: 1,
-    sub: "Glowing LED name plates for offices & showrooms.\nCustom colours, shapes & sizes available.",
-    cta: { label: "Explore LED Name Plates", href: "/shop/name-plates" },
+    sub: "Premium name plates for offices, homes & showrooms.\nCustom colours, shapes & sizes available.",
+    cta: { label: "Explore Name Plates", href: "/shop/name-plates" },
   },
   {
-    src: "/images/Slider/NeonBoards.png",
+    src: "/images/slider/NeonBoards.jpeg",
     alt: "Neon Boards custom printing by Star Press",
     badge: "Neon & Glow Signs",
     headline: ["GLOW DIFFERENT,", "GLOW BOLD"],
@@ -62,19 +35,24 @@ const slides: Slide[] = [
     cta: { label: "Explore Neon Boards", href: "/shop/neon-boards" },
   },
   {
-    src: "/images/Slider/CustomizeKeychainNamePlate.png",
-    alt: "Customized Keychains and Name Plates by Star Press",
-    badge: "Custom Merchandise & Gifts",
-    headline: ["CUSTOMIZE EVERY", "DETAIL WITH STYLE"],
+    src: "/images/slider/3dBoards.jpeg",
+    alt: "3D Letter Board custom printing by Star Press",
+    badge: "Signage & Displays",
+    headline: ["STAND OUT WITH", "3D LETTER BOARDS"],
     highlightIndex: 1,
-    sub: "Personalized keychains and custom name plates crafted to perfection.\nGreat for gifts, branding, and daily use.",
-    cta: { label: "Explore Custom Keychains", href: "/shop/keychain-printing" },
+    sub: "Dimensional letters that demand attention.\nPerfect for retail, events & corporate spaces.",
+    cta: { label: "Explore 3D Letter Boards", href: "/shop/3d-letter-board" },
   },
 ];
 
 const AUTOPLAY_MS = 5000;
 
-export default function Hero() {
+interface HeroProps {
+  slides?: Slide[];
+}
+
+export default function Hero({ slides: propSlides }: HeroProps) {
+  const slides = propSlides && propSlides.length > 0 ? propSlides : defaultSlides;
   const [current, setCurrent] = useState(0);
 
   // Touch swipe support for native mobile feel
@@ -84,12 +62,12 @@ export default function Hero() {
   // Navigate to next slide
   const handleNext = useCallback(() => {
     setCurrent((prev) => (prev + 1) % slides.length);
-  }, []);
+  }, [slides.length]);
 
   // Navigate to previous slide
   const handlePrev = useCallback(() => {
     setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
-  }, []);
+  }, [slides.length]);
 
   // Directly select slide on dot click
   const handleSelect = useCallback((index: number) => {
@@ -128,7 +106,7 @@ export default function Hero() {
     }, AUTOPLAY_MS);
 
     return () => clearTimeout(timer);
-  }, [current]);
+  }, [current, slides.length]);
 
   const slide = slides[current];
 
@@ -189,7 +167,7 @@ export default function Hero() {
                 className="absolute inset-0 md:hidden"
                 style={{
                   background:
-                    "linear-gradient(180deg, rgba(11,12,16,0.88) 0%, rgba(11,12,16,0.72) 35%, rgba(11,12,16,0.90) 75%, #0B0C10 100%)",
+                    "linear-gradient(180deg, rgba(11,12,16,0.6) 0%, rgba(11,12,16,0.4) 35%, rgba(11,12,16,0.7) 75%, #0B0C10 100%)",
                 }}
               />
 
@@ -198,7 +176,7 @@ export default function Hero() {
                 className="hidden md:block absolute inset-0"
                 style={{
                   background:
-                    "linear-gradient(90deg, rgba(11,12,16,0.96) 0%, rgba(11,12,16,0.88) 36%, rgba(11,12,16,0.55) 60%, rgba(11,12,16,0.12) 85%, transparent 100%)",
+                    "linear-gradient(90deg, rgba(11,12,16,0.8) 0%, rgba(11,12,16,0.6) 36%, rgba(11,12,16,0.3) 60%, rgba(11,12,16,0.05) 85%, transparent 100%)",
                 }}
               />
 
@@ -207,7 +185,7 @@ export default function Hero() {
                 className="absolute inset-0"
                 style={{
                   background:
-                    "linear-gradient(0deg, rgba(11,12,16,0.85) 0%, transparent 30%)",
+                    "linear-gradient(0deg, rgba(11,12,16,0.7) 0%, transparent 30%)",
                 }}
               />
             </div>

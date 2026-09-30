@@ -4,15 +4,35 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Plus, Search, Filter, Download, Upload, MoreHorizontal,
-  Copy, Archive, Trash2, Edit3, Eye, Package, IndianRupee,
-  ShoppingCart, Users, Grid3X3, List, X, ChevronDown, Layers,
+  Plus,
+  Search,
+  Filter,
+  Download,
+  Upload,
+  MoreHorizontal,
+  Copy,
+  Archive,
+  Trash2,
+  Edit3,
+  Eye,
+  Package,
+  CheckCircle2,
+  AlertTriangle,
+  FolderTree,
+  Grid3X3,
+  List,
+  X,
+  ChevronDown,
+  Layers,
+  ArrowUpDown,
+  RefreshCw,
 } from 'lucide-react';
 import StatCard from '@/components/admin/ui/StatCard';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
 import Pagination from '@/components/admin/ui/Pagination';
 import ConfirmDialog from '@/components/admin/ui/ConfirmDialog';
 import EmptyState from '@/components/admin/ui/EmptyState';
+import { Skeleton, SkeletonCard, SkeletonTableRow } from '@/components/admin/ui/Skeleton';
 import { showToast } from '@/components/admin/ui/Toast';
 import { productService, categoryService } from '@/lib/admin/services';
 import type { AdminProduct, AdminCategory, ProductStatus } from '@/lib/admin/types';
@@ -28,65 +48,104 @@ export default function ProductsPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [catalogStats, setCatalogStats] = useState({
+    total: 0,
+    published: 0,
+    draft: 0,
+    lowStock: 0,
+  });
 
   // Filter state
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<'created' | 'name' | 'price' | 'stock'>('created');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [showFilters, setShowFilters] = useState(false);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Dialog state
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; ids: string[]; loading: boolean }>({ open: false, ids: [], loading: false });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; ids: string[]; loading: boolean }>({
+    open: false,
+    ids: [],
+    loading: false,
+  });
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
 
-  // Product stats
-  const stats = useMemo(() => {
-    const total = products.length;
-    const published = products.filter((p) => p.status === 'published').length;
-    const draft = products.filter((p) => p.status === 'draft').length;
-    const archived = products.filter((p) => p.status === 'archived').length;
-    const outOfStock = products.filter((p) => (p.stockQuantity ?? 0) <= 0).length;
-    return { total, published, draft, archived, outOfStock };
-  }, [products]);
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
 
+  // Load products
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
       const statusFilter = statusTab === 'out_of_stock' ? 'all' : statusTab;
       const stockFilter = statusTab === 'out_of_stock' ? 'out_of_stock' : 'all';
+
       const result = await productService.getProducts({
-        search,
+        search: debouncedSearch,
         status: statusFilter as ProductStatus | 'all',
         category: selectedCategory,
         stockStatus: stockFilter as 'all' | 'out_of_stock',
         sortBy,
         sortOrder,
         page,
-        pageSize: 10,
+        pageSize: 12,
       });
+
       setProducts(result.data);
       setTotal(result.total);
       setTotalPages(result.totalPages);
+
+      // Fetch overall catalog stats if available or compute from result
+      if (result.total > 0 && catalogStats.total === 0) {
+        setCatalogStats((prev) => ({
+          ...prev,
+          total: result.total,
+          published: result.data.filter((p) => p.status === 'published').length || result.total,
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to load products:', err);
+      showToast('Failed to load products', 'error');
     } finally {
       setLoading(false);
     }
-  }, [search, statusTab, selectedCategory, sortBy, sortOrder, page]);
-
-  useEffect(() => { loadProducts(); }, [loadProducts]);
+  }, [debouncedSearch, statusTab, selectedCategory, sortBy, sortOrder, page, catalogStats.total]);
 
   useEffect(() => {
-    categoryService.getCategories().then(setCategories);
+    loadProducts();
+  }, [loadProducts]);
+
+  // Load categories and initial catalog stats
+  useEffect(() => {
+    categoryService.getCategories().then(setCategories).catch(() => {});
+    // Fetch global product stats
+    fetch('/api/admin/products?limit=1')
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.stats) {
+          setCatalogStats(res.stats);
+        } else if (res.total) {
+          setCatalogStats((prev) => ({ ...prev, total: res.total }));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [search, statusTab, selectedCategory]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusTab, selectedCategory]);
 
   // Selection handlers
   const toggleSelect = (id: string) => {
@@ -111,14 +170,14 @@ export default function ProductsPage() {
     const count = await productService.bulkDelete(deleteDialog.ids);
     setDeleteDialog({ open: false, ids: [], loading: false });
     setSelectedIds(new Set());
-    showToast(`${count} product${count !== 1 ? 's' : ''} deleted`);
+    showToast(`${count} product${count !== 1 ? 's' : ''} deleted successfully`);
     loadProducts();
   };
 
   const handleDuplicate = async (id: string) => {
     const dup = await productService.duplicateProduct(id);
     if (dup) {
-      showToast(`"${dup.name}" created as draft`);
+      showToast(`"${dup.name}" duplicated as draft`);
       loadProducts();
     }
   };
@@ -135,110 +194,131 @@ export default function ProductsPage() {
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(date).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   };
 
-  const STATUS_TABS: { key: StatusTab; label: string; count: number }[] = [
-    { key: 'all', label: 'All', count: stats.total },
-    { key: 'published', label: 'Active', count: stats.published },
-    { key: 'draft', label: 'Drafts', count: stats.draft },
-    { key: 'out_of_stock', label: 'Out of Stock', count: stats.outOfStock },
-    { key: 'archived', label: 'Archived', count: stats.archived },
+  const STATUS_TABS: { key: StatusTab; label: string }[] = [
+    { key: 'all', label: 'All Catalog' },
+    { key: 'published', label: 'Active' },
+    { key: 'draft', label: 'Drafts' },
+    { key: 'out_of_stock', label: 'Out of Stock' },
+    { key: 'archived', label: 'Archived' },
   ];
 
   return (
-    <div className="max-w-[1400px]">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
         <div>
-          <h1 className="text-xl font-bold text-white">Products</h1>
-          <p className="text-sm text-text-muted mt-0.5">
-            Manage your products, inventory, pricing and availability across StarPress.
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Products &amp; Inventory</h1>
+            <span className="px-2 py-0.5 rounded-full bg-brand-yellow/10 border border-brand-yellow/30 text-brand-yellow text-[10px] font-semibold">
+              {total} Total
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Configure catalog items, base pricing, categories, stock levels, and store visibility.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 flex-wrap">
           <Link
             href="/admin/categories"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-border-subtle transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-all hover:text-white"
           >
-            <Layers size={14} />
-            Categories
+            <FolderTree size={14} className="text-purple-400" />
+            <span>Categories ({categories.length})</span>
           </Link>
-          <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-border-subtle transition-colors">
-            <Download size={14} />
-            Export
-          </button>
-          <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-border-subtle transition-colors">
-            <Upload size={14} />
-            Import
-          </button>
+
           <Link
             href="/admin/products/new"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-all shadow-[0_0_15px_rgba(245,186,19,0.2)] active:scale-[0.98]"
           >
             <Plus size={14} />
-            Add Product
+            <span>Add Product</span>
           </Link>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <StatCard icon={Package} title="Total Products" value={stats.total.toLocaleString()} change={4.2} iconColor="text-brand-yellow" />
-        <StatCard icon={IndianRupee} title="Total Revenue" value={`₹${formatPrice(2847500)}`} change={12.5} iconColor="text-emerald-400" />
-        <StatCard icon={ShoppingCart} title="Total Orders" value="342" change={-1.4} iconColor="text-blue-400" />
-        <StatCard icon={Users} title="Customers" value="1,890" change={8.7} iconColor="text-purple-400" />
+      {/* KPI Cards Row - Real Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        <StatCard
+          icon={Package}
+          title="Catalog Items"
+          value={(catalogStats.total || total).toLocaleString()}
+          iconColor="text-brand-yellow"
+          period="in database"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          title="Active Published"
+          value={(catalogStats.published || products.filter((p) => p.status === 'published').length).toLocaleString()}
+          iconColor="text-emerald-400"
+          period="live on store"
+        />
+        <StatCard
+          icon={AlertTriangle}
+          title="Low / Out of Stock"
+          value={(catalogStats.lowStock || products.filter((p) => p.stockQuantity <= 10).length).toLocaleString()}
+          iconColor="text-amber-400"
+          period="needs restocking"
+        />
+        <StatCard
+          icon={FolderTree}
+          title="Categories"
+          value={categories.length.toLocaleString()}
+          iconColor="text-purple-400"
+          period="active collections"
+        />
       </div>
 
-      {/* Toolbar: Search + Filters + View Toggle + Status Tabs */}
-      <div className="bg-bg-surface border border-border-subtle rounded-xl">
-        {/* Search + Filter Row */}
-        <div className="flex items-center gap-3 p-3 border-b border-border-subtle">
-          <div className="relative flex-1 max-w-sm">
+      {/* Toolbar: Search + Filter + Sort + Status Tabs */}
+      <div className="bg-[#0E111B] border border-white/[0.06] rounded-2xl shadow-elevation-sm overflow-hidden">
+        {/* Search & Filter Bar */}
+        <div className="p-3.5 sm:p-4 border-b border-white/[0.06] flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[240px]">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
-              placeholder="Search by product name, SKU or ID"
+              placeholder="Search by title, SKU, or slug…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 rounded-lg bg-white/[0.03] border border-border-subtle text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-brand-yellow/30 transition-colors"
+              className="w-full h-9 pl-9 pr-8 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-brand-yellow/40 focus:bg-white/[0.05] transition-all"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-500 hover:text-white">
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-500 hover:text-white"
+              >
                 <X size={14} />
               </button>
             )}
           </div>
-
-          {/* Filter Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
-              showFilters
-                ? 'border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow'
-                : 'border-border-subtle text-text-secondary hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <Filter size={14} />
-            Filter
-          </button>
 
           {/* Category Dropdown */}
           <div className="relative">
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="appearance-none h-9 pl-3 pr-8 rounded-lg bg-white/[0.03] border border-border-subtle text-xs text-text-secondary focus:outline-none focus:border-brand-yellow/30 transition-colors cursor-pointer"
+              className="appearance-none h-9 pl-3 pr-8 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-slate-300 focus:outline-none focus:border-brand-yellow/40 transition-colors cursor-pointer"
             >
-              <option value="all">All Categories</option>
+              <option value="all" className="bg-[#121522] text-white">
+                All Categories
+              </option>
               {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id} className="bg-[#121522] text-white">
+                  {c.name}
+                </option>
               ))}
             </select>
-            <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
           </div>
 
-          {/* Sort */}
+          {/* Sort Dropdown */}
           <div className="relative">
             <select
               value={`${sortBy}-${sortOrder}`}
@@ -247,256 +327,372 @@ export default function ProductsPage() {
                 setSortBy(sb as typeof sortBy);
                 setSortOrder(so as typeof sortOrder);
               }}
-              className="appearance-none h-9 pl-3 pr-8 rounded-lg bg-white/[0.03] border border-border-subtle text-xs text-text-secondary focus:outline-none focus:border-brand-yellow/30 transition-colors cursor-pointer"
+              className="appearance-none h-9 pl-3 pr-8 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-slate-300 focus:outline-none focus:border-brand-yellow/40 transition-colors cursor-pointer"
             >
-              <option value="created-desc">Newest First</option>
-              <option value="created-asc">Oldest First</option>
-              <option value="name-asc">Name A–Z</option>
-              <option value="name-desc">Name Z–A</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-              <option value="stock-asc">Stock: Low to High</option>
-              <option value="stock-desc">Stock: High to Low</option>
+              <option value="created-desc" className="bg-[#121522] text-white">
+                Newest First
+              </option>
+              <option value="created-asc" className="bg-[#121522] text-white">
+                Oldest First
+              </option>
+              <option value="name-asc" className="bg-[#121522] text-white">
+                Name A–Z
+              </option>
+              <option value="name-desc" className="bg-[#121522] text-white">
+                Name Z–A
+              </option>
+              <option value="price-asc" className="bg-[#121522] text-white">
+                Price: Low to High
+              </option>
+              <option value="price-desc" className="bg-[#121522] text-white">
+                Price: High to Low
+              </option>
+              <option value="stock-asc" className="bg-[#121522] text-white">
+                Stock: Low to High
+              </option>
+              <option value="stock-desc" className="bg-[#121522] text-white">
+                Stock: High to Low
+              </option>
             </select>
-            <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
           </div>
 
           {/* View Toggle */}
-          <div className="flex items-center border border-border-subtle rounded-lg overflow-hidden ml-auto">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-white/[0.08] text-white' : 'text-slate-500 hover:text-white'}`}
-              aria-label="Grid view"
-            >
-              <Grid3X3 size={15} />
-            </button>
+          <div className="flex items-center border border-white/[0.06] rounded-xl overflow-hidden ml-auto">
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-white/[0.08] text-white' : 'text-slate-500 hover:text-white'}`}
-              aria-label="List view"
+              className={`p-2 transition-colors ${
+                viewMode === 'list' ? 'bg-white/[0.1] text-white' : 'text-slate-500 hover:text-white'
+              }`}
+              title="List view"
             >
               <List size={15} />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 transition-colors ${
+                viewMode === 'grid' ? 'bg-white/[0.1] text-white' : 'text-slate-500 hover:text-white'
+              }`}
+              title="Grid view"
+            >
+              <Grid3X3 size={15} />
             </button>
           </div>
         </div>
 
         {/* Status Tabs */}
-        <div className="flex items-center gap-1 px-3 py-2 border-b border-border-subtle">
+        <div className="flex items-center gap-1 px-3.5 py-2.5 border-b border-white/[0.06] overflow-x-auto no-scrollbar">
           {STATUS_TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setStatusTab(tab.key)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                 statusTab === tab.key
-                  ? 'bg-white/[0.08] text-white'
-                  : 'text-text-muted hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-brand-yellow/15 text-brand-yellow font-semibold border border-brand-yellow/30'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               {tab.label}
-              <span className="ml-1.5 text-[10px] opacity-60">{tab.count}</span>
             </button>
           ))}
         </div>
 
-        {/* Product Table */}
+        {/* Content: List or Grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-6 h-6 border-2 border-brand-yellow border-t-transparent rounded-full animate-spin" />
+          <div className="p-4">
+            <table className="w-full">
+              <tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonTableRow key={i} cols={6} />
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : products.length === 0 ? (
           <EmptyState
             icon={Package}
             title="No products found"
-            description={search ? `No products match "${search}"` : 'Start by adding your first product'}
+            description={
+              search ? `No products match "${search}"` : 'Your catalog currently has no products matching this filter.'
+            }
             action={
               <Link
                 href="/admin/products/new"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors"
               >
                 <Plus size={14} />
-                Add Product
+                <span>Create Product</span>
               </Link>
             }
           />
+        ) : viewMode === 'grid' ? (
+          /* Grid View */
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {products.map((product) => {
+              const imgUrl = product.images?.[0]?.url;
+              return (
+                <div
+                  key={product.id}
+                  onClick={() => router.push(`/admin/products/${product.id}`)}
+                  className="group bg-[#121522] border border-white/[0.06] hover:border-brand-yellow/40 rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-elevation-md cursor-pointer flex flex-col"
+                >
+                  <div className="aspect-[4/3] bg-white/[0.02] relative overflow-hidden flex items-center justify-center border-b border-white/[0.04]">
+                    {imgUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={imgUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <Package size={32} className="text-slate-600" />
+                    )}
+                    <div className="absolute top-2.5 right-2.5">
+                      <StatusBadge status={product.stockQuantity === 0 ? 'out_of_stock' : product.status} />
+                    </div>
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-brand-yellow">
+                        {product.categoryName}
+                      </span>
+                      <h3 className="text-sm font-semibold text-white mt-1 group-hover:text-brand-yellow transition-colors line-clamp-1">
+                        {product.name}
+                      </h3>
+                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">{product.sku}</p>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">
+                      <span className="text-sm font-bold text-white">₹{formatPrice(product.basePrice)}</span>
+                      <span
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          product.stockQuantity === 0
+                            ? 'bg-rose-500/10 text-rose-400'
+                            : product.stockQuantity <= 10
+                            ? 'bg-amber-500/10 text-amber-400'
+                            : 'bg-emerald-500/10 text-emerald-400'
+                        }`}
+                      >
+                        {product.stockQuantity} in stock
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
+          /* Table View */
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border-subtle">
-                  <th className="w-10 px-3 py-3">
+                <tr className="border-b border-white/[0.06] bg-white/[0.01]">
+                  <th className="w-10 px-4 py-3.5">
                     <input
                       type="checkbox"
                       checked={selectedIds.size === products.length && products.length > 0}
                       onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-border-strong bg-transparent accent-brand-yellow cursor-pointer"
+                      className="w-4 h-4 rounded border-white/20 bg-transparent accent-brand-yellow cursor-pointer"
                     />
                   </th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Product</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">ID &amp; Created</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Price</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Stock</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Status</th>
-                  <th className="w-12 px-3 py-3"></th>
+                  <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    Product
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    SKU &amp; Date
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    Price
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    Inventory
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    Status
+                  </th>
+                  <th className="w-12 px-4 py-3.5"></th>
                 </tr>
               </thead>
-              <tbody>
-                {products.map((product) => (
-                  <tr
-                    key={product.id}
-                    className={`border-b border-border-subtle/50 hover:bg-white/[0.02] transition-colors cursor-pointer ${
-                      selectedIds.has(product.id) ? 'bg-brand-yellow/[0.03]' : ''
-                    }`}
-                    onClick={() => router.push(`/admin/products/${product.id}`)}
-                  >
-                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(product.id)}
-                        onChange={() => toggleSelect(product.id)}
-                        className="w-4 h-4 rounded border-border-strong bg-transparent accent-brand-yellow cursor-pointer"
-                      />
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/[0.04] border border-border-subtle flex items-center justify-center text-text-muted shrink-0 overflow-hidden">
-                          {product.images[0] ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={product.images[0].url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <Package size={16} />
+              <tbody className="divide-y divide-white/[0.03]">
+                {products.map((product) => {
+                  const imgUrl = product.images?.[0]?.url;
+                  return (
+                    <tr
+                      key={product.id}
+                      onClick={() => router.push(`/admin/products/${product.id}`)}
+                      className={`hover:bg-white/[0.02] transition-colors cursor-pointer group ${
+                        selectedIds.has(product.id) ? 'bg-brand-yellow/[0.04]' : ''
+                      }`}
+                    >
+                      <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(product.id)}
+                          onChange={() => toggleSelect(product.id)}
+                          className="w-4 h-4 rounded border-white/20 bg-transparent accent-brand-yellow cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
+                            {imgUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={imgUrl}
+                                alt={product.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <Package size={16} />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs sm:text-sm font-semibold text-white group-hover:text-brand-yellow transition-colors truncate max-w-[280px]">
+                              {product.name}
+                            </div>
+                            <div className="text-[11px] text-slate-400 truncate">{product.categoryName}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="text-xs font-mono text-slate-300">{product.sku}</div>
+                        <div className="text-[11px] text-slate-500">{formatDate(product.createdAt)}</div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="text-xs sm:text-sm font-semibold text-white">
+                          ₹{formatPrice(product.basePrice)}
+                        </div>
+                        {product.compareAtPrice && (
+                          <div className="text-[11px] text-slate-500 line-through">
+                            ₹{formatPrice(product.compareAtPrice)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${
+                            product.stockQuantity === 0
+                              ? 'bg-rose-500/10 text-rose-400'
+                              : product.stockQuantity <= 10
+                              ? 'bg-amber-500/10 text-amber-400'
+                              : 'bg-emerald-500/10 text-emerald-400'
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              product.stockQuantity === 0
+                                ? 'bg-rose-400'
+                                : product.stockQuantity <= 10
+                                ? 'bg-amber-400'
+                                : 'bg-emerald-400'
+                            }`}
+                          />
+                          {product.stockQuantity} in stock
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <StatusBadge status={product.stockQuantity === 0 ? 'out_of_stock' : product.status} />
+                      </td>
+                      <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative">
+                          <button
+                            onClick={() => setActionMenuId(actionMenuId === product.id ? null : product.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                            aria-label="Actions"
+                          >
+                            <MoreHorizontal size={16} />
+                          </button>
+                          {actionMenuId === product.id && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={() => setActionMenuId(null)} />
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-[#101422] border border-white/10 rounded-xl shadow-elevation-md py-1.5 z-20 animate-fadeIn">
+                                <button
+                                  onClick={() => {
+                                    router.push(`/admin/products/${product.id}`);
+                                    setActionMenuId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors"
+                                >
+                                  <Edit3 size={13} className="text-brand-yellow" /> Edit Details
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    window.open(`/shop/${product.slug}`, '_blank');
+                                    setActionMenuId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors"
+                                >
+                                  <Eye size={13} className="text-cyan-400" /> View Storefront
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleDuplicate(product.id);
+                                    setActionMenuId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors"
+                                >
+                                  <Copy size={13} className="text-purple-400" /> Duplicate Item
+                                </button>
+                                <div className="border-t border-white/[0.06] my-1" />
+                                <button
+                                  onClick={() => {
+                                    setDeleteDialog({ open: true, ids: [product.id], loading: false });
+                                    setActionMenuId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                >
+                                  <Trash2 size={13} /> Delete Product
+                                </button>
+                              </div>
+                            </>
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-white truncate max-w-[240px]">{product.name}</div>
-                          <div className="text-[11px] text-text-muted truncate">{product.categoryName}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="text-xs font-mono text-text-secondary">{product.sku}</div>
-                      <div className="text-[11px] text-text-muted">{formatDate(product.createdAt)}</div>
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="text-sm font-medium text-white">₹{formatPrice(product.basePrice)}</div>
-                      {product.compareAtPrice && (
-                        <div className="text-[11px] text-text-muted line-through">₹{formatPrice(product.compareAtPrice)}</div>
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className={`text-sm font-medium ${
-                        product.stockQuantity === 0 ? 'text-rose-400' :
-                        product.stockQuantity <= product.lowStockThreshold ? 'text-amber-400' :
-                        'text-white'
-                      }`}>
-                        {product.stockQuantity.toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="px-3 py-3">
-                      <StatusBadge status={product.stockQuantity === 0 ? 'out_of_stock' : product.status} />
-                    </td>
-                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative">
-                        <button
-                          onClick={() => setActionMenuId(actionMenuId === product.id ? null : product.id)}
-                          className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
-                          aria-label="Actions"
-                        >
-                          <MoreHorizontal size={16} />
-                        </button>
-                        {actionMenuId === product.id && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setActionMenuId(null)} />
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-bg-surface border border-border-subtle rounded-xl shadow-elevation-md py-1 z-20 animate-fadeIn">
-                              <button
-                                onClick={() => { router.push(`/admin/products/${product.id}`); setActionMenuId(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                              >
-                                <Edit3 size={13} /> Edit Product
-                              </button>
-                              <button
-                                onClick={() => { window.open(`/shop/${product.slug}`, '_blank'); setActionMenuId(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                              >
-                                <Eye size={13} /> Preview Storefront
-                              </button>
-                              <button
-                                onClick={() => { handleDuplicate(product.id); setActionMenuId(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                              >
-                                <Copy size={13} /> Duplicate
-                              </button>
-                              <button
-                                onClick={() => {
-                                  productService.bulkUpdateStatus([product.id], 'archived');
-                                  showToast(`"${product.name}" archived`);
-                                  loadProducts();
-                                  setActionMenuId(null);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-                              >
-                                <Archive size={13} /> Archive
-                              </button>
-                              <div className="border-t border-border-subtle my-1" />
-                              <button
-                                onClick={() => { setDeleteDialog({ open: true, ids: [product.id], loading: false }); setActionMenuId(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors"
-                              >
-                                <Trash2 size={13} /> Delete
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
 
-        {/* Pagination */}
+        {/* Pagination Footer */}
         {totalPages > 1 && (
-          <div className="px-3 border-t border-border-subtle">
+          <div className="p-3.5 border-t border-white/[0.06] flex items-center justify-between">
             <Pagination
               page={page}
               totalPages={totalPages}
               total={total}
-              pageSize={10}
+              pageSize={12}
               onPageChange={setPage}
             />
           </div>
         )}
       </div>
 
-      {/* Bulk Action Bar */}
+      {/* Floating Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-bg-surface border border-border-subtle rounded-2xl shadow-elevation-md animate-fadeIn">
-          <span className="text-sm font-medium text-white">
-            {selectedIds.size} Selected
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-[#0F1320]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-elevation-md animate-fadeIn">
+          <span className="text-xs font-semibold text-white">
+            <strong className="text-brand-yellow font-bold">{selectedIds.size}</strong> selected
           </span>
-          <div className="w-px h-5 bg-border-subtle" />
-          <button
-            onClick={() => showToast('Export started for selected products')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
-          >
-            <Download size={13} /> Export
-          </button>
+          <div className="w-px h-4 bg-white/10" />
           <button
             onClick={() => handleBulkStatusChange('published')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-400 hover:bg-emerald-500/10 transition-colors"
           >
             <Eye size={13} /> Publish
           </button>
           <button
             onClick={() => handleBulkStatusChange('draft')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:bg-white/[0.08] transition-colors"
           >
-            <Edit3 size={13} /> Draft
+            <Edit3 size={13} /> Set Draft
           </button>
           <button
             onClick={() => handleBulkStatusChange('archived')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-white hover:bg-white/[0.04] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:bg-white/[0.08] transition-colors"
           >
             <Archive size={13} /> Archive
           </button>
@@ -508,8 +704,8 @@ export default function ProductsPage() {
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
-            className="p-1 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors ml-1"
-            aria-label="Clear selection"
+            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors ml-1"
+            title="Deselect all"
           >
             <X size={14} />
           </button>
@@ -519,9 +715,11 @@ export default function ProductsPage() {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         open={deleteDialog.open}
-        title="Delete Products"
-        message={`Are you sure you want to delete ${deleteDialog.ids.length} product${deleteDialog.ids.length !== 1 ? 's' : ''}? This action cannot be undone.`}
-        confirmLabel="Delete"
+        title="Delete Selected Products"
+        message={`Are you sure you want to delete ${deleteDialog.ids.length} product${
+          deleteDialog.ids.length !== 1 ? 's' : ''
+        }? This permanently removes them from the StarPress database.`}
+        confirmLabel="Confirm Delete"
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ open: false, ids: [], loading: false })}
         loading={deleteDialog.loading}

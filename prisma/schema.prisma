@@ -1,7 +1,3 @@
-// ============================================================================
-// Star Press — Production Database Schema (Phase C & Roadmap)
-// ============================================================================
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,65 +8,46 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ----------------------------------------------------------------------------
-// Auth & Users
-// ----------------------------------------------------------------------------
-
-enum Role {
-  CUSTOMER
-  ADMIN
-}
-
 model User {
-  id                    String                 @id @default(cuid())
-  name                  String
-  email                 String                 @unique
-  passwordHash          String?
-  phone                 String?
-  role                  Role                   @default(CUSTOMER)
-  
-  // Security & Verification
-  emailVerified         DateTime?
-  emailVerificationToken String?
+  id                       String                 @id @default(cuid())
+  name                     String
+  email                    String                 @unique
+  passwordHash             String?
+  phone                    String?
+  role                     Role                   @default(CUSTOMER)
+  emailVerified            DateTime?
+  emailVerificationToken   String?
   emailVerificationExpires DateTime?
-  passwordResetToken    String?
-  passwordResetExpires   DateTime?
-  
-  // Brute force defense & lockout
-  failedLoginAttempts   Int                    @default(0)
-  lockedUntil           DateTime?
-  
-  // Multi-factor authentication
-  twoFactorEnabled      Boolean                @default(false)
-  twoFactorSecret       String?
-  twoFactorBackupCodes  String[]               @default([])
-  
-  // Activity tracking
-  lastLoginAt           DateTime?
-  lastLoginIp           String?
-  
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-
-  addresses             Address[]
-  orders                Order[]
-  reviews               Review[]
-  customizationRequests CustomizationRequest[]
-  sessions              Session[]
-  auditLogs             AuthAuditLog[]
+  passwordResetToken       String?
+  passwordResetExpires     DateTime?
+  failedLoginAttempts      Int                    @default(0)
+  lockedUntil              DateTime?
+  twoFactorEnabled         Boolean                @default(false)
+  twoFactorSecret          String?
+  twoFactorBackupCodes     String[]               @default([])
+  lastLoginAt              DateTime?
+  lastLoginIp              String?
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  addresses                Address[]
+  auditLogs                AuthAuditLog[]
+  customizationRequests    CustomizationRequest[]
+  orders                   Order[]
+  reviews                  Review[]
+  sessions                 Session[]
 }
 
 model Session {
   id           String   @id @default(cuid())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId       String
   sessionToken String   @unique
-  deviceInfo   String?  // Browser, OS, device fingerprint summary
+  deviceInfo   String?
   ipAddress    String
   isActive     Boolean  @default(true)
   expiresAt    DateTime
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([sessionToken])
@@ -78,15 +55,15 @@ model Session {
 
 model AuthAuditLog {
   id        String   @id @default(cuid())
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId    String?
   email     String
-  action    String   // LOGIN_SUCCESS, LOGIN_FAILURE, LOGOUT, REGISTER, PASSWORD_CHANGE, ACCOUNT_LOCKOUT, EMAIL_VERIFIED
+  action    String
   ipAddress String?
   userAgent String?
-  status    String   // SUCCESS, FAILURE
+  status    String
   reason    String?
   createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([email])
   @@index([userId])
@@ -95,9 +72,8 @@ model AuthAuditLog {
 
 model Address {
   id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  label     String?  // e.g. "Office", "Factory", "Home"
+  label     String?
   line1     String
   line2     String?
   city      String
@@ -106,11 +82,8 @@ model Address {
   phone     String
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
-// ----------------------------------------------------------------------------
-// Catalog
-// ----------------------------------------------------------------------------
 
 model Category {
   id           String    @id @default(cuid())
@@ -119,9 +92,9 @@ model Category {
   description  String?
   imageUrl     String?
   displayOrder Int       @default(0)
-  products     Product[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  products     Product[]
 }
 
 model Product {
@@ -131,38 +104,29 @@ model Product {
   slug               String         @unique
   description        String?
   shortDescription   String?
-  category           Category       @relation(fields: [categoryId], references: [id])
   categoryId         String
-  status             String         @default("draft") // draft, published, archived
+  status             String         @default("draft")
   isFeatured         Boolean        @default(false)
   isActive           Boolean        @default(true)
-  
-  // Pricing
   basePrice          Decimal        @db.Decimal(10, 2)
   compareAtPrice     Decimal?       @db.Decimal(10, 2)
   costPerUnit        Decimal?       @db.Decimal(10, 2)
   discountPercentage Int?
-
-  // Inventory
   trackInventory     Boolean        @default(true)
   stockQuantity      Int            @default(0)
   lowStockThreshold  Int            @default(10)
-
-  // Metadata & SEO
   metaTitle          String?
   metaDescription    String?
   metaKeywords       String?
-
-  // Timestamps & Publishing
   publishedAt        DateTime?
   unpublishAt        DateTime?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
-
-  images             ProductImage[]
-  pricingRules       PricingRule[]
   cartItems          CartItem[]
   orderItems         OrderItem[]
+  pricingRules       PricingRule[]
+  category           Category       @relation(fields: [categoryId], references: [id])
+  images             ProductImage[]
   reviews            Review[]
 
   @@index([status])
@@ -171,7 +135,6 @@ model Product {
 
 model ProductImage {
   id               String   @id @default(cuid())
-  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId        String
   url              String
   altText          String?
@@ -183,24 +146,25 @@ model ProductImage {
   dimensionsWidth  Int?
   dimensionsHeight Int?
   createdAt        DateTime @default(now())
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model PricingRule {
   id        String   @id @default(cuid())
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
   label     String
   price     Decimal  @db.Decimal(10, 2)
   createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model AdminAuditLog {
   id         String   @id @default(cuid())
   adminId    String?
   adminEmail String
-  entityType String   // 'product', 'category', 'price', 'image'
+  entityType String
   entityId   String?
-  action     String   // 'create', 'update', 'delete', 'publish'
+  action     String
   changes    Json?
   ipAddress  String?
   userAgent  String?
@@ -211,114 +175,92 @@ model AdminAuditLog {
   @@index([createdAt])
 }
 
-// ----------------------------------------------------------------------------
-// Cart (Client & Optional Persistent)
-// ----------------------------------------------------------------------------
-
 model Cart {
   id        String     @id @default(cuid())
   userId    String?    @unique
-  items     CartItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  items     CartItem[]
 }
 
 model CartItem {
   id        String   @id @default(cuid())
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   cartId    String
-  product   Product  @relation(fields: [productId], references: [id])
   productId String
   quantity  Int
   unitPrice Decimal  @db.Decimal(10, 2)
   specs     Json?
   createdAt DateTime @default(now())
-}
-
-// ----------------------------------------------------------------------------
-// Orders & Fulfillment
-// ----------------------------------------------------------------------------
-
-enum OrderStatus {
-  PENDING
-  CONFIRMED
-  IN_PRODUCTION
-  DISPATCHED
-  DELIVERED
-  CANCELLED
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
 }
 
 model Order {
-  id                String               @id @default(cuid())
-  orderNumber       String               @unique // Human readable: SP-YYYY-XXXXX
-  user              User?                @relation(fields: [userId], references: [id])
-  userId            String?              // Nullable for guest checkouts
-  guestEmail        String?
-  guestPhone        String?
-  guestName         String?
-  status            OrderStatus          @default(PENDING)
-  subtotal          Decimal              @db.Decimal(10, 2)
-  gstAmount         Decimal?             @db.Decimal(10, 2) // Nullable until GST rules confirmed
-  shippingFee       Decimal              @default(0) @db.Decimal(10, 2)
-  discountAmount    Decimal              @default(0) @db.Decimal(10, 2)
-  totalAmount       Decimal              @db.Decimal(10, 2)
-  shippingAddress   Json                 // Immutable address snapshot
-  billingAddress    Json?                // Optional B2B GST snapshot
-  paymentMethod     String?              // RAZORPAY, COD, MANUAL_PROOF
-  paymentId         String?              // Gateway transaction identifier
-  razorpayOrderId   String?
-  paymentStatus     String               @default("UNPAID") // UNPAID, PAID, FAILED, REFUNDED
-  notes             String?
-  trackingNumber    String?              // Courier AWB
-  courierPartner    String?              // Shiprocket, BlueDart, DTDC, etc.
-  items             OrderItem[]
-  transactions      PaymentTransaction[]
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  id              String               @id @default(cuid())
+  orderNumber     String               @unique
+  userId          String?
+  guestEmail      String?
+  guestPhone      String?
+  guestName       String?
+  status          OrderStatus          @default(PENDING)
+  subtotal        Decimal              @db.Decimal(10, 2)
+  gstAmount       Decimal?             @db.Decimal(10, 2)
+  shippingFee     Decimal              @default(0) @db.Decimal(10, 2)
+  discountAmount  Decimal              @default(0) @db.Decimal(10, 2)
+  totalAmount     Decimal              @db.Decimal(10, 2)
+  shippingAddress Json
+  billingAddress  Json?
+  paymentMethod   String?
+  paymentId       String?
+  razorpayOrderId String?
+  paymentStatus   String               @default("UNPAID")
+  notes           String?
+  trackingNumber  String?
+  courierPartner  String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  user            User?                @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  transactions    PaymentTransaction[]
 }
 
 model OrderItem {
   id          String   @id @default(cuid())
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId     String
-  product     Product? @relation(fields: [productId], references: [id])
   productId   String?
   productName String
   productSlug String
   quantity    Int
   unitPrice   Decimal  @db.Decimal(10, 2)
   lineTotal   Decimal  @db.Decimal(10, 2)
-  specs       Json?    // { sizeId, materialId, dimensions, finish }
+  specs       Json?
   customText  String?
   artworkUrl  String?
   previewUrl  String?
   createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id])
 }
 
 model PaymentTransaction {
-  id                String   @id @default(cuid())
-  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId           String
-  gateway           String   @default("RAZORPAY")
-  gatewayOrderId    String?
-  gatewayPaymentId  String?
-  gatewaySignature  String?
-  method            String?  // UPI, CARD, NETBANKING, WALLET
-  amount            Decimal  @db.Decimal(10, 2)
-  currency          String   @default("INR")
-  status            String   // AUTHORIZED, CAPTURED, FAILED
-  rawPayload        Json?
-  createdAt         DateTime @default(now())
+  id               String   @id @default(cuid())
+  orderId          String
+  gateway          String   @default("RAZORPAY")
+  gatewayOrderId   String?
+  gatewayPaymentId String?
+  gatewaySignature String?
+  method           String?
+  amount           Decimal  @db.Decimal(10, 2)
+  currency         String   @default("INR")
+  status           String
+  rawPayload       Json?
+  createdAt        DateTime @default(now())
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
-
-// ----------------------------------------------------------------------------
-// Inquiries, Leads & Support
-// ----------------------------------------------------------------------------
 
 model CustomizationRequest {
   id            String   @id @default(cuid())
-  inquiryNumber String?  @unique // INQ-YYYY-XXXXX
-  user          User?    @relation(fields: [userId], references: [id])
+  inquiryNumber String?  @unique
   userId        String?
   name          String
   email         String
@@ -328,76 +270,90 @@ model CustomizationRequest {
   finishDetails String?
   details       String?
   fileUrl       String?
-  status        String   @default("NEW") // NEW, REVIEWED, QUOTED, CONVERTED, CLOSED
+  status        String   @default("NEW")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  user          User?    @relation(fields: [userId], references: [id])
 }
 
 model BulkOrderInquiry {
-  id                  String   @id @default(cuid())
-  inquiryNumber       String?  @unique // BLK-YYYY-XXXXX
-  name                String
-  phone               String
-  email               String?
-  company             String?
-  productType         String?
-  quantity            String?
-  details             String?
-  swatchKitRequested  Boolean  @default(false)
-  status              String   @default("NEW") // NEW, CONTACTED, QUOTED, WON, LOST
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  inquiryNumber      String?  @unique
+  name               String
+  phone              String
+  email              String?
+  company            String?
+  productType        String?
+  quantity           String?
+  details            String?
+  swatchKitRequested Boolean  @default(false)
+  status             String   @default("NEW")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model ContactInquiry {
   id            String   @id @default(cuid())
-  inquiryNumber String?  @unique // CNT-YYYY-XXXXX
+  inquiryNumber String?  @unique
   name          String
   email         String?
   phone         String?
   subject       String?
   message       String
-  status        String   @default("NEW") // NEW, REPLIED, ARCHIVED
+  status        String   @default("NEW")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
 
 model Review {
   id        String   @id @default(cuid())
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  rating    Int      // 1 to 5 stars
+  rating    Int
   comment   String?
   createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Discount {
-  id              String    @id @default(cuid())
-  code            String    @unique
-  type            String    // 'percentage' | 'fixed'
-  value           Decimal   @db.Decimal(10, 2)
-  minOrderAmount  Decimal?  @db.Decimal(10, 2)
-  maxUses         Int?
-  usedCount       Int       @default(0)
-  startsAt        DateTime  @default(now())
-  expiresAt       DateTime?
-  isActive        Boolean   @default(true)
-  applicableTo    String    @default("all") // 'all' | 'specific_products' | 'specific_categories'
-  productIds      String[]  @default([])
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  code           String    @unique
+  type           String
+  value          Decimal   @db.Decimal(10, 2)
+  minOrderAmount Decimal?  @db.Decimal(10, 2)
+  maxUses        Int?
+  usedCount      Int       @default(0)
+  startsAt       DateTime  @default(now())
+  expiresAt      DateTime?
+  isActive       Boolean   @default(true)
+  applicableTo   String    @default("all")
+  productIds     String[]  @default([])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([code])
   @@index([isActive])
 }
 
 model StoreSetting {
-  id          String   @id @default(cuid())
-  key         String   @unique
-  value       Json
-  updatedAt   DateTime @updatedAt
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_PRODUCTION
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
