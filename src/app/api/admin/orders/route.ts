@@ -14,12 +14,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const statusParam = searchParams.get("status") || "all";
+    const paymentStatusParam = searchParams.get("paymentStatus") || "all";
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const skip = (page - 1) * limit;
 
     const result = await listOrders({
       status: statusParam === "all" ? undefined : statusParam,
+      paymentStatus: paymentStatusParam === "all" ? undefined : paymentStatusParam,
       search: search || undefined,
       limit,
       skip,
@@ -86,6 +88,7 @@ export async function GET(request: NextRequest) {
         shipping,
         discount,
         total,
+        paymentMethod: o.paymentMethod || "ONLINE",
         paymentStatus: (o.paymentStatus || "unpaid").toLowerCase(),
         fulfillmentStatus: (o.status === "DELIVERED" || o.status === "DISPATCHED" ? "fulfilled" : o.status === "IN_PRODUCTION" ? "partial" : "unfulfilled"),
         status: o.status === "DISPATCHED" ? "shipped" : o.status.toLowerCase(),

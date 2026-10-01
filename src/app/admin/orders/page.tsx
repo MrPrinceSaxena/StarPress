@@ -22,6 +22,7 @@ import {
   MapPin,
   Check,
   RefreshCw,
+  CreditCard,
 } from 'lucide-react';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
 import Pagination from '@/components/admin/ui/Pagination';
@@ -53,6 +54,7 @@ export default function OrdersPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
 
@@ -61,6 +63,7 @@ export default function OrdersPage() {
   const [drawerTracking, setDrawerTracking] = useState<string>('');
   const [drawerCourier, setDrawerCourier] = useState<string>('Shiprocket');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const [orderStats, setOrderStats] = useState({
@@ -87,6 +90,7 @@ export default function OrdersPage() {
       const result = await orderService.getOrders({
         search: debouncedSearch,
         status: statusTab,
+        paymentStatus: paymentFilter as any,
         page,
         pageSize: 10,
       });
@@ -120,7 +124,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, statusTab, page]);
+  }, [debouncedSearch, statusTab, paymentFilter, page]);
 
   useEffect(() => {
     loadOrders();
@@ -128,7 +132,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusTab]);
+  }, [debouncedSearch, statusTab, paymentFilter]);
 
   // Sync drawer form state when order is selected
   useEffect(() => {
@@ -178,8 +182,45 @@ export default function OrdersPage() {
     }
   };
 
+  const handleManualMarkPaid = async () => {
+    if (!selectedOrder) return;
+    const confirmMsg = `Are you sure you want to mark Order #${selectedOrder.orderNumber} as PAID? This audit action is logged.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsMarkingPaid(true);
+    try {
+      const res = await orderService.markOrderPaid(selectedOrder.id);
+      if (res.success) {
+        showToast(res.message || `Order #${selectedOrder.orderNumber} marked as PAID`);
+        setSelectedOrder((prev) =>
+          prev
+            ? {
+                ...prev,
+                paymentStatus: 'paid' as any,
+                status: 'confirmed' as any,
+              }
+            : null
+        );
+        loadOrders();
+      } else {
+        showToast(res.message || 'Failed to mark order as paid', 'error');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error marking order as paid', 'error');
+    } finally {
+      setIsMarkingPaid(false);
+    }
+  };
+
   const formatPrice = (n: number) => new Intl.NumberFormat('en-IN').format(n);
   const totalDisplay = Math.max(orderStats.total, total, orders.length);
+
+  const PAYMENT_FILTERS = [
+    { key: 'all', label: 'All Payments' },
+    { key: 'unpaid', label: 'UNPAID' },
+    { key: 'paid', label: 'PAID' },
+    { key: 'pay_after_proof', label: 'PAY AFTER PROOF' },
+  ];
 
   const STATUS_TABS: { key: StatusTab; label: string; count: number }[] = [
     { key: 'all', label: 'All Orders', count: totalDisplay },
@@ -287,6 +328,26 @@ export default function OrdersPage() {
               <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-white/[0.06] text-[10px] opacity-80">
                 {tab.count}
               </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Payment Filter Sub-row */}
+        <div className="flex items-center gap-1.5 px-3.5 py-2 border-b border-white/[0.04] bg-white/[0.015] overflow-x-auto no-scrollbar text-xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mr-1.5 flex items-center gap-1">
+            <CreditCard size={12} /> Payment:
+          </span>
+          {PAYMENT_FILTERS.map((pf) => (
+            <button
+              key={pf.key}
+              onClick={() => setPaymentFilter(pf.key)}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap ${
+                paymentFilter === pf.key
+                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40 font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+              }`}
+            >
+              {pf.label}
             </button>
           ))}
         </div>
@@ -523,6 +584,52 @@ export default function OrdersPage() {
                     <Save size={14} />
                     <span>{isUpdating ? 'Saving to Database…' : 'Save & Notify Customer'}</span>
                   </button>
+                </div>
+
+                {/* Payment & Audit Action Card */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-[#141828] to-[#10131F] border border-white/[0.08] space-y-3.5 shadow-elevation-sm">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <CreditCard size={15} className="text-brand-yellow" /> Payment Audit & Status
+                    </h3>
+                    <StatusBadge status={selectedOrder.paymentStatus} />
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-white/[0.06]">
+                    <span className="text-slate-400">Payment Channel:</span>
+                    <span className="font-mono text-white uppercase font-bold px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08]">
+                      {selectedOrder.paymentMethod || 'ONLINE'}
+                    </span>
+                  </div>
+
+                  {selectedOrder.paymentStatus !== 'paid' ? (
+                    selectedOrder.paymentMethod === 'PAY_AFTER_PROOF' ||
+                    selectedOrder.paymentMethod === 'COD' ||
+                    selectedOrder.paymentMethod === 'MANUAL_PROOF' ? (
+                      <div className="pt-2">
+                        <button
+                          onClick={handleManualMarkPaid}
+                          disabled={isMarkingPaid}
+                          className="w-full flex items-center justify-center gap-2 h-9 rounded-xl text-xs font-bold bg-emerald-500 text-black hover:bg-emerald-400 transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)] disabled:opacity-50"
+                        >
+                          <CheckCircle2 size={14} />
+                          <span>{isMarkingPaid ? 'Recording in Audit Log…' : 'Mark as Paid (Proof/COD Confirmed)'}</span>
+                        </button>
+                        <p className="text-[10px] text-slate-500 text-center mt-1.5">
+                          Logs admin identity, previous state, and timestamp to AdminAuditLog.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300/90 leading-relaxed">
+                        🔒 Online gateway order: Verified automatically upon Razorpay webhook capture. Manual override is locked for zero-trust security.
+                      </div>
+                    )
+                  ) : (
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300 flex items-center gap-2">
+                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                      <span>Payment captured and verified. Order is confirmed for print production.</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Customer Details Card */}

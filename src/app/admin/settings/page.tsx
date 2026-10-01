@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { showToast } from '@/components/admin/ui/Toast';
 import { Skeleton } from '@/components/admin/ui/Skeleton';
+import ImageUploader from '@/components/admin/ui/ImageUploader';
+import Hero from '@/components/sections/Hero';
 
 const TABS = [
   { key: 'general', label: 'General Info', icon: Store },
@@ -44,6 +46,7 @@ export default function SettingsPage() {
 
   // Slider state
   const [slides, setSlides] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
   // Settings form state
   const [storeName, setStoreName] = useState('Star Press');
@@ -56,7 +59,19 @@ export default function SettingsPage() {
 
   // Payments state
   const [codEnabled, setCodEnabled] = useState(true);
-  const [razorpayKey, setRazorpayKey] = useState('rzp_live_...');
+  const [gatewayStatus, setGatewayStatus] = useState<{
+    isRazorpayConfigured: boolean;
+    keyIdMasked: string | null;
+    hasKeySecret: boolean;
+    hasWebhookSecret: boolean;
+    isResendConfigured: boolean;
+  }>({
+    isRazorpayConfigured: false,
+    keyIdMasked: null,
+    hasKeySecret: false,
+    hasWebhookSecret: false,
+    isResendConfigured: false,
+  });
 
   // Shipping state
   const [defaultCourier, setDefaultCourier] = useState('Shiprocket');
@@ -66,13 +81,17 @@ export default function SettingsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [res, sliderRes] = await Promise.all([
+        const [res, sliderRes, categoriesRes] = await Promise.all([
           fetch('/api/admin/settings'),
           fetch('/api/admin/settings/slider'),
+          fetch('/api/admin/categories'),
         ]);
 
         if (res.ok) {
           const data = await res.json();
+          if (data.gatewayStatus) {
+            setGatewayStatus(data.gatewayStatus);
+          }
           if (data.settings) {
             setStoreName(data.settings.storeName || 'Star Press');
             setStoreEmail(data.settings.storeEmail || 'starpress.print@gmail.com');
@@ -88,6 +107,13 @@ export default function SettingsPage() {
           const sliderData = await sliderRes.json();
           if (sliderData.slides && Array.isArray(sliderData.slides)) {
             setSlides(sliderData.slides);
+          }
+        }
+        
+        if (categoriesRes.ok) {
+          const catData = await categoriesRes.json();
+          if (catData.categories && Array.isArray(catData.categories)) {
+            setCategories(catData.categories);
           }
         }
       } catch (err) {
@@ -362,6 +388,19 @@ export default function SettingsPage() {
                 </button>
               </div>
 
+              {/* Live Preview Container */}
+              <div className="rounded-xl border border-white/[0.08] overflow-hidden bg-black relative mb-6">
+                <div className="p-3 border-b border-white/[0.08] bg-[#0E111B] flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><Eye size={14} className="text-brand-yellow" /> Live Preview</span>
+                </div>
+                <div className="w-full h-[400px] overflow-hidden relative pointer-events-none">
+                  {/* We scale the preview down to 50% to fit it nicely while preserving standard aspect ratio */}
+                  <div className="absolute top-0 left-0 w-[200%] h-[200%] origin-top-left scale-50">
+                    <Hero slides={slides.length > 0 ? slides : undefined} />
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-6">
                 {slides.map((slide, idx) => (
                   <div
@@ -409,26 +448,23 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    {/* Image Preview & URL */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Image Thumbnail Preview */}
-                      <div className="aspect-video rounded-xl bg-white/[0.02] border border-white/[0.08] overflow-hidden flex items-center justify-center relative">
-                        {slide.src ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={slide.src}
-                            alt={slide.alt || 'Slide image preview'}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="text-center p-3 text-slate-600">
-                            <ImageIcon size={24} className="mx-auto mb-1 opacity-50" />
-                            <span className="text-[10px]">Enter image URL</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="md:col-span-2 space-y-3">
+                    {/* Image Upload & URL */}
+                    <div className="space-y-4">
+                      <ImageUploader
+                        bucket="product-images"
+                        folder="slider"
+                        entityId={`slide_${idx}`}
+                        maxImages={1}
+                        images={slide.src ? [{ id: `slide_${idx}`, url: slide.src, altText: slide.alt || '', isPrimary: true, position: 0 }] : []}
+                        onChange={(newImages) => {
+                          if (newImages.length > 0) {
+                            updateSlide(idx, 'src', newImages[0].url);
+                          } else {
+                            updateSlide(idx, 'src', '');
+                          }
+                        }}
+                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <label className="text-[11px] font-semibold text-slate-300">Image Source (URL or Path)</label>
                           <input
@@ -510,7 +546,29 @@ export default function SettingsPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-slate-300">CTA Link Target</label>
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-semibold text-slate-300">CTA Link Target</label>
+                          {categories.length > 0 && (
+                            <select
+                              className="text-[9px] bg-white/[0.04] border border-white/10 rounded px-1.5 py-0.5 text-slate-300 outline-none cursor-pointer"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (!val) return;
+                                const cat = categories.find(c => c.slug === val);
+                                if (cat) {
+                                  updateSlide(idx, 'cta.href', `/shop/category/${cat.slug}`);
+                                  if (!slide.cta?.label) updateSlide(idx, 'cta.label', `Explore ${cat.name}`);
+                                }
+                                e.target.value = ''; // Reset select
+                              }}
+                            >
+                              <option value="">Auto-link Category...</option>
+                              {categories.map(c => (
+                                <option key={c.slug} value={c.slug}>{c.name}</option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
                         <input
                           type="text"
                           value={slide.cta?.href || ''}
@@ -536,33 +594,77 @@ export default function SettingsPage() {
           {activeTab === 'payments' && (
             <div className="space-y-5">
               <h2 className="text-sm font-semibold text-white">Payment Gateways &amp; Checkout Rules</h2>
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.08] space-y-4">
+              
+              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.08] space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xs font-bold text-white">Razorpay Payment Gateway</h3>
+                    <h3 className="text-xs font-bold text-white flex items-center gap-2">
+                      <CreditCard size={15} className="text-brand-yellow" />
+                      Razorpay Payment Gateway Integration
+                    </h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Accepts UPI (Google Pay, PhonePe, Paytm), NetBanking, Credit/Debit cards.
+                      Processes UPI (Google Pay, PhonePe, Paytm), NetBanking, RuPay, Visa, and Mastercard.
                     </p>
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    ACTIVE
+                  <span
+                    className={`px-2.5 py-1 rounded text-[10px] font-bold tracking-wider uppercase border ${
+                      gatewayStatus.isRazorpayConfigured
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                    }`}
+                  >
+                    {gatewayStatus.isRazorpayConfigured ? 'CONFIGURED' : 'NOT CONFIGURED'}
                   </span>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium text-slate-300">Key ID</label>
-                  <input
-                    type="password"
-                    value={razorpayKey}
-                    onChange={(e) => setRazorpayKey(e.target.value)}
-                    className={inputClass}
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-white/[0.06] text-xs">
+                  <div className="p-3 rounded-xl bg-[#090B12] border border-white/[0.06]">
+                    <span className="text-[10px] text-slate-500 font-semibold uppercase block mb-1">
+                      Key ID (Public)
+                    </span>
+                    <span className="font-mono text-white text-xs font-medium">
+                      {gatewayStatus.keyIdMasked || 'Missing in env'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-[#090B12] border border-white/[0.06]">
+                    <span className="text-[10px] text-slate-500 font-semibold uppercase block mb-1">
+                      Key Secret
+                    </span>
+                    <span
+                      className={`font-semibold text-xs ${
+                        gatewayStatus.hasKeySecret ? 'text-emerald-400' : 'text-rose-400'
+                      }`}
+                    >
+                      {gatewayStatus.hasKeySecret ? '✓ Configured in env' : '✗ Missing in env'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-[#090B12] border border-white/[0.06]">
+                    <span className="text-[10px] text-slate-500 font-semibold uppercase block mb-1">
+                      Webhook Secret
+                    </span>
+                    <span
+                      className={`font-semibold text-xs ${
+                        gatewayStatus.hasWebhookSecret ? 'text-emerald-400' : 'text-rose-400'
+                      }`}
+                    >
+                      {gatewayStatus.hasWebhookSecret ? '✓ Configured in env' : '✗ Missing in env'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-300 leading-relaxed">
+                  🔒 <strong>Zero-Trust Credential Security:</strong> Razorpay credentials stay strictly in secure server environment variables (<code className="font-mono text-white">NEXT_PUBLIC_RAZORPAY_KEY_ID</code>, <code className="font-mono text-white">RAZORPAY_KEY_SECRET</code>, <code className="font-mono text-white">RAZORPAY_WEBHOOK_SECRET</code>). For production safety, secrets are never stored in the database or exposed to the client browser.
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.08] flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-bold text-white">Cash on Delivery (COD)</h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Allow offline cash payment upon delivery.</p>
+                  <h3 className="text-xs font-bold text-white">Pay After Proof (COD / Manual Verification)</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Allow customers to review pre-press digital proofs on WhatsApp before fulfilling payment.
+                  </p>
                 </div>
                 <button
                   type="button"

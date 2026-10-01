@@ -313,6 +313,7 @@ export const orderService = {
     const params = new URLSearchParams();
     if (filters.search) params.set('search', filters.search);
     if (filters.status && filters.status !== 'all') params.set('status', filters.status);
+    if (filters.paymentStatus && filters.paymentStatus !== 'all') params.set('paymentStatus', filters.paymentStatus);
     if (filters.page) params.set('page', filters.page.toString());
     if (filters.pageSize) params.set('limit', filters.pageSize.toString());
 
@@ -358,6 +359,12 @@ export const orderService = {
     return apiFetch(`/api/admin/orders/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status, ...tracking }),
+    });
+  },
+
+  async markOrderPaid(id: string): Promise<{ success: boolean; message?: string }> {
+    return apiFetch(`/api/admin/orders/${id}/mark-paid`, {
+      method: 'POST',
     });
   },
 

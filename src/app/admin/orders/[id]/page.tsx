@@ -58,6 +58,27 @@ export default function OrderDetailPage() {
   const [trackingNumber, setTrackingNumber] = useState<string>('');
   const [internalNotes, setInternalNotes] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
+
+  const handleManualMarkPaid = async () => {
+    if (!order) return;
+    if (!window.confirm(`Mark Order #${order.orderNumber} as PAID? This audit action is logged.`)) return;
+
+    setIsMarkingPaid(true);
+    try {
+      const res = await orderService.markOrderPaid(order.id);
+      if (res.success) {
+        showToast(res.message || `Order #${order.orderNumber} marked as PAID`);
+        loadOrder();
+      } else {
+        showToast(res.message || 'Failed to mark order as paid', 'error');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error marking order as paid', 'error');
+    } finally {
+      setIsMarkingPaid(false);
+    }
+  };
 
   // Notification Modal States
   const [notifyModalOpen, setNotifyModalOpen] = useState(false);
@@ -274,6 +295,17 @@ export default function OrderDetailPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {order.paymentStatus !== 'paid' && order.paymentMethod === 'PAY_AFTER_PROOF' && (
+            <button
+              onClick={handleManualMarkPaid}
+              disabled={isMarkingPaid}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 transition-colors disabled:opacity-50"
+              title="Confirm payment received offline (audit logged)"
+            >
+              {isMarkingPaid ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+              Mark as Paid
+            </button>
+          )}
           <button
             onClick={handlePrint}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-border-subtle transition-colors"
@@ -575,13 +607,37 @@ export default function OrderDetailPage() {
             </div>
 
             <div className="pt-3 border-t border-border-subtle">
-              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <CreditCard size={13} className="text-brand-yellow" />
-                Payment Method
-              </p>
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
+                  <CreditCard size={13} className="text-brand-yellow" />
+                  Payment Method
+                </p>
+                <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${
+                  order.paymentStatus === 'paid'
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                }`}>
+                  {order.paymentStatus}
+                </span>
+              </div>
               <p className="text-xs text-text-secondary uppercase font-mono">
                 {order.paymentMethod || 'Online Gateway / Razorpay'}
               </p>
+              {order.paymentStatus !== 'paid' && order.paymentMethod === 'PAY_AFTER_PROOF' && (
+                <div className="mt-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-[11px] text-amber-300 mb-2">
+                    Pay-after-proof awaiting offline payment verification.
+                  </p>
+                  <button
+                    onClick={handleManualMarkPaid}
+                    disabled={isMarkingPaid}
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-500 text-black hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                  >
+                    {isMarkingPaid ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                    Confirm Offline Payment
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

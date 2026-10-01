@@ -116,6 +116,7 @@ export interface AdminOrder {
   discount: number;
   total: number;
   paymentStatus: PaymentStatus;
+  paymentMethod?: string;
   fulfillmentStatus: FulfillmentStatus;
   status: OrderStatus;
   shippingAddress: string;
