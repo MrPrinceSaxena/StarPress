@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,12 +11,13 @@ import {
   Lock,
   ArrowLeft,
   CreditCard,
-  Banknote,
   FileCheck,
-  Building2,
-  PhoneCall,
   Sparkles,
   ShoppingBag,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  Tag,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -51,6 +52,20 @@ const INDIAN_STATES = [
   "West Bengal",
 ];
 
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, subtotal, clearCart, isLoaded } = useCart();
@@ -73,7 +88,44 @@ export default function CheckoutPage() {
     gstin: "",
     shippingMethod: "standard", // "standard" | "express"
     paymentMethod: "online", // "online" | "cod_proof"
+    couponCode: "",
   });
+
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Quote State from Server
+  const [serverQuote, setServerQuote] = useState<{
+    subtotal: number;
+    discount: number;
+    gst: number;
+    shipping: number;
+    grandTotal: number;
+    couponApplied?: { code: string; discountAmount: number };
+  } | null>(null);
+
+  // Confirmed Order State
+  const [confirmedOrder, setConfirmedOrder] = useState<{
+    id: string;
+    orderId: string;
+    date: string;
+    total: number;
+    itemsCount: number;
+    shippingMethod: string;
+    paymentMethod: string;
+    paymentStatus: string;
+  } | null>(null);
+
+  const [pollTimeoutReached, setPollTimeoutReached] = useState(false);
+  const idempotencyKeyRef = useRef<string>("");
+
+  // Initialize or maintain a stable idempotency key for this checkout attempt
+  useEffect(() => {
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = `idemp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    }
+  }, []);
 
   // Autofill checkout details when user is authenticated
   useEffect(() => {
@@ -94,25 +146,95 @@ export default function CheckoutPage() {
     }
   }, [isHydrated, status, router]);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [confirmedOrder, setConfirmedOrder] = useState<{
-    orderId: string;
-    date: string;
-    total: number;
-    itemsCount: number;
-    shippingMethod: string;
-  } | null>(null);
+  // Fetch Server Quote whenever line items or shipping options change
+  useEffect(() => {
+    if (!items || items.length === 0) return;
 
-  // Price calculations
-  const gstAmount = Math.round(subtotal * 0.18);
-  const shippingFee =
-    subtotal >= 999
-      ? 0
-      : subtotal > 0
-      ? 99
-      : 0;
-  const expressFee = formData.shippingMethod === "express" ? 249 : 0;
-  const grandTotal = subtotal + gstAmount + shippingFee + expressFee;
+    let cancelled = false;
+
+    async function fetchQuote() {
+      try {
+        const quotePayload = {
+          items: items.map((it) => ({
+            productId: (it as any).productId || it.id,
+            slug: (it as any).productSlug || it.href?.replace("/shop/", "") || "product",
+            quantity: it.quantity,
+            sizeId: (it as any).sizeId,
+            materialId: (it as any).materialId,
+            customText: (it as any).customText,
+            artworkUrl: (it as any).artworkUrl,
+          })),
+          couponCode: formData.couponCode.trim() || undefined,
+          shippingMethod: formData.shippingMethod as "standard" | "express",
+        };
+
+        const res = await fetch("/api/orders/quote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(quotePayload),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && data.quote) {
+            setServerQuote(data.quote);
+          }
+        }
+      } catch {
+        // Non-blocking quote fallback
+      }
+    }
+
+    fetchQuote();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items, formData.shippingMethod, formData.couponCode]);
+
+  // Price calculations (prefer server quote, fallback to local standard)
+  const gstAmount = serverQuote ? serverQuote.gst : Math.round(subtotal * 0.18);
+  const shippingFee = serverQuote
+    ? serverQuote.shipping
+    : (subtotal >= 999 ? 0 : 99) + (formData.shippingMethod === "express" ? 249 : 0);
+  const discountAmount = serverQuote ? serverQuote.discount : 0;
+  const grandTotal = serverQuote
+    ? serverQuote.grandTotal
+    : Math.max(0, subtotal - discountAmount) + gstAmount + shippingFee;
+
+  // Poll order status if online payment was made
+  useEffect(() => {
+    if (!confirmedOrder || confirmedOrder.paymentStatus === "PAID" || confirmedOrder.paymentMethod !== "ONLINE") {
+      return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 20; // 20 * 3s = 60s
+    const orderIdToPoll = confirmedOrder.id;
+
+    const interval = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/orders/${orderIdToPoll}`);
+        if (res.ok) {
+          const data = await res.json();
+          const pStatus = (data.order?.paymentStatus || "").toUpperCase();
+          if (pStatus === "PAID") {
+            setConfirmedOrder((prev) => (prev ? { ...prev, paymentStatus: "PAID" } : null));
+            clearInterval(interval);
+            return;
+          }
+        }
+      } catch {}
+
+      if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        setPollTimeoutReached(true);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [confirmedOrder]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -132,9 +254,14 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    setCheckoutError(null);
+    setStatusMessage(null);
     setIsSubmitting(true);
 
     try {
+      // 1. Submit Order to server (authoritative quote & persistence)
+      setStatusMessage("Registering print order specifications...");
+
       const payload = {
         userId: session?.user?.id || undefined,
         guestEmail: formData.email,
@@ -151,85 +278,212 @@ export default function CheckoutPage() {
           state: formData.state,
           pincode: formData.pinCode,
         },
-        billingAddress: formData.isGstRequired ? {
-          companyName: formData.companyName,
-          gstin: formData.gstin,
-          addressLine1: formData.addressLine1,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pinCode,
-        } : undefined,
-        subtotal,
-        gstAmount: 0,
-        shippingFee: shippingFee + expressFee,
-        discountAmount: 0,
-        totalAmount: grandTotal,
-        paymentMethod: formData.paymentMethod,
+        billingAddress: formData.isGstRequired
+          ? {
+              companyName: formData.companyName,
+              gstin: formData.gstin,
+              addressLine1: formData.addressLine1,
+              city: formData.city,
+              state: formData.state,
+              pincode: formData.pinCode,
+            }
+          : undefined,
+        shippingMethod: formData.shippingMethod,
+        couponCode: formData.couponCode.trim() || undefined,
+        paymentMethod: formData.paymentMethod === "online" ? "ONLINE" : "PAY_AFTER_PROOF",
         notes: formData.notes,
         items: items.map((it) => ({
-          productId: it.id,
-          productName: it.name,
-          productSlug: it.href?.replace("/shop/", "") || "product",
+          productId: (it as any).productId || it.id,
+          productSlug: (it as any).productSlug || it.href?.replace("/shop/", "") || "product",
           quantity: it.quantity,
-          unitPrice: it.price,
-          lineTotal: it.price * it.quantity,
+          sizeId: (it as any).sizeId,
+          materialId: (it as any).materialId,
+          customText: (it as any).customText,
+          artworkUrl: (it as any).artworkUrl,
           previewUrl: it.imageSrc,
         })),
       };
 
-      const response = await fetch("/api/orders", {
+      const orderResponse = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKeyRef.current,
+        },
         body: JSON.stringify(payload),
       });
 
-      const resData = await response.json();
-      const placedOrder = resData.order;
-      const orderId = placedOrder?.orderNumber || `SP-${Date.now().toString().slice(-6)}`;
+      const orderData = await orderResponse.json();
 
-      const orderSummary = {
-        orderId,
-        date: new Date().toLocaleDateString("en-IN", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        }),
-        total: grandTotal,
-        itemsCount: items.reduce((acc, it) => acc + it.quantity, 0),
-        shippingMethod: formData.shippingMethod,
-      };
-
-      try {
-        const pastOrders = JSON.parse(
-          localStorage.getItem("starpress_recent_orders") || "[]"
+      if (!orderResponse.ok || !orderData.order) {
+        throw new Error(
+          orderData.error || "Failed to create order on server. Please verify your details."
         );
-        pastOrders.unshift({
-          ...orderSummary,
-          items: items.map((i) => ({ name: i.name, qty: i.quantity, price: i.price })),
-          customer: { name: formData.fullName, phone: formData.phone, city: formData.city },
-        });
-        localStorage.setItem("starpress_recent_orders", JSON.stringify(pastOrders.slice(0, 5)));
-      } catch {
-        // ignore storage errors
       }
 
-      setConfirmedOrder(orderSummary);
-      clearCart();
-    } catch (err) {
-      console.error("Error submitting order:", err);
-      // Fallback in case of offline/network failure
-      const fallbackId = `SP-${Date.now().toString().slice(-6)}`;
-      setConfirmedOrder({
-        orderId: fallbackId,
-        date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-        total: grandTotal,
-        itemsCount: items.reduce((acc, it) => acc + it.quantity, 0),
-        shippingMethod: formData.shippingMethod,
+      const placedOrder = orderData.order;
+
+      // 2. Handle Payment Flow
+      if (placedOrder.paymentMethod === "PAY_AFTER_PROOF") {
+        // Proof flow: immediate confirmation with real DB orderNumber
+        clearCart();
+        setConfirmedOrder({
+          id: placedOrder.id,
+          orderId: placedOrder.orderNumber,
+          date: new Date(placedOrder.createdAt || Date.now()).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }),
+          total: Number(placedOrder.totalAmount),
+          itemsCount: items.reduce((acc, it) => acc + it.quantity, 0),
+          shippingMethod: formData.shippingMethod,
+          paymentMethod: "PAY_AFTER_PROOF",
+          paymentStatus: "UNPAID",
+        });
+        setIsSubmitting(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      // Online Razorpay Flow
+      setStatusMessage("Initializing secure payment session with Razorpay...");
+      const razorpayResponse = await fetch("/api/payments/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: placedOrder.id }),
       });
-      clearCart();
-    } finally {
+
+      const rzpData = await razorpayResponse.json();
+      if (!razorpayResponse.ok || !rzpData.razorpayOrderId) {
+        throw new Error(rzpData.error || "Payment gateway unavailable. Please retry or choose Pay After Proof.");
+      }
+
+      // Check if dev test mock (non-production only)
+      if (rzpData.isMock) {
+        setStatusMessage("Completing development test payment simulation...");
+        const verifyRes = await fetch("/api/payments/razorpay/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: placedOrder.id,
+            razorpay_order_id: rzpData.razorpayOrderId,
+            razorpay_payment_id: `pay_mock_${Date.now()}`,
+            razorpay_signature: "mock_test_signature",
+          }),
+        });
+
+        const vData = await verifyRes.json();
+        if (verifyRes.ok && vData.success) {
+          clearCart();
+          setConfirmedOrder({
+            id: placedOrder.id,
+            orderId: placedOrder.orderNumber,
+            date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+            total: Number(placedOrder.totalAmount),
+            itemsCount: items.reduce((acc, it) => acc + it.quantity, 0),
+            shippingMethod: formData.shippingMethod,
+            paymentMethod: "ONLINE",
+            paymentStatus: "PAID",
+          });
+          setIsSubmitting(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+      }
+
+      // Live Razorpay Checkout
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error("Unable to load Razorpay payment SDK. Please check your network connection.");
+      }
+
+      const options = {
+        key: rzpData.keyId,
+        amount: rzpData.amount,
+        currency: rzpData.currency || "INR",
+        name: "Star Press",
+        description: `Print Order #${placedOrder.orderNumber}`,
+        order_id: rzpData.razorpayOrderId,
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: "#FFCF1B",
+        },
+        modal: {
+          ondismiss: function () {
+            setIsSubmitting(false);
+            setStatusMessage(null);
+            setCheckoutError(
+              "Payment window was closed before completion. Your cart items are preserved — you may retry whenever you are ready."
+            );
+          },
+        },
+        handler: async function (response: any) {
+          setIsSubmitting(true);
+          setStatusMessage("Verifying payment capture with server...");
+
+          try {
+            const verifyRes = await fetch("/api/payments/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: placedOrder.id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const vData = await verifyRes.json();
+            if (!verifyRes.ok || !vData.success) {
+              throw new Error(
+                vData.error || "Payment verification failed. If money was debited, your order will confirm automatically via webhook."
+              );
+            }
+
+            // Payment verified and captured authoritatively
+            clearCart();
+            setConfirmedOrder({
+              id: placedOrder.id,
+              orderId: placedOrder.orderNumber,
+              date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+              total: Number(placedOrder.totalAmount),
+              itemsCount: items.reduce((acc, it) => acc + it.quantity, 0),
+              shippingMethod: formData.shippingMethod,
+              paymentMethod: "ONLINE",
+              paymentStatus: "PAID",
+            });
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          } catch (vErr: any) {
+            console.error("Payment verification error:", vErr);
+            setCheckoutError(vErr.message);
+          } finally {
+            setIsSubmitting(false);
+            setStatusMessage(null);
+          }
+        },
+      };
+
+      const razorpayInstance = new (window as any).Razorpay(options);
+
+      razorpayInstance.on("payment.failed", function (resp: any) {
+        setIsSubmitting(false);
+        setStatusMessage(null);
+        setCheckoutError(
+          resp.error?.description || "Payment failed at card/bank network. Please retry with another payment method."
+        );
+      });
+
+      razorpayInstance.open();
+    } catch (err: any) {
+      console.error("Error during checkout:", err);
+      setCheckoutError(err.message || "An unexpected error occurred. Please try again.");
       setIsSubmitting(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setStatusMessage(null);
     }
   };
 
@@ -247,17 +501,18 @@ export default function CheckoutPage() {
   }
 
   if (isHydrated && status === "unauthenticated") {
-    // Avoid rendering the checkout UI while redirecting
     return null;
   }
 
-  // If order was just placed, display the confirmation screen!
+  // If order was confirmed, display real confirmation screen!
   if (confirmedOrder) {
     const whatsappProofMsg = encodeURIComponent(
       `Hi Star Press team! I just placed Order #${confirmedOrder.orderId} for ₹${confirmedOrder.total.toLocaleString(
         "en-IN"
       )}. Please confirm receipt of my artwork and send the digital pre-press proof.`
     );
+
+    const isPaid = confirmedOrder.paymentStatus === "PAID";
 
     return (
       <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">
@@ -269,15 +524,16 @@ export default function CheckoutPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                Order Confirmed
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                {isPaid ? "Payment Verified • Order Confirmed" : "Order Placed • Pre-Press Proof Required"}
               </div>
               <h1 className="font-display font-black text-3xl sm:text-4xl text-white uppercase tracking-tight">
-                Thank You for Printing with Star Press!
+                {isPaid ? "Thank You for Printing with Star Press!" : "Order Queued for Proof Inspection!"}
               </h1>
               <p className="text-sm text-text-secondary max-w-lg mx-auto">
-                Your print order has been received and queued in our pre-press workflow.
-                Our pre-flight team will inspect your resolution, bleeds, and color profiles.
+                {isPaid
+                  ? "Your payment is verified and your print order is queued directly into our press workflow."
+                  : "Your print order has been received. Our pre-flight team will inspect your resolution, bleeds, and color profiles before final printing."}
               </p>
             </div>
 
@@ -296,6 +552,13 @@ export default function CheckoutPage() {
               </div>
 
               <div className="flex items-center justify-between text-xs text-text-secondary">
+                <span>Payment Status</span>
+                <span className={`font-bold uppercase ${isPaid ? "text-emerald-400" : "text-amber-400"}`}>
+                  {isPaid ? "PAID (ONLINE)" : "PAY AFTER PROOF (UNPAID)"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-text-secondary">
                 <span>Production Mode</span>
                 <span className="text-emerald-400 font-bold uppercase">
                   {confirmedOrder.shippingMethod === "express"
@@ -306,13 +569,28 @@ export default function CheckoutPage() {
 
               <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
                 <span className="text-xs font-bold text-white uppercase">
-                  Total Paid / Payable
+                  {isPaid ? "Total Paid" : "Total Payable"}
                 </span>
                 <span className="font-mono font-black text-lg text-white">
                   ₹{confirmedOrder.total.toLocaleString("en-IN")}
                 </span>
               </div>
             </div>
+
+            {/* Polling / Pending verification notice if online but not yet PAID */}
+            {!isPaid && confirmedOrder.paymentMethod === "ONLINE" && (
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 text-left max-w-md mx-auto flex items-start gap-2.5">
+                <RefreshCw size={15} className="animate-spin text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Confirming gateway capture...</p>
+                  <p className="text-amber-300/80 mt-0.5">
+                    {pollTimeoutReached
+                      ? `Payment received; confirmation may take a minute. Track with ${confirmedOrder.orderId}.`
+                      : "Awaiting final confirmation from bank gateway. This page updates automatically."}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="space-y-3 pt-2">
@@ -335,10 +613,10 @@ export default function CheckoutPage() {
                 </Link>
                 <span className="text-border-subtle">|</span>
                 <Link
-                  href="/"
+                  href={`/orders/track?order=${encodeURIComponent(confirmedOrder.orderId)}`}
                   className="text-xs text-text-secondary hover:text-white transition-colors"
                 >
-                  Go to Homepage
+                  Track Order Live
                 </Link>
               </div>
             </div>
@@ -404,6 +682,25 @@ export default function CheckoutPage() {
             <span className="text-brand-yellow font-medium">Checkout</span>
           </div>
         </div>
+
+        {/* Global Error Notice */}
+        {checkoutError && (
+          <div className="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm flex items-start gap-3">
+            <AlertCircle size={18} className="text-rose-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold text-rose-200">Checkout Notice</p>
+              <p>{checkoutError}</p>
+            </div>
+          </div>
+        )}
+
+        {/* In-Flight Status Notice */}
+        {statusMessage && (
+          <div className="mb-6 p-4 rounded-2xl bg-brand-yellow/10 border border-brand-yellow/30 text-brand-yellow text-xs sm:text-sm flex items-center gap-3">
+            <Loader2 size={16} className="animate-spin text-brand-yellow shrink-0" />
+            <span>{statusMessage}</span>
+          </div>
+        )}
 
         <form onSubmit={handlePlaceOrder}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
@@ -722,7 +1019,7 @@ export default function CheckoutPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="font-bold text-white text-sm">
-                           Standard Production
+                          Standard Production
                         </div>
                         <p className="text-xs text-text-secondary mt-1">
                           Dispatched in 3–5 business days. Free for orders ₹999+.
@@ -738,7 +1035,7 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div className="mt-3 text-xs font-mono font-bold text-brand-yellow">
-                      {shippingFee === 0 ? "FREE" : "₹99"}
+                      {subtotal >= 999 ? "FREE" : "₹99"}
                     </div>
                   </label>
 
@@ -805,7 +1102,7 @@ export default function CheckoutPage() {
                       <CreditCard className="text-brand-yellow" size={20} />
                       <div>
                         <div className="font-bold text-white text-sm">
-                          Online UPI / Cards / NetBanking (Instant Confirmation)
+                          Online UPI / Cards / NetBanking (Instant Confirmation via Razorpay)
                         </div>
                         <p className="text-xs text-text-secondary">
                           Google Pay, PhonePe, Paytm, RuPay, Visa, Mastercard, NetBanking.
@@ -836,8 +1133,7 @@ export default function CheckoutPage() {
                           Pay After Pre-Press Proof Approval (COD / Bank Transfer)
                         </div>
                         <p className="text-xs text-text-secondary">
-                          Review digital proof via WhatsApp first, then complete payment before
-                          dispatch.
+                          Review digital proof via WhatsApp first, then complete payment before dispatch.
                         </p>
                       </div>
                     </div>
@@ -895,6 +1191,22 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
+                {/* Coupon Code Input */}
+                <div className="pt-2 border-t border-border-subtle">
+                  <label className="block text-[11px] font-semibold text-text-secondary uppercase mb-1.5">
+                    Have a Discount Coupon?
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. STAR10"
+                      value={formData.couponCode}
+                      onChange={(e) => setFormData((p) => ({ ...p, couponCode: e.target.value.toUpperCase() }))}
+                      className="flex-1 h-9 px-3 rounded-xl bg-bg-surface-alt border border-border-subtle text-xs text-white uppercase font-mono placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
+                    />
+                  </div>
+                </div>
+
                 {/* Financials */}
                 <div className="space-y-2.5 pt-4 border-t border-border-subtle text-xs">
                   <div className="flex items-center justify-between text-text-secondary">
@@ -904,6 +1216,13 @@ export default function CheckoutPage() {
                     </span>
                   </div>
 
+                  {discountAmount > 0 && (
+                    <div className="flex items-center justify-between text-emerald-400">
+                      <span>Discount ({serverQuote?.couponApplied?.code || "Coupon"})</span>
+                      <span className="font-mono font-medium">−₹{discountAmount.toLocaleString("en-IN")}</span>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between text-text-secondary">
                     <span>GST (18%)</span>
                     <span className="font-mono text-white">
@@ -912,7 +1231,7 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="flex items-center justify-between text-text-secondary">
-                    <span>Standard Shipping</span>
+                    <span>Shipping</span>
                     {shippingFee === 0 ? (
                       <span className="text-emerald-400 font-bold uppercase">
                         FREE
@@ -925,7 +1244,7 @@ export default function CheckoutPage() {
                   {formData.shippingMethod === "express" && (
                     <div className="flex items-center justify-between text-text-secondary">
                       <span>Priority 24h Rush</span>
-                      <span className="font-mono text-white font-medium">+₹249</span>
+                      <span className="font-mono text-white font-medium">+₹249 Included</span>
                     </div>
                   )}
 
@@ -950,15 +1269,17 @@ export default function CheckoutPage() {
                   variant="primary"
                   size="lg"
                   disabled={isSubmitting}
-                  className="w-full justify-center text-sm uppercase tracking-wider font-black py-4"
+                  className="w-full justify-center text-sm uppercase tracking-wider font-black py-4 disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                      <span>Transmitting Order...</span>
+                      <Loader2 className="animate-spin text-black" size={16} />
+                      <span>{statusMessage || "Processing Order..."}</span>
                     </span>
+                  ) : formData.paymentMethod === "online" ? (
+                    <span>Proceed to Razorpay Payment →</span>
                   ) : (
-                    <span>Confirm & Place Print Order</span>
+                    <span>Confirm Order (Pay After Proof)</span>
                   )}
                 </Button>
 

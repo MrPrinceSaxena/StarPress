@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRazorpayOrder } from "@/server/payments";
-import { getOrderById } from "@/server/orders";
+import { getSessionUser } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,21 +15,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const order = await getOrderById(orderId);
-    if (!order) {
+    // Require authenticated user
+    let user;
+    try {
+      user = await getSessionUser();
+    } catch {}
+
+    if (!user) {
       return NextResponse.json(
-        { error: "Order not found." },
-        { status: 404 }
+        { error: "Unauthorized. Please sign in to initiate payment." },
+        { status: 401 }
       );
     }
 
     const razorpayOrder = await createRazorpayOrder({
-      orderId: order.id,
-      amountInRupees: Number(order.totalAmount),
-      notes: {
-        orderNumber: order.orderNumber,
-        customerName: order.guestName || "Customer",
-      },
+      orderId,
+      sessionUserId: user.id,
+      sessionUserEmail: user.email,
     });
 
     return NextResponse.json({
@@ -36,14 +40,15 @@ export async function POST(request: NextRequest) {
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
       keyId: razorpayOrder.keyId,
-      orderNumber: order.orderNumber,
-      isMock: razorpayOrder.isMock,
+      orderNumber: razorpayOrder.orderNumber,
+      isMock: razorpayOrder.isMock || false,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("API /api/payments/razorpay/create-order error:", error);
+    const status = error.statusCode || 500;
     return NextResponse.json(
-      { error: (error as Error).message || "Failed to initialize payment gateway order." },
-      { status: 500 }
+      { error: error.message || "Failed to initialize payment gateway order." },
+      { status }
     );
   }
 }
