@@ -470,7 +470,7 @@ export default function SettingsPage() {
                           <input
                             type="text"
                             value={slide.src}
-                            placeholder="/images/slider/NamePlates.jpeg or https://..."
+                            placeholder="/images/Slider/NamePlates.jpeg or https://..."
                             onChange={(e) => updateSlide(idx, 'src', e.target.value)}
                             className={inputClass}
                           />

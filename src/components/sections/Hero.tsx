@@ -17,7 +17,7 @@ export interface Slide {
 
 const defaultSlides: Slide[] = [
   {
-    src: "/images/slider/NamePlates.jpeg",
+    src: "/images/Slider/NamePlates.jpeg",
     alt: "LED Name Plates custom printing by Star Press",
     badge: "Illuminated Signage",
     headline: ["LIGHT UP YOUR", "BRAND IDENTITY"],
@@ -26,7 +26,7 @@ const defaultSlides: Slide[] = [
     cta: { label: "Explore Name Plates", href: "/shop/name-plates" },
   },
   {
-    src: "/images/slider/NeonBoards.jpeg",
+    src: "/images/Slider/NeonBoards.jpeg",
     alt: "Neon Boards custom printing by Star Press",
     badge: "Neon & Glow Signs",
     headline: ["GLOW DIFFERENT,", "GLOW BOLD"],
@@ -35,7 +35,7 @@ const defaultSlides: Slide[] = [
     cta: { label: "Explore Neon Boards", href: "/shop/neon-boards" },
   },
   {
-    src: "/images/slider/3dBoards.jpeg",
+    src: "/images/Slider/3dBoards.jpeg",
     alt: "3D Letter Board custom printing by Star Press",
     badge: "Signage & Displays",
     headline: ["STAND OUT WITH", "3D LETTER BOARDS"],
@@ -52,8 +52,14 @@ interface HeroProps {
 }
 
 export default function Hero({ slides: propSlides }: HeroProps) {
-  const slides = propSlides && propSlides.length > 0 ? propSlides : defaultSlides;
+  const rawSlides = propSlides && propSlides.length > 0 ? propSlides : defaultSlides;
+  // Normalize path casing so /images/slider/ always points to /images/Slider/
+  const slides = rawSlides.map((s) => ({
+    ...s,
+    src: s.src.replace(/^\/images\/slider\//i, "/images/Slider/"),
+  }));
   const [current, setCurrent] = useState(0);
+  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
 
   // Touch swipe support for native mobile feel
   const touchStartX = useRef<number | null>(null);
@@ -152,14 +158,22 @@ export default function Hero({ slides: propSlides }: HeroProps) {
                   isActive ? "scale-100" : "scale-105"
                 }`}
               >
-                <Image
-                  src={s.src}
-                  alt={s.alt}
-                  fill
-                  priority={index === 0}
-                  sizes="100vw"
-                  className="object-cover object-center sm:object-center"
-                />
+                {!failedImages[index] ? (
+                  <Image
+                    src={s.src}
+                    alt={s.alt}
+                    fill
+                    unoptimized
+                    priority={index === 0}
+                    sizes="100vw"
+                    className="object-cover object-center sm:object-center"
+                    onError={() => {
+                      setFailedImages((prev) => ({ ...prev, [index]: true }));
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[#1b1e28] via-[#0B0C10] to-[#12141a]" />
+                )}
               </div>
 
               {/* Full-coverage vertical vignette for mobile (guarantees text contrast on any bright image) */}

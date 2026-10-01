@@ -41,6 +41,14 @@ const nextConfig = {
    * `NextResponse.rewrite()` strictly preserves URL query parameters (`searchParams`)
    * and copies `@supabase/ssr` chunked session cookies directly to avoid dropped sessions.
    */
+  async rewrites() {
+    return [
+      {
+        source: "/images/slider/:path*",
+        destination: "/images/Slider/:path*",
+      },
+    ];
+  },
   async headers() {
     return [
       {
