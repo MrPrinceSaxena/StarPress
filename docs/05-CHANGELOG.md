@@ -3,6 +3,63 @@
 Reverse-chronological log of what was actually built each phase, plus decisions made
 and open questions. This is the audit trail for the whole project.
 
+## Phase A: Orders & Payment Hardening (A1–A7)
+**Date:** 2026-10-01
+
+**Built & Delivered:**
+- **A1: Server Quote Engine (`src/server/quote.ts`, `src/app/api/orders/quote/route.ts`, `scripts/test-quote.ts`)**:
+  - Implemented single source of truth `quoteOrder(input)` for server-side pricing.
+  - Automatically queries active products and resolves product pricing model (`batch` vs `unit` pricing). Correctly calculates starter quantities (e.g. 100 business cards = ₹299, not 100 × ₹299).
+  - Evaluates volume discount tiers, validates coupon codes against database rules and promotional fallbacks with strict minimum order amount checks.
+  - Implements standard delivery, free shipping above threshold (₹999), and rush express delivery (+₹249 flat).
+  - Applies 18% standard GST calculation with integer-paise precision and returns full line-item pricing snapshots.
+  - Exposed `POST /api/orders/quote` for real-time checkout summary calculation.
+  - Built comprehensive unit test suite in `scripts/test-quote.ts` (18/18 tests passing) registered as `npm run test:quote`.
+- **A2: Hardened Order Creation (`src/server/orders.ts`, `src/app/api/orders/route.ts`)**:
+  - Completely removed trust in client-supplied item unit prices, subtotals, GST, and totals.
+  - Generates line items and totals exclusively from server-side `quoteOrder` execution.
+  - Added idempotency support (`Idempotency-Key` HTTP header and body key) with 24-hour reuse of existing unpaid orders.
+  - Enforced authentication and session checks on `POST /api/orders`.
+  - Added artwork enforcement: items requiring design files (`requiresArtwork: true`) without an uploaded `artworkUrl` automatically force `paymentMethod: "PAY_AFTER_PROOF"`.
+  - Removed JSON fallback phantom orders; database connection errors fail closed with HTTP 503 Service Unavailable.
+- **A3: Production Razorpay Order Creation (`src/server/payments.ts`, `src/app/api/payments/razorpay/create-order/route.ts`)**:
+  - Reads order total directly from database record and converts to integer paise (`Math.round(totalAmount * 100)`).
+  - Verifies session and order ownership (customer matching order record, or admin privilege).
+  - Reuses existing active Razorpay order ID if already initialized for an unpaid order.
+  - Fails closed with 503 if Razorpay credentials are missing in production (`NODE_ENV === "production"`).
+- **A4: Razorpay Checkout.js Modal & Signature Verification (`src/app/api/payments/razorpay/verify/route.ts`, `src/app/checkout/page.tsx`)**:
+  - Built `POST /api/payments/razorpay/verify` implementing timing-safe HMAC SHA-256 buffer comparison (`crypto.timingSafeEqual`).
+  - Queries Razorpay REST API `/v1/payments/:id` to verify captured/authorized status, order ID match, and integer paise amount consistency against DB total before recording success.
+  - Updated checkout frontend to load Razorpay Checkout.js dynamically via script loader, invoke standard modal on "Pay via Razorpay", and verify responses via `/verify`.
+  - Hardened cart lifecycle: cart is preserved on modal dismiss or payment failure, clearing only after payment verification or order confirmation.
+  - Added up to 60-second polling fallback checking order payment status directly from server.
+- **A5: Production Webhook Ingestion (`src/app/api/payments/razorpay/webhook/route.ts`)**:
+  - Reads raw HTTP request text body before parsing to perform timing-safe HMAC signature verification against `RAZORPAY_WEBHOOK_SECRET`.
+  - Fails closed (HTTP 500) if webhook secret is missing in production.
+  - Handles `payment.captured`, `order.paid`, and `payment.failed` events.
+  - Validates webhook payment amount in paise against database order total, logging dispute audit events if mismatch is detected.
+  - Idempotently upserts `PaymentTransaction` records and atomically updates order status to `PAID` / `CONFIRMED`.
+- **A6: Transactional Email Notifications (`src/server/email.ts`)**:
+  - Implemented transactional email service utilizing official Resend API client with graceful fallback logger.
+  - Added templates for:
+    - Customer Order Placed & Proof Notification (`sendOrderPlacedProofEmail`)
+    - Customer Payment Confirmation with GST breakdown & item summary (`sendPaymentReceivedEmail`)
+    - Customer Payment Failure Alert (`sendPaymentFailedEmail`)
+    - Owner Instant Payment Notification (`notifyOwnerOrderPaid`)
+- **A7: Admin Polish & Security Hardening (`src/app/api/admin/orders/[id]/mark-paid/route.ts`, `src/app/admin/orders/page.tsx`, `src/app/admin/orders/[id]/page.tsx`, `src/app/admin/settings/page.tsx`)**:
+  - Created `POST /api/admin/orders/[id]/mark-paid` allowing administrators to manually mark offline `PAY_AFTER_PROOF` orders as paid, guarded with `AdminAuditLog` logging and blocking manual override on gateway-managed online orders.
+  - Added payment status filter tabs (`All`, `Unpaid`, `Paid`, `Pay After Proof`) in `/admin/orders` and added "Mark as Paid" action to the quick-view drawer.
+  - Added "Mark as Paid" buttons and payment audit status card in order detail page (`/admin/orders/[id]`).
+  - Hardened `/admin/settings` payments configuration: removed editable plaintext secrets from the browser UI, reading configuration status directly from server environment variables (`NEXT_PUBLIC_RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`).
+- **Edge-Case Hardening & Defenses**:
+  - **Closed Tab After Payment**: Webhook (`payment.captured` / `order.paid`) acts as authoritative fallback to transition order to `PAID` / `CONFIRMED`.
+  - **Double-Click / Two Razorpay Orders**: Existing `razorpayOrderId` is reused when unpaid. If a second payment arrives on an already `PAID` order, it is recorded with status `REFUND_FLAGGED` and annotated on the order without corrupting primary payment state.
+  - **Test Key on Production Refusal**: Refuses payment initialization or signature verification if `rzp_test_*` keys are detected in a production environment.
+  - **Coupon Race Defense**: Increments coupon `usedCount` inside the same Prisma interactive transaction as `PAID`, checking `maxUses` atomically.
+  - **Price Change After Cart**: Client renders server quote breakdown before payment modal; order creation re-quotes at order time using server price book.
+  - **Unpublished Product**: Inactive or unpublished items reject checkout with HTTP 400.
+  - **Database Outage**: Fails closed with HTTP 503; never produces phantom / offline fallback orders.
+
 ## Phase 1.1: Zero-Trust Security Hardening & Authentication Upgrades
 **Date:** 2026-09-19
 
