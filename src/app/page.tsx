@@ -18,20 +18,23 @@ import { getLiveCatalogProducts } from "@/server/products";
 import { db } from "@/lib/db";
 import type { Slide } from "@/components/sections/Hero";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const categories = getAllCategories();
-  const allProducts = await getLiveCatalogProducts();
+  
+  // Run independent DB queries in parallel for faster TTFB
+  const [allProducts, slideSettingResult] = await Promise.all([
+    getLiveCatalogProducts(),
+    db.storeSetting.findUnique({ where: { key: "HERO_SLIDER" } }).catch(err => {
+      console.warn("Failed to fetch dynamic slides:", err);
+      return null;
+    })
+  ]);
   
   let dynamicSlides: Slide[] | undefined = undefined;
-  try {
-    const slideSetting = await db.storeSetting.findUnique({ where: { key: "HERO_SLIDER" } });
-    if (slideSetting && slideSetting.value) {
-      dynamicSlides = slideSetting.value as unknown as Slide[];
-    }
-  } catch (err) {
-    console.warn("Failed to fetch dynamic slides:", err);
+  if (slideSettingResult && slideSettingResult.value) {
+    dynamicSlides = slideSettingResult.value as unknown as Slide[];
   }
 
   return (
@@ -48,28 +51,40 @@ export default async function HomePage() {
         <TrustBadges />
 
         {/* 3. Shop by Category */}
-        <CategoryGrid categories={categories} products={allProducts} />
+        <div id="categories" className="scroll-mt-24">
+          <CategoryGrid categories={categories} products={allProducts} />
+        </div>
 
         {/* 4. Best Selling Products */}
-        <BestSellers />
+        <div id="shop" className="scroll-mt-24">
+          <BestSellers />
+        </div>
 
         {/* 5. Why Choose STAR PRESS? */}
-        <WhyChooseUs />
+        <div id="about" className="scroll-mt-24">
+          <WhyChooseUs />
+        </div>
 
         {/* 6. How It Works (5-Step Process) */}
         <HowItWorks />
 
         {/* 7. Bulk Order Section (Corporate Lead Gen CTA) */}
-        <BulkOrderBanner />
+        <div id="bulk-orders" className="scroll-mt-24">
+          <BulkOrderBanner />
+        </div>
 
         {/* 7.1 Custom Printing Promo Banner */}
-        <PromoBanner />
+        <div id="custom-printing" className="scroll-mt-24">
+          <PromoBanner />
+        </div>
 
         {/* 8. Customer Reviews & Testimonials */}
         <Testimonials />
 
         {/* 9. Standalone CTA Section (Get Started / WhatsApp) */}
-        <CTASection />
+        <div id="contact" className="scroll-mt-24">
+          <CTASection />
+        </div>
 
         {/* 9.1 Newsletter Subscription */}
         <Newsletter />

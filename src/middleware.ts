@@ -83,21 +83,39 @@ function resolveDomains(rawHost: string) {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 1. Refresh Supabase session and retrieve authenticated user
-  const { response, user } = await updateSession(req);
-  const isAuthenticated = !!user;
-  const userEmail = (user?.email || "").toLowerCase().trim();
-  const isAdmin =
-    user?.app_metadata?.role === "ADMIN" ||
-    user?.user_metadata?.role === "ADMIN" ||
-    userEmail === "admin@starpress.in" ||
-    userEmail === "starpress.print@gmail.com" ||
-    userEmail === "mrdigitalmarketerpro@gmail.com" ||
-    Boolean(userEmail.endsWith("@starpress.in"));
-
-  // 2. Extract and resolve domain details
+  // 1. Extract and resolve domain details first
   const rawHost = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
   const { host, isAdminHost, adminUrl, storeUrl } = resolveDomains(rawHost);
+
+  // 2. Determine if this route requires authentication checks
+  const isProtectedCustomerRoute = PROTECTED_CUSTOMER_ROUTES.some(r => pathname === r || pathname.startsWith(`${r}/`));
+  const isAuthRoute = CUSTOMER_AUTH_ROUTES.some(r => pathname === r || pathname.startsWith(`${r}/`));
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isPublicStoreRoute = PUBLIC_STORE_ROUTES.some(r => pathname === r || pathname.startsWith(`${r}/`));
+  
+  // We MUST check auth on the admin domain, admin routes, protected routes, and auth routes.
+  // We can skip the expensive Supabase API call on purely public storefront routes (like /, /shop)
+  const requiresAuthCheck = isAdminHost || isAdminRoute || isProtectedCustomerRoute || isAuthRoute || (!isPublicStoreRoute && pathname !== "/");
+
+  let response = NextResponse.next({ request: req });
+  let isAuthenticated = false;
+  let isAdmin = false;
+  
+  if (requiresAuthCheck) {
+    const sessionData = await updateSession(req);
+    response = sessionData.response;
+    const user = sessionData.user;
+    isAuthenticated = !!user;
+    
+    const userEmail = (user?.email || "").toLowerCase().trim();
+    isAdmin =
+      user?.app_metadata?.role === "ADMIN" ||
+      user?.user_metadata?.role === "ADMIN" ||
+      userEmail === "admin@starpress.in" ||
+      userEmail === "starpress.print@gmail.com" ||
+      userEmail === "mrdigitalmarketerpro@gmail.com" ||
+      Boolean(userEmail.endsWith("@starpress.in"));
+  }
 
   // Helper: preserve refreshed cookies and query strings across all redirects (no-cache headers to prevent browser caching)
   const createRedirect = (destination: URL | string) => {

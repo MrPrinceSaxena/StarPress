@@ -20,7 +20,14 @@ import {
   getLiveProductsByCategory,
 } from "@/server/products";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const products = await getLiveCatalogProducts();
+  return products.map((product) => ({
+    slug: product.slug,
+  }));
+}
 
 interface PageProps {
   params: {

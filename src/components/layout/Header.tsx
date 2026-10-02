@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import {
   ChevronDown,
@@ -13,17 +13,19 @@ import {
   Package,
   MapPin,
   Settings,
-  ShieldCheck,
-  ShieldAlert,
   LogOut,
   Loader2,
   CheckCircle2,
   ArrowRight,
   Sparkles,
+  Store,
+  Layers,
+  Boxes,
+  Info,
+  PhoneCall,
 } from "lucide-react";
 import { NAV_LINKS } from "@/lib/data";
 import Button from "@/components/ui/Button";
-import Badge from "@/components/ui/Badge";
 import MobileNavDrawer from "./MobileNavDrawer";
 import { useCart } from "@/context/CartContext";
 import { useAuthSession } from "@/hooks/useAuthSession";
@@ -41,8 +43,28 @@ interface MenuItem {
   highlight?: boolean;
 }
 
+const getNavIcon = (label: string) => {
+  switch (label.toLowerCase()) {
+    case "shop":
+      return Store;
+    case "categories":
+      return Layers;
+    case "custom printing":
+      return Sparkles;
+    case "bulk orders":
+      return Boxes;
+    case "about":
+      return Info;
+    case "contact":
+      return PhoneCall;
+    default:
+      return Sparkles;
+  }
+};
+
 export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { session, status, isHydrated, signOut: authSignOut } = useAuthSession();
   const { totalCount: dynamicCartCount } = useCart();
   const cartCount = propCartCount !== undefined ? propCartCount : dynamicCartCount;
@@ -51,12 +73,17 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isShopHovered, setIsShopHovered] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("");
 
-  // Profile menu state
+  const isHome = pathname === "/";
+
+  // Profile dropdown state
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Close menus on Escape key
   useEffect(() => {
@@ -72,7 +99,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Close profile dropdown on click outside
+  // Close popovers on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -83,13 +110,63 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
       ) {
         setIsProfileOpen(false);
       }
+
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setIsSearchOpen(false);
+      }
     };
 
-    if (isProfileOpen) {
+    if (isProfileOpen || isSearchOpen) {
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [isProfileOpen]);
+  }, [isProfileOpen, isSearchOpen]);
+
+  // Track scroll state and active section
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+
+      if (pathname === "/") {
+        const sectionIds = ["shop", "categories", "custom-printing", "bulk-orders", "about", "contact"];
+        const scrollPosition = window.scrollY + 180;
+        let matched = "";
+
+        for (const id of sectionIds) {
+          const el = document.getElementById(id);
+          if (el) {
+            const top = el.offsetTop;
+            const height = el.offsetHeight;
+            if (scrollPosition >= top && scrollPosition < top + height) {
+              matched = id;
+              break;
+            }
+          }
+        }
+
+        if (matched) {
+          setActiveSection(matched);
+        } else if (window.scrollY < 240) {
+          setActiveSection("");
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [pathname]);
+
+  const isLinkActive = (href: string) => {
+    if (pathname === "/") {
+      const sectionName = href.replace("/", "");
+      return activeSection === sectionName;
+    }
+    return pathname === href || pathname.startsWith(`${href}/`) || pathname.startsWith(`${href}?`);
+  };
 
   const handleMenuItemClick = (href: string) => {
     setIsProfileOpen(false);
@@ -149,9 +226,20 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-bg-base/90 backdrop-blur-md border-b border-border-subtle transition-all duration-200">
-        <div className="max-w-[1280px] mx-auto px-4 xs:px-6 lg:px-10 h-[68px] sm:h-[72px] flex items-center justify-between gap-3 sm:gap-4">
-          {/* Left: Logo */}
+      <header
+        className={`w-full z-40 transition-all duration-300 ${
+          isHome
+            ? `fixed top-0 inset-x-0 ${
+                isScrolled
+                  ? "bg-[#0A0A0F]/85 backdrop-blur-xl border-b border-border-subtle shadow-lg"
+                  : "bg-transparent border-b border-transparent"
+              }`
+            : "sticky top-0 bg-bg-base/90 backdrop-blur-md border-b border-border-subtle"
+        }`}
+      >
+        <div className="max-w-[1440px] mx-auto px-4 xs:px-6 lg:px-8 h-[68px] sm:h-[74px] flex items-center justify-between gap-3 sm:gap-4">
+          
+          {/* Far Left: StarPress Logo (Outside Pill) */}
           <Link
             href="/"
             className="flex items-center group shrink-0 focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:outline-none rounded-lg"
@@ -160,19 +248,22 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             <Image
               src="/images/Logo.png"
               alt="Star Press - The Printing Hub"
-              width={160}
-              height={50}
+              width={155}
+              height={48}
               priority
-              className="h-10 sm:h-11 w-auto object-contain group-hover:scale-[1.03] transition-transform duration-200"
+              className="h-9 sm:h-10 w-auto object-contain group-hover:scale-[1.02] transition-transform duration-200 drop-shadow-sm"
             />
           </Link>
 
-          {/* Center: Desktop Navigation */}
+          {/* Center: Exactly ONE Rounded Floating Pill containing only menu items */}
           <nav
-            className="hidden lg:flex items-center gap-1 xl:gap-2"
+            className="hidden lg:flex items-center gap-1 xl:gap-2 px-3.5 py-1.5 rounded-full bg-[#13151D]/75 backdrop-blur-xl border border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
             aria-label="Main navigation"
           >
             {NAV_LINKS.map((link) => {
+              const active = isLinkActive(link.href);
+              const Icon = getNavIcon(link.label);
+
               if (link.hasDropdown) {
                 return (
                   <div
@@ -183,21 +274,31 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   >
                     <Link
                       href={link.href}
-                      className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs xl:text-sm font-medium transition-all duration-200 ${
+                        active
+                          ? "bg-white/10 text-white font-semibold border border-white/10 shadow-sm"
+                          : "text-text-secondary hover:text-white hover:bg-white/5"
+                      }`}
                     >
+                      <Icon
+                        size={15}
+                        className={`shrink-0 transition-colors ${
+                          active ? "text-white" : "text-text-secondary"
+                        }`}
+                      />
                       <span>{link.label}</span>
                       <ChevronDown
-                        size={14}
-                        className={`text-text-secondary transition-transform duration-200 ${
-                          isShopHovered ? "rotate-180 text-brand-yellow" : ""
+                        size={13}
+                        className={`text-text-muted transition-transform duration-200 ${
+                          isShopHovered ? "rotate-180 text-white" : ""
                         }`}
                       />
                     </Link>
 
-                    {/* Shop Desktop Megamenu Popover */}
+                    {/* Shop Megamenu Popover */}
                     {isShopHovered && (
-                      <div className="absolute left-0 top-full pt-2 w-[420px] z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                        <div className="bg-bg-surface border border-border-subtle rounded-2xl p-4 shadow-2xl space-y-3">
+                      <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 w-[420px] z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="bg-[#13151D]/95 backdrop-blur-2xl border border-border-subtle rounded-2xl p-4 shadow-2xl space-y-3">
                           <div className="flex items-center justify-between px-2 pb-2 border-b border-border-subtle">
                             <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
                               Popular Categories
@@ -256,30 +357,40 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs xl:text-sm font-medium transition-all duration-200 ${
+                    active
+                      ? "bg-white/10 text-white font-semibold border border-white/10 shadow-sm"
+                      : "text-text-secondary hover:text-white hover:bg-white/5"
+                  }`}
                 >
+                  <Icon
+                    size={15}
+                    className={`shrink-0 transition-colors ${
+                      active ? "text-white" : "text-text-secondary"
+                    }`}
+                  />
                   <span>{link.label}</span>
                 </Link>
               );
             })}
           </nav>
 
-          {/* Right: Actions */}
+          {/* Far Right: Search, Cart, Profile/Auth, Get a Quote (Outside Pill) */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Search Icon Button */}
-            <div className="relative">
+            <div className="relative" ref={searchContainerRef}>
               <button
                 type="button"
                 onClick={() => setIsSearchOpen((prev) => !prev)}
                 aria-label="Search products"
-                className="p-2.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="p-2 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
               >
                 <Search size={19} />
               </button>
 
               {/* Quick Search Popover */}
               {isSearchOpen && (
-                <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-bg-surface border border-border-subtle rounded-xl p-3 shadow-2xl z-50">
+                <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-bg-surface border border-border-subtle rounded-xl p-3 shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -313,29 +424,24 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             <Link
               href="/cart"
               aria-label={`Cart with ${cartCount} items`}
-              className="relative p-2.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow"
+              className="relative p-2 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
             >
               <ShoppingBag size={20} />
               {cartCount > 0 && (
-                <Badge
-                  variant="notification"
-                  className="absolute top-1.5 right-1.5 transform translate-x-1 -translate-y-1 bg-brand-magenta text-white font-black text-[10px] min-w-[16px] h-[16px] flex items-center justify-center shadow-md"
-                >
+                <span className="absolute -top-0.5 -right-0.5 bg-brand-magenta text-white font-black text-[10px] min-w-[17px] h-[17px] rounded-full flex items-center justify-center shadow-md animate-in zoom-in">
                   {cartCount}
-                </Badge>
+                </span>
               )}
             </Link>
 
-            {/* ── Advanced User Profile / Auth Dropdown ── */}
+            {/* User Profile / Auth Button */}
             <div className="relative">
               {!isHydrated || status === "loading" ? (
-                // Hydration / Loading Placeholder
                 <div
                   className="w-9 h-9 rounded-full bg-white/5 border border-border-subtle animate-pulse"
                   aria-hidden="true"
                 />
               ) : status === "authenticated" && session?.user ? (
-                // Authenticated Profile Button
                 <button
                   ref={profileTriggerRef}
                   type="button"
@@ -343,23 +449,16 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   aria-label={`User menu for ${session.user.name || session.user.email}`}
                   aria-haspopup="menu"
                   aria-expanded={isProfileOpen}
-                  className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1.5 rounded-full hover:bg-white/5 border border-transparent hover:border-border-subtle transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
+                  className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-full hover:bg-white/5 border border-transparent hover:border-border-subtle transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
                 >
-                  {/* User Avatar Circle */}
                   <div className="relative">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all shadow-sm bg-brand-yellow text-black"
-                    >
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all shadow-sm bg-brand-yellow text-black">
                       {getUserInitial()}
                     </div>
-                    {/* Status indicator dot */}
-                    <span
-                      className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-bg-base bg-emerald-400"
-                    />
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-bg-base bg-emerald-400" />
                   </div>
 
-                  {/* Name on large screens */}
-                  <span className="hidden xl:inline-block text-xs font-semibold text-white max-w-[90px] truncate">
+                  <span className="hidden xl:inline-block text-xs font-semibold text-white max-w-[85px] truncate">
                     {session.user.name?.split(" ")[0] || "Account"}
                   </span>
 
@@ -371,7 +470,6 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   />
                 </button>
               ) : (
-                // Unauthenticated / Guest Trigger Button
                 <button
                   ref={profileTriggerRef}
                   type="button"
@@ -379,7 +477,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   aria-label="Sign In or Register"
                   aria-haspopup="menu"
                   aria-expanded={isProfileOpen}
-                  className="flex items-center gap-1.5 p-2 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow"
+                  className="flex items-center gap-1 p-2 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] justify-center"
                 >
                   <User size={20} />
                   <ChevronDown
@@ -391,7 +489,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 </button>
               )}
 
-              {/* ── Dropdown Menu Popover ── */}
+              {/* Profile Dropdown Menu Popover */}
               {isProfileOpen && (
                 <div
                   ref={profileDropdownRef}
@@ -400,14 +498,11 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   className="absolute right-0 top-full mt-2 w-80 sm:w-84 bg-bg-surface border border-border-subtle rounded-2xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150 overflow-hidden"
                 >
                   {status === "authenticated" && session?.user ? (
-                    // ── Authenticated Dropdown Body ──
                     <div>
                       {/* Identity Header */}
                       <div className="p-4 bg-gradient-to-r from-white/[0.04] to-white/[0.01] border-b border-border-subtle">
                         <div className="flex items-start gap-3">
-                          <div
-                            className="w-11 h-11 rounded-2xl flex items-center justify-center font-display font-black text-base shrink-0 shadow-md bg-brand-yellow text-black border border-yellow-300"
-                          >
+                          <div className="w-10 h-10 rounded-2xl flex items-center justify-center font-display font-black text-sm shrink-0 shadow-md bg-brand-yellow text-black border border-yellow-300">
                             {getUserInitial()}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -417,7 +512,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                             <p className="text-xs text-text-muted truncate mt-0.5">
                               {session.user.email}
                             </p>
-                            <div className="mt-2 flex items-center gap-2">
+                            <div className="mt-1.5 flex items-center gap-2">
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/30">
                                 <CheckCircle2 size={11} />
                                 <span>Verified Customer</span>
@@ -471,7 +566,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                           onClick={handleSignOut}
                           disabled={isSigningOut}
                           role="menuitem"
-                          className="w-full px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                          className="w-full px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                           {isSigningOut ? (
                             <>
@@ -488,23 +583,22 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                       </div>
                     </div>
                   ) : (
-                    // ── Unauthenticated / Guest Dropdown Body ──
                     <div>
                       {/* Guest Greeting */}
-                      <div className="p-5 bg-gradient-to-br from-brand-yellow/[0.08] via-transparent to-brand-cyan/[0.05] border-b border-border-subtle text-center">
-                        <div className="w-10 h-10 rounded-full bg-brand-yellow/15 border border-brand-yellow/30 flex items-center justify-center mx-auto mb-2 text-brand-yellow">
-                          <Sparkles size={18} />
+                      <div className="p-4 bg-gradient-to-br from-brand-yellow/[0.08] via-transparent to-brand-cyan/[0.05] border-b border-border-subtle text-center">
+                        <div className="w-9 h-9 rounded-full bg-brand-yellow/15 border border-brand-yellow/30 flex items-center justify-center mx-auto mb-2 text-brand-yellow">
+                          <Sparkles size={16} />
                         </div>
                         <h3 className="font-display font-bold text-sm text-white mb-1">
                           Welcome to Star Press
                         </h3>
                         <p className="text-xs text-text-muted leading-relaxed">
-                          Sign in to manage active print orders, saved designs, and express checkout.
+                          Sign in to manage print orders, saved designs, and express checkout.
                         </p>
                       </div>
 
                       {/* Guest CTAs */}
-                      <div className="p-4 space-y-2.5">
+                      <div className="p-3.5 space-y-2">
                         <Link
                           href="/login"
                           onClick={() => setIsProfileOpen(false)}
@@ -519,14 +613,14 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                           href="/register"
                           onClick={() => setIsProfileOpen(false)}
                           role="menuitem"
-                          className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 border border-border-subtle text-white font-semibold text-xs rounded-full flex items-center justify-center transition-colors text-center"
+                          className="w-full py-2 px-4 bg-white/5 hover:bg-white/10 border border-border-subtle text-white font-semibold text-xs rounded-full flex items-center justify-center transition-colors text-center"
                         >
                           Create New Account
                         </Link>
                       </div>
 
                       {/* Guest Order Tracking Helper */}
-                      <div className="p-3 bg-white/[0.02] border-t border-border-subtle">
+                      <div className="p-2.5 bg-white/[0.02] border-t border-border-subtle">
                         <Link
                           href="/account?tab=orders"
                           onClick={() => setIsProfileOpen(false)}
@@ -543,25 +637,24 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               )}
             </div>
 
-            {/* "Get a Quote" Button (Desktop) */}
+            {/* "Get a Quote" Pill Button (Desktop) */}
             <div className="hidden sm:block">
-              <Button
-                variant="primary"
-                size="md"
+              <Link
                 href="/custom-printing"
-                className="!px-5 !py-2.5 !text-sm font-semibold !bg-brand-yellow !text-black hover:!bg-[#FFE04D]"
+                className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 text-xs sm:text-sm font-bold rounded-full bg-brand-yellow text-black hover:bg-[#FFE04D] transition-all duration-200 shadow-glow-yellow hover:scale-[1.02] active:scale-[0.98]"
               >
-                Get a Quote
-              </Button>
+                <Sparkles size={14} className="text-black" />
+                <span>Get a Quote</span>
+              </Link>
             </div>
 
-            {/* Mobile Hamburger Toggle */}
+            {/* Mobile Hamburger Menu Toggle */}
             <button
               type="button"
               onClick={() => setIsMobileOpen(true)}
               aria-label="Open navigation menu"
               aria-expanded={isMobileOpen}
-              className="lg:hidden p-2.5 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="lg:hidden p-2 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
             >
               <Menu size={22} />
             </button>

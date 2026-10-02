@@ -1056,7 +1056,9 @@ export async function bulkUpdateProductStatus(ids: string[], status: string) {
  * Return live, dynamic catalog products merging baseline catalog with admin overrides and custom products.
  * Used by storefront (/shop, /shop/[slug], categories) so any price/image/name changes update everywhere in real-time.
  */
-export async function getLiveCatalogProducts(): Promise<CatalogProduct[]> {
+import { cache } from "react";
+
+export const getLiveCatalogProducts = cache(async function getLiveCatalogProducts(): Promise<CatalogProduct[]> {
   const base = getAllProducts();
   
   let dbProducts: any[] = [];
@@ -1226,7 +1228,7 @@ export async function getLiveCatalogProducts(): Promise<CatalogProduct[]> {
     });
 
   return [...customFromDb, ...customCatalog, ...mergedBase];
-}
+});
 
 /**
  * Return live, dynamic product by slug with real-time price & image overrides applied.
