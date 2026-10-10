@@ -299,11 +299,12 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
   {
     title: "Help & Policies",
     links: [
+      { label: "Cancellation & Refund Policy", href: "/cancellation-refund" },
+      { label: "Shipping & Delivery Policy", href: "/shipping-policy" },
+      { label: "Terms & Conditions", href: "/terms" },
+      { label: "Privacy Policy", href: "/privacy" },
       { label: "Frequently Asked Questions", href: "/faq" },
       { label: "Artwork & Bleed Guidelines", href: "/faq#artwork" },
-      { label: "Shipping & Turnaround", href: "/faq#shipping" },
-      { label: "100% Reprint Guarantee", href: "/terms#guarantee" },
-      { label: "Privacy Policy", href: "/privacy" },
     ],
   },
 ];

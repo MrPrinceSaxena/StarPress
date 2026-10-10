@@ -112,13 +112,21 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-border-subtle pt-6 mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-muted">
           <p>© 2025 Star Press. All rights reserved.</p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
             <Link href="/privacy" className="hover:text-text-secondary transition-colors">
-              Privacy
+              Privacy Policy
             </Link>
             <span>·</span>
             <Link href="/terms" className="hover:text-text-secondary transition-colors">
               Terms
+            </Link>
+            <span>·</span>
+            <Link href="/cancellation-refund" className="hover:text-text-secondary transition-colors">
+              Refund Policy
+            </Link>
+            <span>·</span>
+            <Link href="/shipping-policy" className="hover:text-text-secondary transition-colors">
+              Shipping Policy
             </Link>
             <span>·</span>
             <Link href="/sitemap.xml" className="hover:text-text-secondary transition-colors">
