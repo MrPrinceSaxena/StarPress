@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 // =============================================================================
 // ImageUploader — Drag-and-Drop Image Upload Component for Admin Panel

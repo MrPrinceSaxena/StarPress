@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   FolderPlus, Search, Edit3, Trash2, ExternalLink,
   Layers, Package, X, Check, Loader2, ArrowUpDown,
@@ -417,9 +418,12 @@ export default function CategoriesPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg bg-white/[0.04] border border-border-subtle overflow-hidden shrink-0 flex items-center justify-center">
                           {cat.imageUrl ? (
-                            <img
+                            <Image
                               src={cat.imageUrl}
                               alt={cat.name}
+                              width={48}
+                              height={48}
+                              unoptimized
                               className="w-full h-full object-cover"
                             />
                           ) : (

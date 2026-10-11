@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Printer, Truck, CheckCircle2, Clock,
@@ -382,7 +383,14 @@ export default function OrderDetailPage() {
                 <div key={it.id} className="py-4 flex items-start gap-4">
                   <div className="w-16 h-16 rounded-lg bg-white/[0.04] border border-border-subtle overflow-hidden shrink-0 flex items-center justify-center">
                     {it.image ? (
-                      <img src={it.image} alt={it.productName} className="w-full h-full object-cover" />
+                      <Image
+                        src={it.image}
+                        alt={it.productName}
+                        width={64}
+                        height={64}
+                        unoptimized
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <Package size={24} className="text-text-muted/40" />
                     )}
