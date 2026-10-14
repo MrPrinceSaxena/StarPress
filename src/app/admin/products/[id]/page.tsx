@@ -12,6 +12,7 @@ import { showToast } from '@/components/admin/ui/Toast';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
 import ConfirmDialog from '@/components/admin/ui/ConfirmDialog';
 import ImageUploader from '@/components/admin/ui/ImageUploader';
+import InputGroup from '@/components/admin/ui/InputGroup';
 import type { UploadedImage } from '@/components/admin/ui/ImageUploader';
 import { productService, categoryService } from '@/lib/admin/services';
 import type { AdminProduct, AdminCategory, AdminProductImage, AdminVariantOption } from '@/lib/admin/types';
@@ -183,14 +184,6 @@ export default function ProductDetailPage({ params }: { params?: { id?: string }
 
   const inputClass = "w-full h-10 px-3.5 rounded-xl bg-white border border-[#E5E7EB] text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] transition-all shadow-2xs";
   const textareaClass = "w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E5E7EB] text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] transition-all shadow-2xs resize-none";
-
-  const InputGroup = ({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) => (
-    <div className="space-y-1.5">
-      <label className="text-xs font-semibold text-slate-700">{label}</label>
-      {children}
-      {hint && <p className="text-[11px] text-slate-500">{hint}</p>}
-    </div>
-  );
 
   if (loading) {
     return (
