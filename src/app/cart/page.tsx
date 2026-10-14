@@ -33,12 +33,15 @@ export default function CartPage() {
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{
     code: string;
-    discountPercent: number;
+    type: string;
+    value: number;
+    discountAmount: number;
   } | null>(null);
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState("");
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
     setPromoError("");
     setPromoSuccess("");
@@ -46,18 +49,30 @@ export default function CartPage() {
     const code = promoCode.trim().toUpperCase();
     if (!code) return;
 
-    if (code === "STAR10") {
-      setAppliedPromo({ code: "STAR10", discountPercent: 10 });
-      setPromoSuccess("10% discount applied successfully!");
-    } else if (code === "PRESS20") {
-      if (subtotal >= 1500) {
-        setAppliedPromo({ code: "PRESS20", discountPercent: 20 });
-        setPromoSuccess("20% bulk order discount applied!");
+    setIsApplyingPromo(true);
+    try {
+      const res = await fetch("/api/discounts/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, cartSubtotal: subtotal }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        setPromoError(data.error || "Invalid coupon code.");
+        setAppliedPromo(null);
       } else {
-        setPromoError("Code PRESS20 requires a minimum order of ₹1,500");
+        setAppliedPromo({
+          code: data.code,
+          type: data.type,
+          value: data.value,
+          discountAmount: data.discountAmount,
+        });
+        setPromoSuccess(data.message || `Coupon "${data.code}" applied!`);
       }
-    } else {
-      setPromoError("Invalid discount code. Try STAR10 for 10% off.");
+    } catch {
+      setPromoError("Failed to validate coupon code. Please try again.");
+    } finally {
+      setIsApplyingPromo(false);
     }
   };
 
@@ -68,9 +83,11 @@ export default function CartPage() {
     setPromoError("");
   };
 
-  // Calculations
+  // Dynamic calculations supporting percentage and fixed discounts
   const discountAmount = appliedPromo
-    ? Math.round((subtotal * appliedPromo.discountPercent) / 100)
+    ? appliedPromo.type === "percentage"
+      ? Math.round((subtotal * appliedPromo.value) / 100)
+      : Math.min(appliedPromo.value, subtotal)
     : 0;
   const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   const isFreeShipping = discountedSubtotal >= FREE_SHIPPING_THRESHOLD;
@@ -337,8 +354,11 @@ export default function CartPage() {
                         <div className="flex items-center gap-2">
                           <CheckCircle2 size={15} />
                           <span>
-                            Code <strong>{appliedPromo.code}</strong> active (-
-                            {appliedPromo.discountPercent}%)
+                            Code <strong>{appliedPromo.code}</strong> applied (
+                            {appliedPromo.type === "percentage"
+                              ? `-${appliedPromo.value}%`
+                              : `-₹${appliedPromo.value}`}
+                            )
                           </span>
                         </div>
                         <button
@@ -368,8 +388,8 @@ export default function CartPage() {
                             className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle pl-9 pr-3 py-2.5 text-xs text-white uppercase placeholder-text-muted focus:outline-none focus:border-brand-yellow font-mono"
                           />
                         </div>
-                        <Button type="submit" variant="secondary" size="sm">
-                          Apply
+                        <Button type="submit" variant="secondary" size="sm" disabled={isApplyingPromo}>
+                          {isApplyingPromo ? "Checking..." : "Apply"}
                         </Button>
                       </div>
                     )}
@@ -443,21 +463,30 @@ export default function CartPage() {
                 </div>
 
                 {/* Checkout CTA Button */}
-                {isHydrated && status === "authenticated" ? (
-                  <Link href="/checkout" className="block w-full">
-                    <Button variant="primary" size="lg" className="w-full justify-center">
-                      <span>Proceed to Checkout</span>
-                      <ArrowRight size={18} />
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link href="/login?callbackUrl=/checkout" className="block w-full">
-                    <Button variant="secondary" size="lg" className="w-full justify-center text-brand-yellow border-brand-yellow">
-                      <span>Sign In to Checkout</span>
-                      <ArrowRight size={18} />
-                    </Button>
-                  </Link>
-                )}
+                {(() => {
+                  const targetCheckoutUrl = appliedPromo
+                    ? `/checkout?coupon=${encodeURIComponent(appliedPromo.code)}`
+                    : "/checkout";
+                  const targetLoginUrl = appliedPromo
+                    ? `/login?callbackUrl=${encodeURIComponent(targetCheckoutUrl)}`
+                    : "/login?callbackUrl=/checkout";
+
+                  return isHydrated && status === "authenticated" ? (
+                    <Link href={targetCheckoutUrl} className="block w-full">
+                      <Button variant="primary" size="lg" className="w-full justify-center">
+                        <span>Proceed to Checkout</span>
+                        <ArrowRight size={18} />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href={targetLoginUrl} className="block w-full">
+                      <Button variant="secondary" size="lg" className="w-full justify-center text-brand-yellow border-brand-yellow">
+                        <span>Sign In to Checkout</span>
+                        <ArrowRight size={18} />
+                      </Button>
+                    </Link>
+                  );
+                })()}
 
                 {/* Trust Guarantees */}
                 <div className="pt-3 border-t border-border-subtle space-y-2.5 text-xs text-text-secondary">

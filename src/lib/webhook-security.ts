@@ -16,5 +16,14 @@ const RAZORPAY_WEBHOOK_IPS = [
 export function isAllowedWebhookSource(ip: string): boolean {
   if (process.env.NODE_ENV !== "production") return true; // Skip in dev/test
   if (!ip) return false;
-  return RAZORPAY_WEBHOOK_IPS.includes(ip.trim());
+
+  const trimmedIp = ip.trim();
+
+  // Allow dynamic addition via RAZORPAY_WEBHOOK_IPS env var (comma-separated)
+  const envIps = process.env.RAZORPAY_WEBHOOK_IPS
+    ? process.env.RAZORPAY_WEBHOOK_IPS.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const allAllowed = [...RAZORPAY_WEBHOOK_IPS, ...envIps];
+  return allAllowed.includes(trimmedIp);
 }

@@ -129,6 +129,16 @@ export default function CheckoutPage() {
     }
   }, []);
 
+  // Auto-populate coupon code from URL if passed from cart or campaign link
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlCoupon = new URLSearchParams(window.location.search).get("coupon");
+      if (urlCoupon && urlCoupon.trim()) {
+        setFormData((prev) => ({ ...prev, couponCode: urlCoupon.trim().toUpperCase() }));
+      }
+    }
+  }, []);
+
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -644,6 +654,14 @@ export default function CheckoutPage() {
                 <span>Verify Pre-Press Proof on WhatsApp</span>
                 <Sparkles size={16} />
               </a>
+
+              <Link
+                href={`/account/orders/${confirmedOrder.id}/invoice`}
+                className="inline-flex items-center justify-center gap-2 w-full max-w-md py-3 px-6 rounded-xl font-bold text-xs bg-white/5 hover:bg-white/10 border border-white/15 text-white transition-all shadow-sm"
+              >
+                <FileCheck size={15} className="text-brand-yellow" />
+                <span>Download / Print GST Tax Invoice</span>
+              </Link>
 
               <div className="flex items-center justify-center gap-4 pt-2">
                 <Link

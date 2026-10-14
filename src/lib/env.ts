@@ -75,13 +75,41 @@ if (!parsed.success) {
   console.warn("⚠️ Environment variables validation notice:", parsed.error.format());
 }
 
+const isProduction =
+  process.env.NODE_ENV === "production" ||
+  process.env.VERCEL_ENV === "production";
+
+// Fail closed in production if critical secrets are missing or using insecure dev placeholders
+if (isProduction) {
+  const nextAuthSecret = process.env.NEXTAUTH_SECRET || (parsed.success ? parsed.data.NEXTAUTH_SECRET : "");
+  if (!nextAuthSecret || nextAuthSecret === "development-secret-key-32-chars-min") {
+    console.error("🚨 [CRITICAL SECURITY ERROR] NEXTAUTH_SECRET is unset or using default development key in production.");
+    if (process.env.BUILD_PHASE !== "true" && !process.env.NEXT_PHASE?.includes("build")) {
+      throw new Error("Security Misconfiguration: Secure NEXTAUTH_SECRET must be configured in production.");
+    }
+  }
+
+  const databaseUrl = process.env.DATABASE_URL || (parsed.success ? parsed.data.DATABASE_URL : "");
+  if (!databaseUrl && process.env.BUILD_PHASE !== "true" && !process.env.NEXT_PHASE?.includes("build")) {
+    console.error("🚨 [CRITICAL SECURITY ERROR] DATABASE_URL is unset in production.");
+  }
+}
+
 export const env = parsed.success
-  ? parsed.data
+  ? {
+      ...parsed.data,
+      NEXTAUTH_SECRET:
+        isProduction && parsed.data.NEXTAUTH_SECRET === "development-secret-key-32-chars-min"
+          ? ""
+          : parsed.data.NEXTAUTH_SECRET,
+    }
   : {
       NODE_ENV: (process.env.NODE_ENV as "development" | "test" | "production") || "development",
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
       DATABASE_URL: process.env.DATABASE_URL || "",
-      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || "development-secret-key-32-chars-min",
+      NEXTAUTH_SECRET: isProduction
+        ? (process.env.NEXTAUTH_SECRET || "")
+        : (process.env.NEXTAUTH_SECRET || "development-secret-key-32-chars-min"),
       NEXTAUTH_URL:
         sanitizeUrl(process.env.NEXTAUTH_URL) ||
         (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"),

@@ -36,6 +36,7 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://starpress.in").replace(/\/$/, "");
   const product = await getLiveProductBySlug(params.slug);
   if (!product) {
     const cat = getCategoryRedirect(params.slug);
@@ -53,12 +54,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${product.name} — Custom Printing & Pricing`,
     description: `${product.shortDescription} Manufactured at Star Press Khatima, Uttarakhand with quick doorstep delivery.`,
     alternates: {
-      canonical: `https://www.starpress.in/shop/${product.slug}`,
+      canonical: `${baseUrl}/shop/${product.slug}`,
     },
     openGraph: {
       title: `${product.name} | Star Press Khatima`,
       description: product.shortDescription,
-      url: `https://www.starpress.in/shop/${product.slug}`,
+      url: `${baseUrl}/shop/${product.slug}`,
       images: [
         {
           url: product.images[0] || "/images/hero-composition.jpg",
@@ -72,6 +73,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://starpress.in").replace(/\/$/, "");
+
   // If the user entered a category slug in /shop/[slug], redirect to the category filter
   const categoryRedirect = getCategoryRedirect(params.slug);
   if (categoryRedirect) {
@@ -89,8 +92,85 @@ export default async function ProductDetailPage({ params }: PageProps) {
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
 
+  // Structured Data (JSON-LD) for Google Rich Results
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.shortDescription,
+    image: product.images.length > 0 ? product.images : [`${baseUrl}/images/hero-composition.jpg`],
+    sku: product.id,
+    brand: {
+      "@type": "Brand",
+      name: "Star Press",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `${baseUrl}/shop/${product.slug}`,
+      priceCurrency: "INR",
+      price: product.basePrice,
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "Organization",
+        name: "Star Press",
+      },
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: product.rating || 5,
+      reviewCount: product.reviewCount || 1,
+      bestRating: 5,
+      worstRating: 1,
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: baseUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Shop",
+        item: `${baseUrl}/shop`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.categoryName,
+        item: `${baseUrl}/shop?category=${product.categorySlug}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: product.name,
+        item: `${baseUrl}/shop/${product.slug}`,
+      },
+    ],
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">
+      {/* Google Rich Snippets JSON-LD Scripts */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+
       <Header />
 
       <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 lg:px-10 py-8 md:py-12">

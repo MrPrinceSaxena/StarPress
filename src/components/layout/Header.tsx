@@ -18,11 +18,6 @@ import {
   CheckCircle2,
   ArrowRight,
   Sparkles,
-  Store,
-  Layers,
-  Boxes,
-  Info,
-  PhoneCall,
 } from "lucide-react";
 import { NAV_LINKS } from "@/lib/data";
 import Button from "@/components/ui/Button";
@@ -42,25 +37,6 @@ interface MenuItem {
   divider?: boolean;
   highlight?: boolean;
 }
-
-const getNavIcon = (label: string) => {
-  switch (label.toLowerCase()) {
-    case "shop":
-      return Store;
-    case "categories":
-      return Layers;
-    case "custom printing":
-      return Sparkles;
-    case "bulk orders":
-      return Boxes;
-    case "about":
-      return Info;
-    case "contact":
-      return PhoneCall;
-    default:
-      return Sparkles;
-  }
-};
 
 export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const router = useRouter();
@@ -237,7 +213,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             : "sticky top-0 bg-bg-base/90 backdrop-blur-md border-b border-border-subtle"
         }`}
       >
-        <div className="max-w-[1440px] mx-auto px-4 xs:px-6 lg:px-8 h-[68px] sm:h-[74px] flex items-center justify-between gap-3 sm:gap-4">
+        <div className="max-w-[1440px] mx-auto px-4 xs:px-6 lg:px-8 h-16 sm:h-[68px] flex items-center justify-between gap-3 sm:gap-4">
           
           {/* Far Left: StarPress Logo (Outside Pill) */}
           <Link
@@ -248,21 +224,20 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             <Image
               src="/images/Logo.png"
               alt="Star Press - The Printing Hub"
-              width={155}
-              height={48}
+              width={140}
+              height={42}
               priority
-              className="h-9 sm:h-10 w-auto object-contain group-hover:scale-[1.02] transition-transform duration-200 drop-shadow-sm"
+              className="h-8 sm:h-9 w-auto object-contain group-hover:scale-[1.02] transition-transform duration-200 drop-shadow-sm"
             />
           </Link>
 
-          {/* Center: Exactly ONE Rounded Floating Pill containing only menu items */}
+          {/* Center: Sleek Minimal Floating Nav Pill */}
           <nav
-            className="hidden lg:flex items-center gap-1 xl:gap-2 px-3.5 py-1.5 rounded-full bg-[#13151D]/75 backdrop-blur-xl border border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+            className="hidden lg:flex items-center gap-0.5 xl:gap-1 px-2.5 py-1 rounded-full bg-[#12131A]/85 backdrop-blur-xl border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.35)]"
             aria-label="Main navigation"
           >
             {NAV_LINKS.map((link) => {
               const active = isLinkActive(link.href);
-              const Icon = getNavIcon(link.label);
 
               if (link.hasDropdown) {
                 return (
@@ -274,21 +249,15 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   >
                     <Link
                       href={link.href}
-                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs xl:text-sm font-medium transition-all duration-200 ${
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs xl:text-[13px] font-medium whitespace-nowrap shrink-0 transition-all duration-200 ${
                         active
                           ? "bg-white/10 text-white font-semibold border border-white/10 shadow-sm"
                           : "text-text-secondary hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      <Icon
-                        size={15}
-                        className={`shrink-0 transition-colors ${
-                          active ? "text-white" : "text-text-secondary"
-                        }`}
-                      />
                       <span>{link.label}</span>
                       <ChevronDown
-                        size={13}
+                        size={12}
                         className={`text-text-muted transition-transform duration-200 ${
                           isShopHovered ? "rotate-180 text-white" : ""
                         }`}
@@ -297,7 +266,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
 
                     {/* Shop Megamenu Popover */}
                     {isShopHovered && (
-                      <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 w-[420px] z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2.5 w-[420px] z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                         <div className="bg-[#13151D]/95 backdrop-blur-2xl border border-border-subtle rounded-2xl p-4 shadow-2xl space-y-3">
                           <div className="flex items-center justify-between px-2 pb-2 border-b border-border-subtle">
                             <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
@@ -357,18 +326,12 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs xl:text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center px-3 py-1.5 rounded-full text-xs xl:text-[13px] font-medium whitespace-nowrap shrink-0 transition-all duration-200 ${
                     active
                       ? "bg-white/10 text-white font-semibold border border-white/10 shadow-sm"
                       : "text-text-secondary hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Icon
-                    size={15}
-                    className={`shrink-0 transition-colors ${
-                      active ? "text-white" : "text-text-secondary"
-                    }`}
-                  />
                   <span>{link.label}</span>
                 </Link>
               );
@@ -641,9 +604,9 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             <div className="hidden sm:block">
               <Link
                 href="/custom-printing"
-                className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 text-xs sm:text-sm font-bold rounded-full bg-brand-yellow text-black hover:bg-[#FFE04D] transition-all duration-200 shadow-glow-yellow hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-full bg-brand-yellow text-black hover:bg-[#FFE04D] transition-all duration-200 shadow-glow-yellow hover:scale-[1.02] active:scale-[0.98]"
               >
-                <Sparkles size={14} className="text-black" />
+                <Sparkles size={13} className="text-black" />
                 <span>Get a Quote</span>
               </Link>
             </div>

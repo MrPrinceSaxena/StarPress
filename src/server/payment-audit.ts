@@ -25,7 +25,8 @@ export type PaymentAuditAction =
   | "MOCK_PAYMENT_BLOCKED"
   | "WEBHOOK_REFUND_SKIPPED"
   | "EXCESSIVE_REFUND_BLOCKED"
-  | "LATE_PAYMENT_REFUND_FLAGGED";
+  | "LATE_PAYMENT_REFUND_FLAGGED"
+  | "RECOVERY_NUDGE_SENT";
 
 export async function auditPaymentEvent(params: {
   orderId?: string;

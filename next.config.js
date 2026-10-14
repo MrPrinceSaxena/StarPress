@@ -66,6 +66,8 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               "object-src 'none'",
               "base-uri 'self'",
+              "form-action 'self'",
+              "upgrade-insecure-requests",
             ].join("; "),
           },
           {
@@ -90,11 +92,15 @@ const nextConfig = {
           },
           {
             key: "Referrer-Policy",
-            value: "origin-when-cross-origin",
+            value: "strict-origin-when-cross-origin",
           },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            value: "camera=(), microphone=(), geolocation=(), payment=(self)",
+          },
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
           },
         ],
       },

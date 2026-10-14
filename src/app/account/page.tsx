@@ -19,6 +19,7 @@ import {
   Lock,
   Loader2,
   CreditCard,
+  FileText,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -455,26 +456,37 @@ function AccountContent() {
                       ))}
                     </div>
 
-                    {/* Courier Tracking info if available */}
-                    {ord.trackingNumber && (
-                      <div className="pt-3 border-t border-border-subtle/80 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2 text-sky-400 font-medium">
-                          <Truck size={14} />
-                          <span>
-                            {ord.courierPartner || "Courier"} AWB: <strong className="font-mono">{ord.trackingNumber}</strong>
-                          </span>
-                        </div>
+                    {/* Order Actions: Tax Invoice & Courier Tracking */}
+                    <div className="pt-3 border-t border-border-subtle/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      {ord.paymentStatus === "PAID" ? (
+                        <Link
+                          href={`/account/orders/${ord.id}/invoice`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-brand-yellow hover:text-[#FFE04D] text-xs font-semibold transition-all shadow-sm"
+                        >
+                          <FileText size={13} />
+                          <span>View / Print GST Invoice</span>
+                        </Link>
+                      ) : (
+                        <span className="text-[11px] text-text-muted">
+                          Official invoice issued once payment is confirmed.
+                        </span>
+                      )}
+
+                      {ord.trackingNumber && (
                         <a
                           href={`https://www.shiprocket.in/shipment-tracking/?awb=${ord.trackingNumber}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[11px] text-brand-yellow hover:underline flex items-center gap-1"
+                          className="text-[11px] text-sky-400 hover:underline flex items-center gap-1"
                         >
-                          <span>Live Tracking</span>
+                          <Truck size={13} />
+                          <span>
+                            {ord.courierPartner || "Courier"} Tracking ({ord.trackingNumber})
+                          </span>
                           <ExternalLink size={12} />
                         </a>
-                      </div>
-                    )}
+                      )}
+                    </div>
 
                     {/* Payment Recovery Action for Unpaid Orders */}
                     {ord.paymentStatus !== "PAID" && ord.status !== "CANCELLED" && (

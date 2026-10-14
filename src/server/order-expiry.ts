@@ -97,3 +97,92 @@ export async function expireStaleOrders(client: typeof db = db): Promise<{
     orderNumbers: expiredOrderNumbers,
   };
 }
+
+/**
+ * Scans for recently abandoned orders (20+ mins old, UNPAID, not yet expired/cancelled)
+ * and sends an automated 1-click recovery email to recover abandoned sales.
+ */
+export async function recoverAbandonedCheckouts(client: typeof db = db): Promise<{
+  scanned: number;
+  recoveredSent: number;
+  orderNumbers: string[];
+}> {
+  const twentyMinsAgo = new Date(Date.now() - 20 * 60 * 1000);
+  const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+
+  const candidateOrders = await client.order.findMany({
+    where: {
+      status: OrderStatus.PENDING,
+      paymentStatus: "UNPAID",
+      createdAt: {
+        lte: twentyMinsAgo,
+        gte: twelveHoursAgo,
+      },
+      NOT: {
+        notes: {
+          contains: "[RECOVERY_EMAIL_SENT]",
+        },
+      },
+    },
+    include: {
+      items: true,
+      user: { select: { name: true, email: true } },
+    },
+    take: 50,
+  });
+
+  const sentOrderNumbers: string[] = [];
+
+  for (const order of candidateOrders) {
+    try {
+      const recipientEmail = order.guestEmail || order.user?.email;
+      const recipientName = order.guestName || order.user?.name || "Customer";
+
+      if (!recipientEmail) continue;
+
+      const { sendAbandonedCheckoutRecoveryEmail } = await import("@/server/email");
+      const sent = await sendAbandonedCheckoutRecoveryEmail({
+        orderNumber: order.orderNumber,
+        orderId: order.id,
+        customerName: recipientName,
+        customerEmail: recipientEmail,
+        totalAmount: Number(order.totalAmount),
+        items: order.items.map((it) => ({
+          name: it.productName,
+          quantity: it.quantity,
+        })),
+      });
+
+      if (sent) {
+        const noteStamp = `[RECOVERY_EMAIL_SENT: ${new Date().toISOString()}]`;
+        await client.order.update({
+          where: { id: order.id },
+          data: {
+            notes: order.notes ? `${order.notes} ${noteStamp}` : noteStamp,
+          },
+        });
+
+        await auditPaymentEvent({
+          orderId: order.id,
+          action: "RECOVERY_NUDGE_SENT",
+          actor: "SYSTEM:CRON",
+          details: {
+            orderNumber: order.orderNumber,
+            recipientEmail,
+            totalAmount: Number(order.totalAmount),
+          },
+        });
+
+        sentOrderNumbers.push(order.orderNumber);
+      }
+    } catch (err) {
+      console.error(`[Abandoned Checkout Recovery] Error processing order #${order.orderNumber}:`, err);
+    }
+  }
+
+  return {
+    scanned: candidateOrders.length,
+    recoveredSent: sentOrderNumbers.length,
+    orderNumbers: sentOrderNumbers,
+  };
+}

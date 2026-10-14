@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import { getAllCategories, getAllProducts } from "@/lib/catalog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://www.starpress.in";
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://starpress.in").replace(/\/$/, "");
   const now = new Date();
 
   // Core static pages

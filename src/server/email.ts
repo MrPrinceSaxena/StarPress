@@ -9,11 +9,11 @@ import { env } from "@/lib/env";
 const STORE_NAME = "Star Press Print Studio";
 const APP_URL = env.NEXT_PUBLIC_APP_URL || "https://starpress.in";
 const RESEND_API_URL = "https://api.resend.com/emails";
-const SENDER_EMAIL = process.env.NOTIFICATION_EMAIL || "orders@example.com";
+const SENDER_EMAIL = process.env.NOTIFICATION_EMAIL || "orders@starpress.in";
 const OWNER_EMAIL =
   process.env.ORDER_NOTIFY_EMAIL ||
   process.env.OWNER_ALERT_EMAIL ||
-  "owner@example.com";
+  "owner@starpress.in";
 const OWNER_ALERT_EMAIL = OWNER_EMAIL;
 
 interface EmailRecipient {
@@ -464,6 +464,57 @@ export async function sendLatePaymentRefundEmail(params: {
     to: params.customerEmail,
     subject: `Refund Notice: Payment for Expired Order #${params.orderNumber} [Star Press]`,
     html: wrapHtmlEmail(`Refund Scheduled #${params.orderNumber}`, body),
+  });
+}
+
+/**
+ * 10. Customer Notification: Abandoned Checkout Recovery
+ */
+export async function sendAbandonedCheckoutRecoveryEmail(order: {
+  orderNumber: string;
+  orderId: string;
+  customerName: string;
+  customerEmail: string;
+  totalAmount: number;
+  items: Array<{ name: string; quantity: number }>;
+}): Promise<boolean> {
+  const formattedTotal = Number(order.totalAmount).toLocaleString("en-IN");
+  const checkoutUrl = `${APP_URL}/account/orders/${order.orderId}/pay`;
+
+  const itemsHtml = (order.items || [])
+    .map(
+      (item) => `
+      <div class="row">
+        <span class="lbl">${item.name} × ${item.quantity}</span>
+      </div>`
+    )
+    .join("");
+
+  const body = `
+    <span class="badge" style="background: rgba(254, 240, 138, 0.15); color: #EAB308; border: 1px solid rgba(234, 179, 8, 0.3);">Reserved In Cart</span>
+    <h1 class="h1">Complete Your Print Order #${order.orderNumber}</h1>
+    <p class="p">Hi ${order.customerName},</p>
+    <p class="p">You left your custom print order in your Star Press cart. Your selected specifications and print production slot are currently on hold for you.</p>
+
+    <div class="box">
+      <div class="row"><span class="lbl">Order Number:</span><span class="val" style="font-family: monospace;">${order.orderNumber}</span></div>
+      ${itemsHtml}
+      <div class="row" style="margin-top: 8px; border-top: 1px solid #222738; padding-top: 8px;"><span class="lbl">Order Total:</span><span class="val" style="font-weight: 700; color: #FFE04D;">₹${formattedTotal}</span></div>
+    </div>
+
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${checkoutUrl}" class="btn" style="background: #FFE04D; color: #000; font-weight: 700;">Complete Order & Start Printing →</a>
+    </div>
+
+    <p class="p" style="font-size: 12px; color: #94A3B8; text-align: center;">
+      Need design adjustments or custom quantity? Reply to this email or contact us at <a href="mailto:orders@starpress.in" style="color: #FFE04D;">orders@starpress.in</a>.
+    </p>
+  `;
+
+  return sendViaResend({
+    to: order.customerEmail,
+    subject: `Complete your custom print order #${order.orderNumber} [Star Press]`,
+    html: wrapHtmlEmail(`Complete Order #${order.orderNumber}`, body),
   });
 }
 

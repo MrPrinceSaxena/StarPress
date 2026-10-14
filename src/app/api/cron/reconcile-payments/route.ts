@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { reconcilePayments } from "@/server/reconciliation";
 
+import { timingSafeCompare } from "@/lib/crypto-utils";
+
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
@@ -21,9 +23,11 @@ async function handleCron(request: NextRequest) {
     return NextResponse.json({ error: "Cron security not configured." }, { status: 500 });
   }
 
-  const bearer = authHeader?.replace("Bearer ", "").trim();
-  const querySecret = request.nextUrl.searchParams.get("secret");
-  if (bearer !== cronSecret && querySecret !== cronSecret) {
+  const bearer = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7).trim()
+    : null;
+
+  if (!timingSafeCompare(bearer, cronSecret)) {
     return NextResponse.json({ error: "Unauthorized cron execution." }, { status: 401 });
   }
 

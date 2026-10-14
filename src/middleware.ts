@@ -365,6 +365,10 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   );
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("X-DNS-Prefetch-Control", "on");
+  response.headers.set(
+    "Cross-Origin-Opener-Policy",
+    "same-origin-allow-popups"
+  );
 
   return response;
 }

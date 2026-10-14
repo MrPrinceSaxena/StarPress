@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { expireStaleOrders } from "@/server/order-expiry";
+import { expireStaleOrders, recoverAbandonedCheckouts } from "@/server/order-expiry";
+
+import { timingSafeCompare } from "@/lib/crypto-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -21,18 +23,25 @@ async function handleCron(request: NextRequest) {
     return NextResponse.json({ error: "Cron security not configured." }, { status: 500 });
   }
 
-  const bearer = authHeader?.replace("Bearer ", "").trim();
-  const querySecret = request.nextUrl.searchParams.get("secret");
-  if (bearer !== cronSecret && querySecret !== cronSecret) {
+  const bearer = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7).trim()
+    : null;
+
+  if (!timingSafeCompare(bearer, cronSecret)) {
     return NextResponse.json({ error: "Unauthorized cron execution." }, { status: 401 });
   }
 
   try {
-    const result = await expireStaleOrders();
+    const [recoveryResult, expiryResult] = await Promise.all([
+      recoverAbandonedCheckouts(),
+      expireStaleOrders(),
+    ]);
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
-      ...result,
+      recovery: recoveryResult,
+      expiry: expiryResult,
     });
   } catch (error: any) {
     console.error("[Cron Expire Orders Error]:", error);

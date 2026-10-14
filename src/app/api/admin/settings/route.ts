@@ -18,9 +18,19 @@ export async function GET(request: NextRequest) {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || env.RAZORPAY_WEBHOOK_SECRET || "";
     const resendKey = process.env.RESEND_API_KEY || env.RESEND_API_KEY || "";
 
+    const isLive = keyId.startsWith("rzp_live_");
+    const isTest = keyId.startsWith("rzp_test_");
+    const maskedDisplay = isLive
+      ? "rzp_live_••••••••"
+      : isTest
+      ? "rzp_test_••••••••"
+      : keyId && keyId !== "rzp_test_placeholder"
+      ? "••••••••"
+      : null;
+
     const gatewayStatus = {
       isRazorpayConfigured: Boolean(keyId && keySecret && keyId !== "rzp_test_placeholder"),
-      keyIdMasked: keyId && keyId !== "rzp_test_placeholder" ? `${keyId.substring(0, 8)}••••••••` : null,
+      keyIdMasked: maskedDisplay,
       hasKeySecret: Boolean(keySecret),
       hasWebhookSecret: Boolean(webhookSecret),
       isResendConfigured: Boolean(resendKey && resendKey !== "re_test_placeholder"),
