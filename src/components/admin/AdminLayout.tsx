@@ -14,15 +14,15 @@ function AdminLayoutInner({ children }: AdminLayoutProps) {
   const { collapsed } = useAdminSidebar();
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-white">
+    <div className="min-h-screen bg-[#F7F8FA] text-slate-900 antialiased selection:bg-brand-yellow selection:text-black">
       <AdminSidebar />
       <div
         className={`transition-all duration-300 ease-in-out ${
           collapsed ? 'lg:ml-[72px]' : 'lg:ml-[240px]'
-        } ml-0`}
+        } ml-0 min-h-screen flex flex-col`}
       >
         <AdminTopbar />
-        <main className="p-4 sm:p-6 lg:p-8 animate-fadeIn max-w-[1600px] mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 animate-fadeIn max-w-[1600px] w-full mx-auto">
           {children}
         </main>
       </div>

@@ -84,7 +84,24 @@ export default function ImageUploader({
 
       // Upload each file
       let currentImages = [...images];
+      const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
       for (const entry of newUploading) {
+        if (entry.file.size > maxSizeBytes) {
+          setUploading((prev) =>
+            prev.map((u) =>
+              u.id === entry.id
+                ? {
+                    ...u,
+                    status: "error",
+                    error: `File exceeds the maximum ${maxSizeMB}MB upload limit.`,
+                  }
+                : u
+            )
+          );
+          continue;
+        }
+
         try {
           const formData = new FormData();
           formData.append('files', entry.file);
@@ -292,8 +309,8 @@ export default function ImageUploader({
         onClick={() => fileInputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
           isDragging
-            ? 'border-brand-yellow bg-brand-yellow/[0.05] scale-[1.01]'
-            : 'border-border-subtle hover:border-brand-yellow/30 hover:bg-brand-yellow/[0.02]'
+            ? 'border-[#F5A623] bg-amber-50/40 scale-[1.01]'
+            : 'border-[#E5E7EB] bg-slate-50/50 hover:border-[#F5A623] hover:bg-amber-50/20'
         }`}
       >
         <input
@@ -307,12 +324,12 @@ export default function ImageUploader({
         <div className={`transition-transform ${isDragging ? 'scale-110' : ''}`}>
           <Upload
             size={28}
-            className={`mx-auto mb-2.5 ${isDragging ? 'text-brand-yellow' : 'text-text-muted'}`}
+            className={`mx-auto mb-2.5 ${isDragging ? 'text-[#F5A623]' : 'text-slate-400'}`}
           />
-          <p className="text-xs font-medium text-text-secondary">
+          <p className="text-xs font-semibold text-slate-800">
             {isDragging ? 'Drop images here' : 'Drag & drop images or click to browse'}
           </p>
-          <p className="text-[11px] text-text-muted mt-1">
+          <p className="text-[11px] text-slate-500 mt-1">
             PNG, JPG, WebP, GIF, AVIF • Max {maxSizeMB} MB per file • {totalImages}/{maxImages} images
           </p>
         </div>
@@ -324,10 +341,10 @@ export default function ImageUploader({
           {uploading.map((entry) => (
             <div
               key={entry.id}
-              className="flex items-center gap-3 p-2.5 rounded-lg bg-white/[0.02] border border-border-subtle"
+              className="flex items-center gap-3 p-2.5 rounded-xl bg-white border border-[#E5E7EB] shadow-2xs"
             >
               {/* Thumbnail Preview */}
-              <div className="w-10 h-10 rounded-md overflow-hidden bg-white/[0.04] shrink-0">
+              <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-[#E5E7EB]">
                 <img
                   src={entry.preview}
                   alt=""
@@ -337,28 +354,28 @@ export default function ImageUploader({
 
               {/* File Info & Progress */}
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-white truncate">{entry.file.name}</p>
+                <p className="text-xs font-medium text-slate-900 truncate">{entry.file.name}</p>
                 <div className="flex items-center gap-2 mt-1">
                   {entry.status === 'uploading' && (
                     <>
-                      <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-brand-yellow rounded-full transition-all duration-300"
+                          className="h-full bg-[#F5A623] rounded-full transition-all duration-300"
                           style={{ width: `${Math.min(entry.progress, 100)}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-text-muted font-mono">
+                      <span className="text-[10px] text-slate-500 font-mono">
                         {Math.round(entry.progress)}%
                       </span>
                     </>
                   )}
                   {entry.status === 'done' && (
-                    <span className="flex items-center gap-1 text-[11px] text-emerald-400">
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600">
                       <CheckCircle2 size={12} /> Uploaded
                     </span>
                   )}
                   {entry.status === 'error' && (
-                    <span className="flex items-center gap-1 text-[11px] text-rose-400">
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-rose-600">
                       <AlertCircle size={12} /> {entry.error || 'Failed'}
                     </span>
                   )}
@@ -367,7 +384,7 @@ export default function ImageUploader({
 
               {/* Actions */}
               {entry.status === 'uploading' && (
-                <Loader2 size={14} className="text-brand-yellow animate-spin shrink-0" />
+                <Loader2 size={14} className="text-[#F5A623] animate-spin shrink-0" />
               )}
               {entry.status === 'error' && (
                 <div className="flex items-center gap-1 shrink-0">
@@ -377,7 +394,7 @@ export default function ImageUploader({
                       removeUploadingEntry(entry.id);
                       uploadFiles([entry.file]);
                     }}
-                    className="px-2 py-1 rounded text-[10px] font-medium text-brand-yellow hover:bg-brand-yellow/10 transition-colors"
+                    className="px-2 py-1 rounded-lg text-[10px] font-semibold text-[#F5A623] hover:bg-amber-50 transition-colors"
                   >
                     Retry
                   </button>
@@ -386,7 +403,7 @@ export default function ImageUploader({
                       e.stopPropagation();
                       removeUploadingEntry(entry.id);
                     }}
-                    className="p-1 rounded text-text-muted hover:text-rose-400 transition-colors"
+                    className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                   >
                     <X size={12} />
                   </button>
@@ -412,11 +429,11 @@ export default function ImageUploader({
                 setDragOverIndex(null);
               }}
               className={`
-                relative rounded-lg border overflow-hidden aspect-square bg-white/[0.03]
-                transition-all duration-200 group
-                ${img.isPrimary ? 'border-brand-yellow/40 ring-1 ring-brand-yellow/20' : 'border-border-subtle'}
+                relative rounded-xl border overflow-hidden aspect-square bg-slate-50
+                transition-all duration-200 group shadow-2xs
+                ${img.isPrimary ? 'border-[#F5A623] ring-2 ring-[#F5A623]/20' : 'border-[#E5E7EB] hover:border-slate-300'}
                 ${dragSourceIndex === idx ? 'opacity-40 scale-95' : ''}
-                ${dragOverIndex === idx && dragSourceIndex !== idx ? 'border-brand-yellow ring-2 ring-brand-yellow/30 scale-105' : ''}
+                ${dragOverIndex === idx && dragSourceIndex !== idx ? 'border-[#F5A623] ring-2 ring-[#F5A623]/30 scale-105' : ''}
               `}
             >
               {/* Image */}
@@ -428,30 +445,30 @@ export default function ImageUploader({
                   loading="lazy"
                 />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-text-muted">
+                <div className="absolute inset-0 flex items-center justify-center text-slate-400">
                   <ImageIcon size={24} />
                 </div>
               )}
 
               {/* Top-left: Drag handle + Primary badge */}
-              <div className="absolute top-2 left-2 flex items-center gap-1">
-                <div className="p-0.5 rounded bg-black/40 backdrop-blur-sm cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
-                  <GripVertical size={12} className="text-white/80" />
+              <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
+                <div className="p-1 rounded-md bg-black/60 backdrop-blur-sm cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
+                  <GripVertical size={12} className="text-white" />
                 </div>
                 {img.isPrimary && (
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-brand-yellow text-black shadow-sm">
+                  <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-[#F5A623] text-black shadow-xs">
                     PRIMARY
                   </span>
                 )}
               </div>
 
               {/* Top-right: Actions */}
-              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-2 right-2 flex items-center gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                 {!img.isPrimary && (
                   <button
                     onClick={() => setPrimary(idx)}
                     title="Set as primary image"
-                    className="p-1 rounded bg-black/50 backdrop-blur-sm text-white/70 hover:text-brand-yellow transition-colors"
+                    className="p-1 rounded-md bg-black/60 backdrop-blur-sm text-white/80 hover:text-[#F5A623] transition-colors"
                   >
                     <Star size={12} />
                   </button>
@@ -459,15 +476,15 @@ export default function ImageUploader({
                 <button
                   onClick={() => removeImage(idx)}
                   title="Remove image"
-                  className="p-1 rounded bg-black/50 backdrop-blur-sm text-white/70 hover:text-rose-400 transition-colors"
+                  className="p-1 rounded-md bg-black/60 backdrop-blur-sm text-white/80 hover:text-rose-400 transition-colors"
                 >
                   <Trash2 size={12} />
                 </button>
               </div>
 
               {/* Bottom: File info overlay */}
-              <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                <p className="text-[10px] text-white/80 truncate">{img.altText || 'Image'}</p>
+              <div className="absolute bottom-0 left-0 right-0 px-2.5 py-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-[11px] text-white font-medium truncate">{img.altText || 'Product Image'}</p>
               </div>
             </div>
           ))}
@@ -476,7 +493,7 @@ export default function ImageUploader({
 
       {/* Empty state */}
       {images.length === 0 && uploading.length === 0 && (
-        <p className="text-center text-xs text-text-muted py-2">
+        <p className="text-center text-xs text-slate-500 py-2">
           No images uploaded yet. Add images to make your product stand out!
         </p>
       )}

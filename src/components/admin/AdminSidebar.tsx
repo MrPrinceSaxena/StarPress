@@ -22,8 +22,6 @@ import {
   ChevronDown,
   ExternalLink,
   X,
-  Layers,
-  Sparkles,
 } from 'lucide-react';
 import { useAdminSidebar } from './AdminSidebarContext';
 
@@ -49,8 +47,6 @@ const BASE_MAIN_NAV: Omit<NavItem, 'badge'>[] = [
   },
   { label: 'Customers', href: '/admin/customers', icon: Users },
   { label: 'Content', href: '/admin/content', icon: FileText },
-  { label: 'Finances', href: '/admin/finances', icon: DollarSign },
-  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   {
     label: 'Marketing',
     href: '/admin/marketing',
@@ -61,12 +57,8 @@ const BASE_MAIN_NAV: Omit<NavItem, 'badge'>[] = [
     ],
   },
   { label: 'Discounts', href: '/admin/discounts', icon: PercentCircle },
-];
-
-const CHANNEL_NAV: NavItem[] = [
-  { label: 'Online Store', href: '/', icon: Store },
-  { label: 'Point of Sale', href: '/admin/settings?tab=pos', icon: CreditCard },
-  { label: 'Shop', href: '/shop', icon: ShoppingBag },
+  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { label: 'Finance', href: '/admin/finances', icon: DollarSign },
 ];
 
 export default function AdminSidebar() {
@@ -113,10 +105,10 @@ export default function AdminSidebar() {
         <div className="relative shrink-0 flex items-center justify-center">
           <item.icon
             size={18}
-            className={`transition-colors duration-150 ${active ? 'text-brand-yellow' : 'text-slate-400 group-hover:text-slate-200'}`}
+            className={`transition-colors duration-150 ${active ? 'text-[#F5A623]' : 'text-slate-400 group-hover:text-slate-200'}`}
           />
           {collapsed && item.badge && item.badge > 0 && (
-            <span className="absolute -top-1.5 -right-2 w-2 h-2 rounded-full bg-brand-yellow ring-2 ring-[#0A0C14]" />
+            <span className="absolute -top-1.5 -right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#12161F]" />
           )}
         </div>
 
@@ -124,26 +116,26 @@ export default function AdminSidebar() {
           <>
             <span className="flex-1 truncate tracking-tight">{item.label}</span>
             {item.badge && item.badge > 0 && (
-              <span className="min-w-[18px] h-[18px] px-1.5 flex items-center justify-center rounded-full bg-brand-yellow/20 border border-brand-yellow/40 text-brand-yellow text-[10px] font-bold leading-none animate-pulse">
+              <span className="min-w-[20px] h-[20px] px-1.5 flex items-center justify-center rounded-full bg-rose-500 text-white text-[11px] font-bold leading-none shadow-sm">
                 {item.badge}
               </span>
             )}
             {hasChildren && (
               <ChevronDown
                 size={14}
-                className={`text-slate-500 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-white' : ''}`}
+                className={`text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-white' : ''}`}
               />
             )}
             {isExternal && <ExternalLink size={12} className="opacity-40" />}
           </>
         )}
 
-        {/* Floating tooltip when collapsed */}
+        {/* Tooltip when collapsed */}
         {collapsed && (
-          <div className="fixed left-[76px] hidden group-hover:flex items-center px-2.5 py-1 rounded-md bg-[#161B29] border border-white/10 text-white text-xs font-medium shadow-elevation-md whitespace-nowrap z-[100] pointer-events-none">
+          <div className="fixed left-[76px] hidden group-hover:flex items-center px-2.5 py-1 rounded-md bg-[#1B2232] border border-white/10 text-white text-xs font-medium shadow-lg whitespace-nowrap z-[100] pointer-events-none">
             {item.label}
             {item.badge && item.badge > 0 && (
-              <span className="ml-1.5 px-1 rounded bg-brand-yellow text-black text-[10px] font-bold">
+              <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold">
                 {item.badge}
               </span>
             )}
@@ -152,9 +144,9 @@ export default function AdminSidebar() {
       </>
     );
 
-    const baseClasses = `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 relative group ${
+    const baseClasses = `flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 relative group ${
       active
-        ? 'bg-gradient-to-r from-brand-yellow/15 to-transparent text-white font-semibold border-l-2 border-brand-yellow'
+        ? 'bg-[#1E2536] text-white font-semibold border-l-2 border-[#F5A623]'
         : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
     } ${collapsed ? 'justify-center px-0' : ''}`;
 
@@ -174,9 +166,9 @@ export default function AdminSidebar() {
                 <Link
                   key={child.href}
                   href={child.href}
-                  className={`block px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+                  className={`block px-2.5 py-1.5 rounded-md text-xs transition-colors ${
                     pathname === child.href
-                      ? 'text-brand-yellow font-medium bg-brand-yellow/10'
+                      ? 'text-[#F5A623] font-medium bg-[#F5A623]/10'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'
                   }`}
                 >
@@ -215,41 +207,36 @@ export default function AdminSidebar() {
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden animate-fadeIn"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden animate-fadeIn"
           onClick={closeMobile}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed left-0 top-0 bottom-0 z-50 flex flex-col bg-[#0A0C14] border-r border-white/[0.06] transition-all duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 bottom-0 z-50 flex flex-col bg-[#12161F] border-r border-[#1E2536] transition-all duration-300 ease-in-out ${
           collapsed ? 'lg:w-[72px]' : 'lg:w-[240px]'
         } ${
           mobileOpen ? 'translate-x-0 w-[260px]' : '-translate-x-full lg:translate-x-0'
         } ${!mobileOpen && collapsed ? 'w-[72px]' : 'w-[240px]'}`}
       >
-        {/* Logo Header */}
+        {/* Brand Header */}
         <div
-          className={`flex items-center h-16 border-b border-white/[0.06] ${
+          className={`flex items-center h-16 border-b border-[#1E2536] ${
             collapsed ? 'justify-center px-2' : 'justify-between px-4'
           }`}
         >
-          <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-yellow/20 to-brand-yellow/5 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow font-display font-black text-sm shrink-0 shadow-[0_0_12px_rgba(245,186,19,0.15)] group-hover:scale-105 transition-transform">
+          <Link href="/admin/dashboard" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-lg bg-[#F5A623] flex items-center justify-center text-slate-950 font-black text-base shrink-0 shadow-sm transition-transform group-hover:scale-105">
               S
             </div>
             {!collapsed && (
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-display font-black text-xs tracking-wider text-white">
-                    STAR<span className="text-brand-yellow">PRESS</span>
-                  </span>
-                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-white/[0.06] text-slate-300">
-                    PRO
-                  </span>
-                </div>
-                <span className="text-[9px] font-mono text-slate-500 tracking-widest">
-                  ADMIN CONSOLE
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold text-sm tracking-wide text-white leading-tight">
+                  STARPRESS
+                </span>
+                <span className="text-xs text-slate-400 leading-tight">
+                  Store Admin
                 </span>
               </div>
             )}
@@ -266,40 +253,20 @@ export default function AdminSidebar() {
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto no-scrollbar px-3 py-4 space-y-6">
-          <div>
-            {!collapsed && (
-              <div className="px-3 mb-2 flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                  Store Management
-                </span>
-              </div>
-            )}
-            <div className="space-y-1">{mainNav.map(renderNavItem)}</div>
-          </div>
-
-          <div>
-            {!collapsed && (
-              <div className="px-3 mb-2">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                  Sales Channels
-                </span>
-              </div>
-            )}
-            <div className="space-y-1">{CHANNEL_NAV.map(renderNavItem)}</div>
-          </div>
+        <nav className="flex-1 overflow-y-auto no-scrollbar px-3 py-4 space-y-1">
+          {mainNav.map(renderNavItem)}
         </nav>
 
         {/* Bottom Section */}
-        <div className="border-t border-white/[0.06] p-3 space-y-1 bg-[#08090F]">
+        <div className="border-t border-[#1E2536] p-3 space-y-1 bg-[#0F131B]">
           <Link
             href="/admin/settings"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors ${
               pathname.startsWith('/admin/settings')
-                ? 'bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/20 font-semibold'
+                ? 'bg-[#1E2536] text-[#F5A623] font-semibold border-l-2 border-[#F5A623]'
                 : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
             } ${collapsed ? 'justify-center px-0' : ''}`}
-            title={collapsed ? 'Settings' : undefined}
+            title={collapsed ? 'Store Settings' : undefined}
           >
             <Settings size={18} className="shrink-0" />
             {!collapsed && <span>Store Settings</span>}
@@ -309,26 +276,51 @@ export default function AdminSidebar() {
             href="https://wa.me/917456849955?text=StarPress%20Support%20Inquiry"
             target="_blank"
             rel="noopener noreferrer"
-            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors ${
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors ${
               collapsed ? 'justify-center px-0' : ''
             }`}
-            title={collapsed ? 'Support' : undefined}
+            title={collapsed ? 'Help & Support' : undefined}
           >
             <HelpCircle size={18} className="shrink-0" />
-            {!collapsed && <span>Live Support</span>}
+            {!collapsed && <span>Help & Support</span>}
           </a>
 
+          {/* Dedicated View Store Bottom Card */}
+          {!collapsed && (
+            <div className="pt-2">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl p-2.5 flex items-center gap-2.5 transition-colors group cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center text-slate-300 group-hover:text-white shrink-0">
+                  <Store size={16} />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-xs font-semibold text-white flex items-center gap-1 group-hover:text-[#F5A623] transition-colors">
+                    <span>View Store</span>
+                    <ExternalLink size={11} className="opacity-70" />
+                  </div>
+                  <p className="text-[10px] text-slate-400 truncate">
+                    Open your online store
+                  </p>
+                </div>
+              </a>
+            </div>
+          )}
+
           {/* Desktop Collapse Toggle */}
-          <div className="hidden lg:block pt-2 border-t border-white/[0.04]">
+          <div className="hidden lg:block pt-2 border-t border-white/[0.06]">
             <button
               onClick={toggleCollapse}
-              className="w-full flex items-center justify-center p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.06] transition-all"
+              className="w-full flex items-center justify-center p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.06] transition-all"
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <ChevronLeft
                 size={16}
-                className={`transition-transform duration-300 ${collapsed ? 'rotate-180 text-brand-yellow' : ''}`}
+                className={`transition-transform duration-300 ${collapsed ? 'rotate-180 text-[#F5A623]' : ''}`}
               />
             </button>
           </div>

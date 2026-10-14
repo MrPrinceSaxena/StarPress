@@ -40,37 +40,37 @@ export default function ConfirmDialog({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
 
       {/* Dialog */}
-      <div className="relative bg-bg-surface border border-border-subtle rounded-2xl shadow-elevation-md w-full max-w-md animate-fadeIn">
-        <div className="flex items-start gap-3 p-5">
-          <div className={`p-2 rounded-xl ${
-            variant === 'danger' ? 'bg-rose-500/10 text-rose-400' : 'bg-amber-500/10 text-amber-400'
+      <div className="relative bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl w-full max-w-md animate-fadeIn overflow-hidden">
+        <div className="flex items-start gap-3.5 p-5">
+          <div className={`p-2.5 rounded-xl shrink-0 ${
+            variant === 'danger' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
           }`}>
             <AlertTriangle size={20} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-white">{title}</h3>
-            <p className="text-sm text-text-secondary mt-1">{message}</p>
+            <h3 className="text-base font-bold text-slate-900">{title}</h3>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">{message}</p>
           </div>
           <button
             onClick={onCancel}
-            className="p-1 rounded-lg hover:bg-white/[0.06] text-text-muted hover:text-white transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             aria-label="Close"
           >
             <X size={16} />
           </button>
         </div>
-        <div className="flex items-center justify-end gap-2 px-5 pb-5">
+        <div className="flex items-center justify-end gap-2 px-5 pb-5 pt-2">
           <button
             onClick={onCancel}
             disabled={loading}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-white hover:bg-white/[0.06] border border-border-subtle transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-[#E5E7EB] bg-white transition-colors disabled:opacity-50 shadow-xs"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 ${confirmStyles}`}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all disabled:opacity-50 shadow-xs ${confirmStyles}`}
           >
             {loading ? 'Processing…' : confirmLabel}
           </button>

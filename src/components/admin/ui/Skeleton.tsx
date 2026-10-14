@@ -10,7 +10,7 @@ interface SkeletonProps {
 export function Skeleton({ className = '', style }: SkeletonProps) {
   return (
     <div
-      className={`animate-pulse bg-white/[0.06] rounded-md ${className}`}
+      className={`animate-pulse bg-slate-200/80 rounded-md ${className}`}
       style={style}
     />
   );
@@ -18,7 +18,7 @@ export function Skeleton({ className = '', style }: SkeletonProps) {
 
 export function SkeletonCard() {
   return (
-    <div className="bg-[#10131E] border border-white/[0.06] rounded-xl p-4 space-y-3">
+    <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 space-y-3 shadow-sm">
       <div className="flex items-center justify-between">
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-8 w-8 rounded-lg" />
@@ -31,7 +31,7 @@ export function SkeletonCard() {
 
 export function SkeletonTableRow({ cols = 5 }: { cols?: number }) {
   return (
-    <tr className="border-b border-white/[0.04]">
+    <tr className="border-b border-[#E5E7EB]">
       {Array.from({ length: cols }).map((_, i) => (
         <td key={i} className="px-5 py-4">
           <Skeleton className="h-4 w-full max-w-[120px]" />
@@ -43,14 +43,14 @@ export function SkeletonTableRow({ cols = 5 }: { cols?: number }) {
 
 export function SkeletonTable({ rows = 5, cols = 5 }: { rows?: number; cols?: number }) {
   return (
-    <div className="w-full bg-[#10131E] border border-white/[0.06] rounded-xl overflow-hidden">
-      <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
+    <div className="w-full bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-sm">
+      <div className="p-4 border-b border-[#E5E7EB] flex items-center justify-between">
         <Skeleton className="h-5 w-36" />
         <Skeleton className="h-8 w-24 rounded-lg" />
       </div>
       <table className="w-full">
         <thead>
-          <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+          <tr className="border-b border-[#E5E7EB] bg-slate-50">
             {Array.from({ length: cols }).map((_, i) => (
               <th key={i} className="px-5 py-3 text-left">
                 <Skeleton className="h-3 w-16" />
