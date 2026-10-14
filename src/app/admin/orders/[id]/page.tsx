@@ -38,10 +38,10 @@ const COURIER_OPTIONS = [
 ];
 
 const ORDER_STEPS = [
-  { key: 'pending', label: 'Order Placed', desc: 'Customer completed order checkout' },
+  { key: 'pending', label: 'Order Placed', desc: 'Customer completed checkout' },
   { key: 'processing', label: 'In Production', desc: 'Pre-press proof & printing underway' },
   { key: 'shipped', label: 'Dispatched', desc: 'Handed over to courier partner' },
-  { key: 'delivered', label: 'Delivered', desc: 'Successfully received by customer' },
+  { key: 'delivered', label: 'Delivered', desc: 'Successfully delivered to customer' },
 ];
 
 export default function OrderDetailPage() {
@@ -60,6 +60,38 @@ export default function OrderDetailPage() {
   const [internalNotes, setInternalNotes] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [isMarkingPaid, setIsMarkingPaid] = useState(false);
+
+  // Notification Modal States
+  const [notifyModalOpen, setNotifyModalOpen] = useState(false);
+  const [notifyType, setNotifyType] = useState<OrderNotificationType>('shipped');
+  const [notifyChannel, setNotifyChannel] = useState<'whatsapp' | 'email'>('whatsapp');
+  const [notifyMessage, setNotifyMessage] = useState('');
+  const [notifySending, setNotifySending] = useState(false);
+
+  const loadOrder = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`);
+      const data = await res.json();
+      if (data.success && data.order) {
+        setOrder(data.order);
+        setStatus(data.order.status || 'pending');
+        setCourierPartner(data.order.courierPartner || 'Shiprocket');
+        setTrackingNumber(data.order.trackingNumber || '');
+        setInternalNotes(data.order.notes || '');
+      } else {
+        showToast(data.error || 'Order not found', 'error');
+      }
+    } catch {
+      showToast('Failed to load order', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    loadOrder();
+  }, [loadOrder]);
 
   const handleManualMarkPaid = async () => {
     if (!order) return;
@@ -80,13 +112,6 @@ export default function OrderDetailPage() {
       setIsMarkingPaid(false);
     }
   };
-
-  // Notification Modal States
-  const [notifyModalOpen, setNotifyModalOpen] = useState(false);
-  const [notifyType, setNotifyType] = useState<OrderNotificationType>('shipped');
-  const [notifyChannel, setNotifyChannel] = useState<'whatsapp' | 'email'>('whatsapp');
-  const [notifyMessage, setNotifyMessage] = useState('');
-  const [notifySending, setNotifySending] = useState(false);
 
   const openNotificationModal = (channel: 'whatsapp' | 'email', type: OrderNotificationType) => {
     if (!order) return;
@@ -150,31 +175,6 @@ export default function OrderDetailPage() {
     }
   };
 
-  const loadOrder = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/orders/${orderId}`);
-      const data = await res.json();
-      if (data.success && data.order) {
-        setOrder(data.order);
-        setStatus(data.order.status || 'pending');
-        setCourierPartner(data.order.courierPartner || 'Shiprocket');
-        setTrackingNumber(data.order.trackingNumber || '');
-        setInternalNotes(data.order.notes || '');
-      } else {
-        showToast(data.error || 'Order not found', 'error');
-      }
-    } catch {
-      showToast('Failed to load order', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [orderId]);
-
-  useEffect(() => {
-    loadOrder();
-  }, [loadOrder]);
-
   const handleSaveFulfillment = async () => {
     setSaving(true);
     try {
@@ -228,24 +228,24 @@ export default function OrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="py-24 flex flex-col items-center justify-center text-text-muted gap-3">
-        <Loader2 size={32} className="animate-spin text-brand-yellow" />
-        <p className="text-sm">Loading order details...</p>
+      <div className="py-24 flex flex-col items-center justify-center text-slate-500 gap-3">
+        <Loader2 size={32} className="animate-spin text-[#F5A623]" />
+        <p className="text-sm font-medium">Loading order details...</p>
       </div>
     );
   }
 
   if (!order) {
     return (
-      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
-        <AlertCircle size={48} className="mx-auto text-red-400" />
-        <h2 className="text-xl font-bold text-white">Order Not Found</h2>
-        <p className="text-sm text-text-muted">
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4 bg-white border border-[#E5E7EB] rounded-2xl p-8 shadow-sm">
+        <AlertCircle size={48} className="mx-auto text-rose-500" />
+        <h2 className="text-xl font-bold text-slate-900">Order Not Found</h2>
+        <p className="text-sm text-slate-500">
           The requested order could not be located in StarPress database.
         </p>
         <Link
           href="/admin/orders"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.06] text-white hover:bg-white/[0.1] text-xs font-semibold"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors"
         >
           <ArrowLeft size={14} /> Back to Orders
         </Link>
@@ -260,33 +260,33 @@ export default function OrderDetailPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/admin/orders"
-            className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] border border-border-subtle transition-colors"
+            className="p-2.5 rounded-xl text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-[#E5E7EB] transition-colors shadow-2xs"
           >
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-white tracking-tight">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                 {order.orderNumber}
               </h1>
               <button
                 onClick={copyOrderNumber}
-                className="text-text-muted hover:text-white p-1"
+                className="text-slate-400 hover:text-slate-700 p-1 transition-colors cursor-pointer"
                 title="Copy order number"
               >
-                {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                {copied ? <Check size={15} className="text-emerald-600" /> : <Copy size={15} />}
               </button>
               <StatusBadge status={order.status} />
-              <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${
+              <span className={`text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${
                 order.paymentStatus === 'paid'
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                  : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-amber-50 text-amber-800 border-amber-200'
               }`}>
                 {order.paymentStatus}
               </span>
             </div>
-            <p className="text-xs text-text-muted mt-1 flex items-center gap-2">
-              <Calendar size={13} />
+            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 font-medium">
+              <Calendar size={13} className="text-slate-400" />
               Placed on {new Date(order.date).toLocaleString('en-IN', {
                 dateStyle: 'medium',
                 timeStyle: 'short',
@@ -295,12 +295,12 @@ export default function OrderDetailPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
           {order.paymentStatus !== 'paid' && order.paymentMethod === 'PAY_AFTER_PROOF' && (
             <button
               onClick={handleManualMarkPaid}
               disabled={isMarkingPaid}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
               title="Confirm payment received offline (audit logged)"
             >
               {isMarkingPaid ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
@@ -309,7 +309,7 @@ export default function OrderDetailPage() {
           )}
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-border-subtle transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-[#E5E7EB] transition-colors shadow-2xs cursor-pointer"
           >
             <Printer size={15} />
             Print GST Invoice
@@ -317,7 +317,7 @@ export default function OrderDetailPage() {
           <button
             onClick={handleSaveFulfillment}
             disabled={saving}
-            className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors disabled:opacity-50 shadow-sm"
+            className="flex items-center gap-1.5 px-4.5 py-2 rounded-xl text-xs font-semibold bg-[#F5A623] hover:bg-[#e0961e] text-black transition-colors disabled:opacity-50 shadow-xs cursor-pointer"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             Save Changes
@@ -326,11 +326,11 @@ export default function OrderDetailPage() {
       </div>
 
       {/* Workflow Progress Timeline (Hidden on Print) */}
-      <div className="print:hidden bg-card border border-border-subtle rounded-xl p-5">
-        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">
+      <div className="print:hidden bg-white border border-[#E5E7EB] rounded-xl p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3.5">
           Order Production & Fulfillment Workflow
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5 relative">
           {ORDER_STEPS.map((step, idx) => {
             const isCompleted = idx <= currentStepIndex;
             const isCurrent = idx === currentStepIndex;
@@ -339,26 +339,28 @@ export default function OrderDetailPage() {
               <div
                 key={step.key}
                 onClick={() => setStatus(step.key)}
-                className={`cursor-pointer p-3.5 rounded-xl border transition-all ${
+                className={`cursor-pointer p-4 rounded-xl border transition-all ${
                   isCurrent
-                    ? 'bg-brand-yellow/10 border-brand-yellow/50 text-white'
+                    ? 'bg-amber-50/80 border-[#F5A623] text-slate-900 shadow-2xs ring-1 ring-[#F5A623]/30'
                     : isCompleted
-                    ? 'bg-emerald-500/[0.06] border-emerald-500/30 text-white'
-                    : 'bg-white/[0.02] border-border-subtle text-text-muted hover:border-white/20'
+                    ? 'bg-emerald-50/70 border-emerald-200 text-slate-900'
+                    : 'bg-slate-50/60 border-[#E5E7EB] text-slate-500 hover:border-slate-300'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wider">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                    isCurrent ? 'text-amber-800' : isCompleted ? 'text-emerald-700' : 'text-slate-400'
+                  }`}>
                     Step {idx + 1}
                   </span>
                   {isCompleted ? (
-                    <CheckCircle2 size={16} className="text-emerald-400" />
+                    <CheckCircle2 size={16} className={isCurrent ? 'text-amber-700' : 'text-emerald-600'} />
                   ) : (
-                    <Clock size={16} className="opacity-40" />
+                    <Clock size={16} className="text-slate-300" />
                   )}
                 </div>
-                <p className="font-semibold text-sm text-white">{step.label}</p>
-                <p className="text-[11px] text-text-muted mt-0.5 leading-snug">{step.desc}</p>
+                <p className="font-bold text-sm text-slate-900">{step.label}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{step.desc}</p>
               </div>
             );
           })}
@@ -370,18 +372,18 @@ export default function OrderDetailPage() {
         {/* Left Column (2 Cols) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Order Items Table */}
-          <div className="bg-card border border-border-subtle rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-white mb-4 flex items-center justify-between">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 sm:p-6 shadow-sm">
+            <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center justify-between">
               <span>Order Items ({order.itemCount} items)</span>
-              <span className="text-xs text-text-muted font-normal">
+              <span className="text-xs text-slate-500 font-normal">
                 Curated for custom print production
               </span>
             </h3>
 
-            <div className="divide-y divide-border-subtle">
+            <div className="divide-y divide-[#E5E7EB]">
               {order.items.map((it: any) => (
-                <div key={it.id} className="py-4 flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-lg bg-white/[0.04] border border-border-subtle overflow-hidden shrink-0 flex items-center justify-center">
+                <div key={it.id} className="py-4.5 flex items-start gap-4">
+                  <div className="w-16 h-16 rounded-xl bg-slate-50 border border-[#E5E7EB] overflow-hidden shrink-0 flex items-center justify-center">
                     {it.image ? (
                       <Image
                         src={it.image}
@@ -392,38 +394,38 @@ export default function OrderDetailPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <Package size={24} className="text-text-muted/40" />
+                      <Package size={24} className="text-slate-400" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-white text-sm">{it.productName}</p>
-                    <p className="text-xs text-text-muted mt-0.5 font-mono">{it.sku}</p>
+                    <p className="font-bold text-slate-900 text-sm">{it.productName}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 font-mono">{it.sku}</p>
 
                     {/* Custom specifications / artwork */}
                     {it.specs && (
-                      <div className="mt-2 text-xs bg-white/[0.03] p-2.5 rounded-lg border border-border-subtle space-y-1">
+                      <div className="mt-2.5 text-xs bg-slate-50 p-3 rounded-xl border border-[#E5E7EB] space-y-1">
                         {Object.entries(it.specs).map(([key, val]) => (
                           <div key={key} className="flex justify-between">
-                            <span className="text-text-muted capitalize">{key}:</span>
-                            <span className="text-text-secondary font-medium">{String(val)}</span>
+                            <span className="text-slate-500 capitalize">{key}:</span>
+                            <span className="text-slate-800 font-semibold">{String(val)}</span>
                           </div>
                         ))}
                       </div>
                     )}
 
                     {it.customText && (
-                      <p className="text-xs text-text-secondary mt-1.5 bg-brand-yellow/5 p-2 rounded border border-brand-yellow/10">
-                        <span className="font-medium text-brand-yellow">Custom Text:</span> {it.customText}
+                      <p className="text-xs text-slate-800 mt-2 bg-amber-50/60 p-2.5 rounded-xl border border-amber-200">
+                        <span className="font-bold text-amber-800">Custom Text:</span> {it.customText}
                       </p>
                     )}
 
                     {it.artworkUrl && (
-                      <div className="mt-2">
+                      <div className="mt-2.5">
                         <a
                           href={it.artworkUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-brand-yellow hover:underline"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline"
                         >
                           <ExternalLink size={13} />
                           Download Customer Artwork File
@@ -433,10 +435,10 @@ export default function OrderDetailPage() {
                   </div>
 
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-bold text-slate-900">
                       ₹{new Intl.NumberFormat('en-IN').format(it.total)}
                     </p>
-                    <p className="text-xs text-text-muted mt-0.5">
+                    <p className="text-xs text-slate-500 mt-0.5 font-medium">
                       ₹{new Intl.NumberFormat('en-IN').format(it.unitPrice)} × {it.quantity}
                     </p>
                   </div>
@@ -445,39 +447,39 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Financial Summary */}
-            <div className="mt-4 pt-4 border-t border-border-subtle space-y-2 text-xs">
-              <div className="flex justify-between text-text-muted">
+            <div className="mt-5 pt-4.5 border-t border-[#E5E7EB] space-y-2.5 text-xs font-medium">
+              <div className="flex justify-between text-slate-600">
                 <span>Subtotal</span>
-                <span>₹{new Intl.NumberFormat('en-IN').format(order.subtotal)}</span>
+                <span className="text-slate-900 font-semibold">₹{new Intl.NumberFormat('en-IN').format(order.subtotal)}</span>
               </div>
-              <div className="flex justify-between text-text-muted">
+              <div className="flex justify-between text-slate-600">
                 <span>GST (18% Goods & Services Tax)</span>
-                <span>₹{new Intl.NumberFormat('en-IN').format(order.tax)}</span>
+                <span className="text-slate-900 font-semibold">₹{new Intl.NumberFormat('en-IN').format(order.tax)}</span>
               </div>
-              <div className="flex justify-between text-text-muted">
+              <div className="flex justify-between text-slate-600">
                 <span>Shipping & Handling</span>
-                <span>{order.shipping > 0 ? `₹${new Intl.NumberFormat('en-IN').format(order.shipping)}` : 'FREE'}</span>
+                <span className="text-slate-900 font-semibold">{order.shipping > 0 ? `₹${new Intl.NumberFormat('en-IN').format(order.shipping)}` : 'FREE'}</span>
               </div>
               {order.discount > 0 && (
-                <div className="flex justify-between text-emerald-400">
+                <div className="flex justify-between text-emerald-700 font-semibold">
                   <span>Discount Applied</span>
                   <span>-₹{new Intl.NumberFormat('en-IN').format(order.discount)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-border-subtle">
-                <span>Total Amount Paid</span>
-                <span className="text-brand-yellow text-base">₹{new Intl.NumberFormat('en-IN').format(order.total)}</span>
+              <div className="flex justify-between text-sm font-bold text-slate-900 pt-3 border-t border-[#E5E7EB]">
+                <span>Total Amount</span>
+                <span className="text-base text-slate-900 font-bold">₹{new Intl.NumberFormat('en-IN').format(order.total)}</span>
               </div>
             </div>
           </div>
 
           {/* Internal Notes Card */}
-          <div className="print:hidden bg-card border border-border-subtle rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-              <FileText size={16} className="text-brand-yellow" />
+          <div className="print:hidden bg-white border border-[#E5E7EB] rounded-xl p-5 sm:p-6 shadow-sm">
+            <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+              <FileText size={16} className="text-[#F5A623]" />
               Internal Production Notes
             </h3>
-            <p className="text-xs text-text-muted mb-3">
+            <p className="text-xs text-slate-500 mb-3.5">
               Visible only to StarPress staff. Include pre-press instructions, paper stock details, or courier references.
             </p>
             <textarea
@@ -485,7 +487,7 @@ export default function OrderDetailPage() {
               value={internalNotes}
               onChange={(e) => setInternalNotes(e.target.value)}
               placeholder="e.g. 350 GSM Matte Lamination approved. Ship with waterproof corner guards."
-              className="w-full bg-white/[0.04] border border-border-subtle rounded-lg p-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow/50 transition-colors resize-none"
+              className="w-full bg-slate-50 border border-[#E5E7EB] rounded-xl p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] transition-all resize-none shadow-2xs"
             />
           </div>
         </div>
@@ -493,42 +495,42 @@ export default function OrderDetailPage() {
         {/* Right Column (1 Col): Customer & Dispatch */}
         <div className="space-y-6">
           {/* Dispatch & Fulfillment Card */}
-          <div className="print:hidden bg-card border border-border-subtle rounded-xl p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Truck size={16} className="text-brand-yellow" />
+          <div className="print:hidden bg-white border border-[#E5E7EB] rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Truck size={17} className="text-[#F5A623]" />
               Dispatch & Fulfillment
             </h3>
 
             {/* Status Selector */}
             <div>
-              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Current Status
               </label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full bg-white/[0.04] border border-border-subtle rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-yellow/50 cursor-pointer"
+                className="w-full bg-white border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] cursor-pointer shadow-2xs"
               >
-                <option value="pending" className="bg-[#0F1420]">Pending</option>
-                <option value="processing" className="bg-[#0F1420]">In Production / Processing</option>
-                <option value="shipped" className="bg-[#0F1420]">Dispatched / Shipped</option>
-                <option value="delivered" className="bg-[#0F1420]">Delivered</option>
-                <option value="cancelled" className="bg-[#0F1420]">Cancelled</option>
+                <option value="pending">Pending</option>
+                <option value="processing">In Production / Processing</option>
+                <option value="shipped">Dispatched / Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
 
             {/* Courier Partner */}
             <div>
-              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Courier Partner
               </label>
               <select
                 value={courierPartner}
                 onChange={(e) => setCourierPartner(e.target.value)}
-                className="w-full bg-white/[0.04] border border-border-subtle rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-yellow/50 cursor-pointer"
+                className="w-full bg-white border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] cursor-pointer shadow-2xs"
               >
                 {COURIER_OPTIONS.map((c) => (
-                  <option key={c} value={c} className="bg-[#0F1420]">
+                  <option key={c} value={c}>
                     {c}
                   </option>
                 ))}
@@ -537,7 +539,7 @@ export default function OrderDetailPage() {
 
             {/* Tracking Number */}
             <div>
-              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 AWB / Tracking Number
               </label>
               <input
@@ -545,14 +547,14 @@ export default function OrderDetailPage() {
                 placeholder="e.g. 14325890423"
                 value={trackingNumber}
                 onChange={(e) => setTrackingNumber(e.target.value)}
-                className="w-full bg-white/[0.04] border border-border-subtle rounded-lg px-3 py-2 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow/50 font-mono"
+                className="w-full bg-white border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] font-mono shadow-2xs"
               />
             </div>
 
             <button
               onClick={handleSaveFulfillment}
               disabled={saving}
-              className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#F5A623] text-black hover:bg-[#e0961e] transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
             >
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               Update Fulfillment
@@ -560,86 +562,86 @@ export default function OrderDetailPage() {
           </div>
 
           {/* Customer Details */}
-          <div className="bg-card border border-border-subtle rounded-xl p-5 space-y-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <User size={16} className="text-brand-yellow" />
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <User size={17} className="text-[#F5A623]" />
                 Customer Information
               </h3>
               <Link
                 href={`/admin/customers/${encodeURIComponent(order.customerEmail || order.userId || order.customerPhone || 'customer')}`}
-                className="text-xs text-brand-yellow hover:underline flex items-center gap-1 font-medium"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
               >
-                Profile & LTV <ExternalLink size={12} />
+                Profile <ExternalLink size={12} />
               </Link>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="flex items-center gap-2.5 text-white font-medium">
-                <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-text-secondary shrink-0">
-                  <User size={14} />
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800 font-bold shrink-0">
+                  {order.customerName ? order.customerName.charAt(0).toUpperCase() : 'C'}
                 </div>
                 <div>
-                  <p className="font-semibold text-sm">{order.customerName}</p>
-                  <p className="text-text-muted text-[11px]">Direct Customer</p>
+                  <p className="font-bold text-sm text-slate-900">{order.customerName}</p>
+                  <p className="text-slate-500 text-[11px]">Direct Store Customer</p>
                 </div>
               </div>
 
               {order.customerEmail && (
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <Mail size={14} className="text-text-muted shrink-0" />
-                  <a href={`mailto:${order.customerEmail}`} className="hover:text-white transition-colors truncate">
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Mail size={14} className="text-slate-400 shrink-0" />
+                  <a href={`mailto:${order.customerEmail}`} className="hover:text-blue-600 transition-colors truncate font-medium">
                     {order.customerEmail}
                   </a>
                 </div>
               )}
 
               {order.customerPhone && (
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <Phone size={14} className="text-text-muted shrink-0" />
-                  <a href={`tel:${order.customerPhone}`} className="hover:text-white transition-colors">
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Phone size={14} className="text-slate-400 shrink-0" />
+                  <a href={`tel:${order.customerPhone}`} className="hover:text-blue-600 transition-colors font-medium">
                     {order.customerPhone}
                   </a>
                 </div>
               )}
             </div>
 
-            <div className="pt-3 border-t border-border-subtle">
-              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <MapPin size={13} className="text-brand-yellow" />
+            <div className="pt-3 border-t border-[#E5E7EB]">
+              <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <MapPin size={13} className="text-[#F5A623]" />
                 Shipping Destination
               </p>
-              <p className="text-xs text-text-secondary leading-relaxed bg-white/[0.02] p-3 rounded-lg border border-border-subtle">
+              <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-xl border border-[#E5E7EB]">
                 {order.shippingAddress || 'No address provided'}
               </p>
             </div>
 
-            <div className="pt-3 border-t border-border-subtle">
+            <div className="pt-3 border-t border-[#E5E7EB]">
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
-                  <CreditCard size={13} className="text-brand-yellow" />
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <CreditCard size={13} className="text-[#F5A623]" />
                   Payment Method
                 </p>
-                <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${
+                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
                   order.paymentStatus === 'paid'
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-800 border-amber-200'
                 }`}>
                   {order.paymentStatus}
                 </span>
               </div>
-              <p className="text-xs text-text-secondary uppercase font-mono">
+              <p className="text-xs text-slate-700 uppercase font-mono font-medium">
                 {order.paymentMethod || 'Online Gateway / Razorpay'}
               </p>
               {order.paymentStatus !== 'paid' && order.paymentMethod === 'PAY_AFTER_PROOF' && (
-                <div className="mt-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <p className="text-[11px] text-amber-300 mb-2">
+                <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <p className="text-[11px] text-amber-800 font-medium mb-2.5">
                     Pay-after-proof awaiting offline payment verification.
                   </p>
                   <button
                     onClick={handleManualMarkPaid}
                     disabled={isMarkingPaid}
-                    className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-500 text-black hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
                   >
                     {isMarkingPaid ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
                     Confirm Offline Payment
@@ -650,71 +652,71 @@ export default function OrderDetailPage() {
           </div>
 
           {/* Customer Notifications & WhatsApp Automation */}
-          <div className="print:hidden bg-card border border-border-subtle rounded-xl p-5 space-y-4">
+          <div className="print:hidden bg-white border border-[#E5E7EB] rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <MessageCircle size={16} className="text-[#25D366]" />
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <MessageCircle size={17} className="text-[#25D366]" />
                 Customer Alerts & WhatsApp
               </h3>
-              <span className="text-[10px] uppercase font-bold text-[#25D366] bg-[#25D366]/10 px-2 py-0.5 rounded-full border border-[#25D366]/20">
+              <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                 Automated
               </span>
             </div>
-            <p className="text-xs text-text-muted">
+            <p className="text-xs text-slate-500">
               Trigger instant order status updates directly to customer’s WhatsApp or registered email address.
             </p>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <button
                 onClick={() => openNotificationModal('whatsapp', 'shipped')}
-                className="w-full flex items-center justify-between p-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-border-subtle text-xs text-white transition-colors group"
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-[#E5E7EB] text-xs font-semibold text-slate-800 transition-colors group cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-md bg-[#25D366]/20 text-[#25D366] flex items-center justify-center">
-                    <Truck size={13} />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-[#25D366]/15 text-[#25D366] flex items-center justify-center">
+                    <Truck size={14} />
                   </div>
-                  <span className="font-medium">WhatsApp: Dispatched + AWB Tracking</span>
+                  <span>WhatsApp: Dispatched + AWB Tracking</span>
                 </div>
-                <ExternalLink size={13} className="text-text-muted group-hover:text-white" />
+                <ExternalLink size={14} className="text-slate-400 group-hover:text-slate-700" />
               </button>
 
               <button
                 onClick={() => openNotificationModal('whatsapp', 'in_production')}
-                className="w-full flex items-center justify-between p-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-border-subtle text-xs text-white transition-colors group"
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-[#E5E7EB] text-xs font-semibold text-slate-800 transition-colors group cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-md bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                    <Clock size={13} />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Clock size={14} />
                   </div>
-                  <span className="font-medium">WhatsApp: In Production Alert</span>
+                  <span>WhatsApp: In Production Alert</span>
                 </div>
-                <ExternalLink size={13} className="text-text-muted group-hover:text-white" />
+                <ExternalLink size={14} className="text-slate-400 group-hover:text-slate-700" />
               </button>
 
               <button
                 onClick={() => openNotificationModal('whatsapp', 'confirmed')}
-                className="w-full flex items-center justify-between p-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-border-subtle text-xs text-white transition-colors group"
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-[#E5E7EB] text-xs font-semibold text-slate-800 transition-colors group cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                    <CheckCircle2 size={13} />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <CheckCircle2 size={14} />
                   </div>
-                  <span className="font-medium">WhatsApp: Order Confirmation</span>
+                  <span>WhatsApp: Order Confirmation</span>
                 </div>
-                <ExternalLink size={13} className="text-text-muted group-hover:text-white" />
+                <ExternalLink size={14} className="text-slate-400 group-hover:text-slate-700" />
               </button>
 
               <button
                 onClick={() => openNotificationModal('email', 'shipped')}
-                className="w-full flex items-center justify-between p-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-border-subtle text-xs text-white transition-colors group"
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-[#E5E7EB] text-xs font-semibold text-slate-800 transition-colors group cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-md bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                    <Mail size={13} />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <Mail size={14} />
                   </div>
-                  <span className="font-medium">Email: Send Transactional Update</span>
+                  <span>Email: Send Transactional Update</span>
                 </div>
-                <Send size={13} className="text-text-muted group-hover:text-white" />
+                <Send size={14} className="text-slate-400 group-hover:text-slate-700" />
               </button>
             </div>
           </div>
@@ -807,51 +809,51 @@ export default function OrderDetailPage() {
 
       {/* Notification Preview & Send Modal */}
       {notifyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#0F1420] border border-border-subtle rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-border-subtle">
-              <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  notifyChannel === 'whatsapp' ? 'bg-[#25D366]/20 text-[#25D366]' : 'bg-purple-500/20 text-purple-400'
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#E5E7EB] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-[#E5E7EB]">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                  notifyChannel === 'whatsapp' ? 'bg-[#25D366]/15 text-[#25D366]' : 'bg-purple-50 text-purple-600'
                 }`}>
-                  {notifyChannel === 'whatsapp' ? <MessageCircle size={16} /> : <Mail size={16} />}
+                  {notifyChannel === 'whatsapp' ? <MessageCircle size={18} /> : <Mail size={18} />}
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white">
+                  <h3 className="text-base font-bold text-slate-900">
                     {notifyChannel === 'whatsapp' ? 'Send WhatsApp Message' : 'Send Email Notification'}
                   </h3>
-                  <p className="text-xs text-text-muted">
+                  <p className="text-xs text-slate-500">
                     To: {order.customerName} ({notifyChannel === 'whatsapp' ? order.customerPhone || 'No phone' : order.customerEmail || 'No email'})
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setNotifyModalOpen(false)}
-                className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/[0.06] transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                   Message Content Preview (Editable)
                 </label>
                 <textarea
                   rows={8}
                   value={notifyMessage}
                   onChange={(e) => setNotifyMessage(e.target.value)}
-                  className="w-full bg-white/[0.04] border border-border-subtle rounded-lg p-3 text-xs text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow/50 font-mono leading-relaxed resize-none"
+                  className="w-full bg-slate-50 border border-[#E5E7EB] rounded-xl p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] font-mono leading-relaxed resize-none shadow-2xs"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-border-subtle">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
                 <button
                   type="button"
                   onClick={() => setNotifyModalOpen(false)}
                   disabled={notifySending}
-                  className="px-4 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-[#E5E7EB] transition-colors cursor-pointer shadow-2xs"
                 >
                   Cancel
                 </button>
@@ -859,10 +861,10 @@ export default function OrderDetailPage() {
                   type="button"
                   onClick={handleSendNotification}
                   disabled={notifySending}
-                  className={`flex items-center gap-1.5 px-5 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 shadow-sm ${
+                  className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 shadow-xs cursor-pointer ${
                     notifyChannel === 'whatsapp'
-                      ? 'bg-[#25D366] text-black hover:bg-[#20bd5a]'
-                      : 'bg-brand-yellow text-black hover:bg-[#FFE04D]'
+                      ? 'bg-[#25D366] text-white hover:bg-[#20bd5a]'
+                      : 'bg-[#F5A623] text-black hover:bg-[#e0961e]'
                   }`}
                 >
                   {notifySending ? (
@@ -872,12 +874,12 @@ export default function OrderDetailPage() {
                     </>
                   ) : notifyChannel === 'whatsapp' ? (
                     <>
-                      <MessageCircle size={14} />
+                      <MessageCircle size={15} />
                       Open WhatsApp Web
                     </>
                   ) : (
                     <>
-                      <Send size={14} />
+                      <Send size={15} />
                       Send Email Now
                     </>
                   )}

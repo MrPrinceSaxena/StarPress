@@ -212,33 +212,33 @@ export default function ProductsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB]">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Products &amp; Inventory</h1>
-            <span className="px-2 py-0.5 rounded-full bg-brand-yellow/10 border border-brand-yellow/30 text-brand-yellow text-[10px] font-semibold">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#111827] tracking-tight">Products &amp; Inventory</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-[#B45309] text-xs font-semibold">
               {total} Total
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-[#667085] mt-1">
             Configure catalog items, base pricing, categories, stock levels, and store visibility.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <Link
             href="/admin/categories"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-all hover:text-white"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-[#E5E7EB] shadow-xs transition-all"
           >
-            <FolderTree size={14} className="text-purple-400" />
+            <FolderTree size={14} className="text-purple-600" />
             <span>Categories ({categories.length})</span>
           </Link>
 
           <Link
             href="/admin/products/new"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-all shadow-[0_0_15px_rgba(245,186,19,0.2)] active:scale-[0.98]"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#F5A623] hover:bg-[#E09612] text-slate-950 transition-all shadow-sm active:scale-[0.98]"
           >
-            <Plus size={14} />
+            <Plus size={15} />
             <span>Add Product</span>
           </Link>
         </div>
@@ -250,49 +250,49 @@ export default function ProductsPage() {
           icon={Package}
           title="Catalog Items"
           value={(catalogStats.total || total).toLocaleString()}
-          iconColor="text-brand-yellow"
+          iconColor="text-amber-500"
           period="in database"
         />
         <StatCard
           icon={CheckCircle2}
           title="Active Published"
           value={(catalogStats.published || products.filter((p) => p.status === 'published').length).toLocaleString()}
-          iconColor="text-emerald-400"
+          iconColor="text-emerald-500"
           period="live on store"
         />
         <StatCard
           icon={AlertTriangle}
           title="Low / Out of Stock"
           value={(catalogStats.lowStock || products.filter((p) => p.stockQuantity <= 10).length).toLocaleString()}
-          iconColor="text-amber-400"
+          iconColor="text-rose-500"
           period="needs restocking"
         />
         <StatCard
           icon={FolderTree}
           title="Categories"
           value={categories.length.toLocaleString()}
-          iconColor="text-purple-400"
+          iconColor="text-purple-500"
           period="active collections"
         />
       </div>
 
       {/* Toolbar: Search + Filter + Sort + Status Tabs */}
-      <div className="bg-[#0E111B] border border-white/[0.06] rounded-2xl shadow-elevation-sm overflow-hidden">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-sm overflow-hidden">
         {/* Search & Filter Bar */}
-        <div className="p-3.5 sm:p-4 border-b border-white/[0.06] flex flex-wrap items-center gap-3">
+        <div className="p-3.5 sm:p-4 border-b border-[#E5E7EB] flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[240px]">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search by title, SKU, or slug…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-9 pl-9 pr-8 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-brand-yellow/40 focus:bg-white/[0.05] transition-all"
+              className="w-full h-9 pl-9 pr-8 rounded-xl bg-[#F9FAFB] border border-[#E5E7EB] text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#F5A623] transition-all"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-500 hover:text-white"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-700"
               >
                 <X size={14} />
               </button>
@@ -304,18 +304,18 @@ export default function ProductsPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="appearance-none h-9 pl-3 pr-8 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-slate-300 focus:outline-none focus:border-brand-yellow/40 transition-colors cursor-pointer"
+              className="appearance-none h-9 pl-3 pr-8 rounded-xl bg-[#F9FAFB] hover:bg-white border border-[#E5E7EB] text-xs font-medium text-slate-700 focus:outline-none focus:border-[#F5A623] transition-colors cursor-pointer shadow-xs"
             >
-              <option value="all" className="bg-[#121522] text-white">
+              <option value="all">
                 All Categories
               </option>
               {categories.map((c) => (
-                <option key={c.id} value={c.id} className="bg-[#121522] text-white">
+                <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
             </select>
-            <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
 
           {/* Sort Dropdown */}
@@ -327,42 +327,42 @@ export default function ProductsPage() {
                 setSortBy(sb as typeof sortBy);
                 setSortOrder(so as typeof sortOrder);
               }}
-              className="appearance-none h-9 pl-3 pr-8 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-slate-300 focus:outline-none focus:border-brand-yellow/40 transition-colors cursor-pointer"
+              className="appearance-none h-9 pl-3 pr-8 rounded-xl bg-[#F9FAFB] hover:bg-white border border-[#E5E7EB] text-xs font-medium text-slate-700 focus:outline-none focus:border-[#F5A623] transition-colors cursor-pointer shadow-xs"
             >
-              <option value="created-desc" className="bg-[#121522] text-white">
+              <option value="created-desc">
                 Newest First
               </option>
-              <option value="created-asc" className="bg-[#121522] text-white">
+              <option value="created-asc">
                 Oldest First
               </option>
-              <option value="name-asc" className="bg-[#121522] text-white">
+              <option value="name-asc">
                 Name A–Z
               </option>
-              <option value="name-desc" className="bg-[#121522] text-white">
+              <option value="name-desc">
                 Name Z–A
               </option>
-              <option value="price-asc" className="bg-[#121522] text-white">
+              <option value="price-asc">
                 Price: Low to High
               </option>
-              <option value="price-desc" className="bg-[#121522] text-white">
+              <option value="price-desc">
                 Price: High to Low
               </option>
-              <option value="stock-asc" className="bg-[#121522] text-white">
+              <option value="stock-asc">
                 Stock: Low to High
               </option>
-              <option value="stock-desc" className="bg-[#121522] text-white">
+              <option value="stock-desc">
                 Stock: High to Low
               </option>
             </select>
-            <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
 
           {/* View Toggle */}
-          <div className="flex items-center border border-white/[0.06] rounded-xl overflow-hidden ml-auto">
+          <div className="flex items-center border border-[#E5E7EB] rounded-xl overflow-hidden ml-auto bg-[#F9FAFB]">
             <button
               onClick={() => setViewMode('list')}
               className={`p-2 transition-colors ${
-                viewMode === 'list' ? 'bg-white/[0.1] text-white' : 'text-slate-500 hover:text-white'
+                viewMode === 'list' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-400 hover:text-slate-700'
               }`}
               title="List view"
             >
@@ -371,7 +371,7 @@ export default function ProductsPage() {
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 transition-colors ${
-                viewMode === 'grid' ? 'bg-white/[0.1] text-white' : 'text-slate-500 hover:text-white'
+                viewMode === 'grid' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-400 hover:text-slate-700'
               }`}
               title="Grid view"
             >
@@ -381,15 +381,15 @@ export default function ProductsPage() {
         </div>
 
         {/* Status Tabs */}
-        <div className="flex items-center gap-1 px-3.5 py-2.5 border-b border-white/[0.06] overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 px-3.5 py-2.5 border-b border-[#E5E7EB] overflow-x-auto no-scrollbar">
           {STATUS_TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setStatusTab(tab.key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                 statusTab === tab.key
-                  ? 'bg-brand-yellow/15 text-brand-yellow font-semibold border border-brand-yellow/30'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-[#1E2536] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               {tab.label}
@@ -418,7 +418,7 @@ export default function ProductsPage() {
             action={
               <Link
                 href="/admin/products/new"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#F5A623] hover:bg-[#E09612] text-slate-950 transition-colors shadow-sm"
               >
                 <Plus size={14} />
                 <span>Create Product</span>
@@ -434,9 +434,9 @@ export default function ProductsPage() {
                 <div
                   key={product.id}
                   onClick={() => router.push(`/admin/products/${product.id}`)}
-                  className="group bg-[#121522] border border-white/[0.06] hover:border-brand-yellow/40 rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-elevation-md cursor-pointer flex flex-col"
+                  className="group bg-white border border-[#E5E7EB] hover:border-[#F5A623]/50 rounded-xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer flex flex-col"
                 >
-                  <div className="aspect-[4/3] bg-white/[0.02] relative overflow-hidden flex items-center justify-center border-b border-white/[0.04]">
+                  <div className="aspect-[4/3] bg-slate-50 relative overflow-hidden flex items-center justify-center border-b border-[#E5E7EB]">
                     {imgUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -446,7 +446,7 @@ export default function ProductsPage() {
                         loading="lazy"
                       />
                     ) : (
-                      <Package size={32} className="text-slate-600" />
+                      <Package size={32} className="text-slate-300" />
                     )}
                     <div className="absolute top-2.5 right-2.5">
                       <StatusBadge status={product.stockQuantity === 0 ? 'out_of_stock' : product.status} />
@@ -454,23 +454,23 @@ export default function ProductsPage() {
                   </div>
                   <div className="p-4 flex-1 flex flex-col justify-between">
                     <div>
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-brand-yellow">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#F5A623]">
                         {product.categoryName}
                       </span>
-                      <h3 className="text-sm font-semibold text-white mt-1 group-hover:text-brand-yellow transition-colors line-clamp-1">
+                      <h3 className="text-sm font-bold text-slate-900 mt-1 group-hover:text-[#F5A623] transition-colors line-clamp-1">
                         {product.name}
                       </h3>
-                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">{product.sku}</p>
+                      <p className="text-[11px] font-mono text-slate-500 mt-0.5">{product.sku}</p>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">
-                      <span className="text-sm font-bold text-white">₹{formatPrice(product.basePrice)}</span>
+                    <div className="mt-3 pt-3 border-t border-[#E5E7EB] flex items-center justify-between">
+                      <span className="text-sm font-bold text-slate-900 font-mono">₹{formatPrice(product.basePrice)}</span>
                       <span
                         className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                           product.stockQuantity === 0
-                            ? 'bg-rose-500/10 text-rose-400'
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
                             : product.stockQuantity <= 10
-                            ? 'bg-amber-500/10 text-amber-400'
-                            : 'bg-emerald-500/10 text-emerald-400'
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         }`}
                       >
                         {product.stockQuantity} in stock
@@ -484,44 +484,44 @@ export default function ProductsPage() {
         ) : (
           /* Table View */
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/[0.06] bg-white/[0.01]">
+                <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB] text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   <th className="w-10 px-4 py-3.5">
                     <input
                       type="checkbox"
                       checked={selectedIds.size === products.length && products.length > 0}
                       onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-white/20 bg-transparent accent-brand-yellow cursor-pointer"
+                      className="w-4 h-4 rounded border-slate-300 text-[#F5A623] focus:ring-[#F5A623] cursor-pointer"
                     />
                   </th>
-                  <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3.5">
                     Product
                   </th>
-                  <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3.5">
                     SKU &amp; Date
                   </th>
-                  <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3.5">
                     Price
                   </th>
-                  <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3.5">
                     Inventory
                   </th>
-                  <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3.5">
                     Status
                   </th>
-                  <th className="w-12 px-4 py-3.5"></th>
+                  <th className="w-12 px-4 py-3.5 text-right"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.03]">
+              <tbody className="divide-y divide-[#E5E7EB] text-xs text-slate-700">
                 {products.map((product) => {
                   const imgUrl = product.images?.[0]?.url;
                   return (
                     <tr
                       key={product.id}
                       onClick={() => router.push(`/admin/products/${product.id}`)}
-                      className={`hover:bg-white/[0.02] transition-colors cursor-pointer group ${
-                        selectedIds.has(product.id) ? 'bg-brand-yellow/[0.04]' : ''
+                      className={`hover:bg-slate-50/80 transition-colors cursor-pointer group ${
+                        selectedIds.has(product.id) ? 'bg-amber-50/40' : ''
                       }`}
                     >
                       <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
@@ -529,12 +529,12 @@ export default function ProductsPage() {
                           type="checkbox"
                           checked={selectedIds.has(product.id)}
                           onChange={() => toggleSelect(product.id)}
-                          className="w-4 h-4 rounded border-white/20 bg-transparent accent-brand-yellow cursor-pointer"
+                          className="w-4 h-4 rounded border-slate-300 text-[#F5A623] focus:ring-[#F5A623] cursor-pointer"
                         />
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
+                          <div className="w-10 h-10 rounded-lg bg-slate-100 border border-[#E5E7EB] flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
                             {imgUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
@@ -548,44 +548,44 @@ export default function ProductsPage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <div className="text-xs sm:text-sm font-semibold text-white group-hover:text-brand-yellow transition-colors truncate max-w-[280px]">
+                            <div className="text-xs sm:text-sm font-semibold text-slate-900 group-hover:text-[#F5A623] transition-colors truncate max-w-[280px]">
                               {product.name}
                             </div>
-                            <div className="text-[11px] text-slate-400 truncate">{product.categoryName}</div>
+                            <div className="text-[11px] text-slate-500 truncate">{product.categoryName}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
-                        <div className="text-xs font-mono text-slate-300">{product.sku}</div>
+                        <div className="text-xs font-mono text-slate-700">{product.sku}</div>
                         <div className="text-[11px] text-slate-500">{formatDate(product.createdAt)}</div>
                       </td>
                       <td className="px-4 py-3.5">
-                        <div className="text-xs sm:text-sm font-semibold text-white">
+                        <div className="text-xs sm:text-sm font-bold text-slate-900 font-mono">
                           ₹{formatPrice(product.basePrice)}
                         </div>
                         {product.compareAtPrice && (
-                          <div className="text-[11px] text-slate-500 line-through">
+                          <div className="text-[11px] text-slate-400 line-through font-mono">
                             ₹{formatPrice(product.compareAtPrice)}
                           </div>
                         )}
                       </td>
                       <td className="px-4 py-3.5">
                         <span
-                          className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${
+                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                             product.stockQuantity === 0
-                              ? 'bg-rose-500/10 text-rose-400'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
                               : product.stockQuantity <= 10
-                              ? 'bg-amber-500/10 text-amber-400'
-                              : 'bg-emerald-500/10 text-emerald-400'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           }`}
                         >
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
                               product.stockQuantity === 0
-                                ? 'bg-rose-400'
+                                ? 'bg-rose-500'
                                 : product.stockQuantity <= 10
-                                ? 'bg-amber-400'
-                                : 'bg-emerald-400'
+                                ? 'bg-amber-500'
+                                : 'bg-emerald-500'
                             }`}
                           />
                           {product.stockQuantity} in stock
@@ -594,11 +594,11 @@ export default function ProductsPage() {
                       <td className="px-4 py-3.5">
                         <StatusBadge status={product.stockQuantity === 0 ? 'out_of_stock' : product.status} />
                       </td>
-                      <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="relative">
                           <button
                             onClick={() => setActionMenuId(actionMenuId === product.id ? null : product.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                             aria-label="Actions"
                           >
                             <MoreHorizontal size={16} />
@@ -606,41 +606,41 @@ export default function ProductsPage() {
                           {actionMenuId === product.id && (
                             <>
                               <div className="fixed inset-0 z-10" onClick={() => setActionMenuId(null)} />
-                              <div className="absolute right-0 top-full mt-1 w-48 bg-[#101422] border border-white/10 rounded-xl shadow-elevation-md py-1.5 z-20 animate-fadeIn">
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-[#E5E7EB] rounded-xl shadow-xl py-1.5 z-20 animate-fadeIn">
                                 <button
                                   onClick={() => {
                                     router.push(`/admin/products/${product.id}`);
                                     setActionMenuId(null);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors"
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                                 >
-                                  <Edit3 size={13} className="text-brand-yellow" /> Edit Details
+                                  <Edit3 size={13} className="text-[#F5A623]" /> Edit Details
                                 </button>
                                 <button
                                   onClick={() => {
                                     window.open(`/shop/${product.slug}`, '_blank');
                                     setActionMenuId(null);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors"
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                                 >
-                                  <Eye size={13} className="text-cyan-400" /> View Storefront
+                                  <Eye size={13} className="text-blue-500" /> View Storefront
                                 </button>
                                 <button
                                   onClick={() => {
                                     handleDuplicate(product.id);
                                     setActionMenuId(null);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors"
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                                 >
-                                  <Copy size={13} className="text-purple-400" /> Duplicate Item
+                                  <Copy size={13} className="text-purple-500" /> Duplicate Item
                                 </button>
-                                <div className="border-t border-white/[0.06] my-1" />
+                                <div className="border-t border-[#E5E7EB] my-1" />
                                 <button
                                   onClick={() => {
                                     setDeleteDialog({ open: true, ids: [product.id], loading: false });
                                     setActionMenuId(null);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
                                 >
                                   <Trash2 size={13} /> Delete Product
                                 </button>
@@ -659,7 +659,7 @@ export default function ProductsPage() {
 
         {/* Pagination Footer */}
         {totalPages > 1 && (
-          <div className="p-3.5 border-t border-white/[0.06] flex items-center justify-between">
+          <div className="p-3.5 border-t border-[#E5E7EB] flex items-center justify-between">
             <Pagination
               page={page}
               totalPages={totalPages}
@@ -673,11 +673,11 @@ export default function ProductsPage() {
 
       {/* Floating Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-[#0F1320]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-elevation-md animate-fadeIn">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-[#12161F] text-white border border-slate-700 rounded-xl shadow-2xl animate-fadeIn">
           <span className="text-xs font-semibold text-white">
-            <strong className="text-brand-yellow font-bold">{selectedIds.size}</strong> selected
+            <strong className="text-[#F5A623] font-bold">{selectedIds.size}</strong> selected
           </span>
-          <div className="w-px h-4 bg-white/10" />
+          <div className="w-px h-4 bg-slate-700" />
           <button
             onClick={() => handleBulkStatusChange('published')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-400 hover:bg-emerald-500/10 transition-colors"
