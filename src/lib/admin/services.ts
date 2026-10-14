@@ -47,7 +47,7 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
 // =============================================================================
 
 export const productService = {
-  async getProducts(filters: ProductFilters = {}): Promise<PaginatedResult<AdminProduct>> {
+  async getProducts(filters: ProductFilters = {}): Promise<PaginatedResult<AdminProduct> & { stats?: any }> {
     const params = new URLSearchParams();
     if (filters.search) params.set('search', filters.search);
     if (filters.status && filters.status !== 'all') params.set('status', filters.status);
@@ -123,7 +123,9 @@ export const productService = {
         page: res.page || 1,
         pageSize: res.limit || 10,
         totalPages,
+        stats: res.stats,
       };
+
     } catch (err) {
       console.error('[productService.getProducts] error:', err);
       return { data: [], total: 0, page: 1, pageSize: 10, totalPages: 1 };

@@ -21,6 +21,7 @@ import {
   type BucketName,
 } from '@/lib/supabase/storage';
 import { verifyAdminAccess } from '@/lib/admin/auth-check';
+import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -266,10 +267,25 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Candidate keys for bucket deletion: full prefixed path and relative key inside bucket
     const relativeKey = decodedPath.slice(matchedPrefix.length);
 
     const success = await deleteFiles(bucket as BucketName, [decodedPath, relativeKey]);
+
+    // Clean up database references in real time
+    if (url) {
+      await db.productImage.deleteMany({
+        where: { url },
+      }).catch(() => {});
+      await db.category.updateMany({
+        where: { imageUrl: url },
+        data: { imageUrl: null },
+      }).catch(() => {});
+    }
+    if (decodedPath) {
+      await db.productImage.deleteMany({
+        where: { url: { contains: decodedPath } },
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ success, path: decodedPath });
   } catch (err: any) {

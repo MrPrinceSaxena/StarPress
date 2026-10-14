@@ -220,16 +220,49 @@ export function extractPathFromUrl(url: string, bucket: BucketName = BUCKETS.PRO
     const publicMarker = '/storage/v1/object/public/';
     const publicIdx = url.indexOf(publicMarker);
     if (publicIdx !== -1) {
-      return url.substring(publicIdx + publicMarker.length);
+      let pathAfterMarker = url.substring(publicIdx + publicMarker.length);
+      if (pathAfterMarker.startsWith(`${bucket}/`)) {
+        pathAfterMarker = pathAfterMarker.substring(bucket.length + 1);
+      }
+      return pathAfterMarker;
     }
     const bucketMarker = `/${bucket}/`;
     const bucketIdx = url.indexOf(bucketMarker);
     if (bucketIdx !== -1) {
-      return url.substring(bucketIdx + 1);
+      return url.substring(bucketIdx + bucketMarker.length);
     }
     return null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Safely delete an image from Supabase Storage by its public URL or path.
+ * Automatically extracts the relative key inside the bucket and cleans it up.
+ */
+export async function deleteStorageImage(
+  urlOrPath: string,
+  bucket: BucketName = BUCKETS.PRODUCT_IMAGES
+): Promise<boolean> {
+  if (!urlOrPath) return false;
+  try {
+    let relativeKey = extractPathFromUrl(urlOrPath, bucket) || urlOrPath.trim();
+    relativeKey = relativeKey.replace(/^\/+/, '');
+    
+    // Attempt deletion with both clean relative key and bucket-prefixed key
+    const candidates = new Set<string>();
+    candidates.add(relativeKey);
+    if (relativeKey.startsWith(`${bucket}/`)) {
+      candidates.add(relativeKey.substring(bucket.length + 1));
+    } else {
+      candidates.add(`${bucket}/${relativeKey}`);
+    }
+
+    return await deleteFiles(bucket, Array.from(candidates));
+  } catch (err) {
+    console.warn(`[Storage] Failed to delete image (${urlOrPath}):`, err);
+    return false;
   }
 }
 

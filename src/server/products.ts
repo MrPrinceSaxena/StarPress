@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { getAllProducts, CATALOG_CATEGORIES, PRODUCT_SLUG_ALIASES, type CatalogProduct } from "@/lib/catalog";
 import { persistentStore } from "@/server/storage";
+import { deleteStorageImage, BUCKETS } from "@/lib/supabase/storage";
 
 export interface ListAdminProductsOptions {
   search?: string;
@@ -562,24 +563,33 @@ export async function createAdminProduct(
   adminEmail: string,
   ipAddress?: string
 ) {
-  const slug = data.slug?.trim() ? slugify(data.slug) : slugify(data.name);
-  const sku = data.sku?.trim() ? data.sku.trim().toUpperCase() : generateSku(data.name);
-
-  // Find or create category in DB
-  let categoryId = data.categoryId;
-  if (categoryId) {
-    const catById = await db.category.findUnique({ where: { id: categoryId } }).catch(() => null);
-    if (!catById) {
+  // 1. Resolve Category reliably from PostgreSQL
+  let resolvedCategoryId: string | null = null;
+  const rawCatId = data.categoryId?.trim();
+  if (rawCatId) {
+    const catById = await db.category.findUnique({ where: { id: rawCatId } }).catch(() => null);
+    if (catById) {
+      resolvedCategoryId = catById.id;
+    } else {
       const catBySlug = await db.category.findFirst({
-        where: { OR: [{ slug: categoryId }, { name: categoryId }] },
+        where: {
+          OR: [
+            { slug: rawCatId },
+            { name: { equals: rawCatId, mode: "insensitive" } },
+          ],
+        },
       }).catch(() => null);
       if (catBySlug) {
-        categoryId = catBySlug.id;
+        resolvedCategoryId = catBySlug.id;
       }
     }
   }
-  if (!categoryId || categoryId === "general") {
-    try {
+
+  if (!resolvedCategoryId) {
+    const firstCat = await db.category.findFirst({ orderBy: { displayOrder: "asc" } }).catch(() => null);
+    if (firstCat) {
+      resolvedCategoryId = firstCat.id;
+    } else {
       const defaultCategory = await db.category.upsert({
         where: { slug: "business-printing" },
         update: {},
@@ -589,66 +599,93 @@ export async function createAdminProduct(
           description: "Corporate stationery, business cards, and essentials",
         },
       });
-      categoryId = defaultCategory.id;
-    } catch {
-      const firstCat = await db.category.findFirst().catch(() => null);
-      categoryId = firstCat?.id || "cmum543r20000xtrl67lwqlou";
+      resolvedCategoryId = defaultCategory.id;
     }
   }
 
-  let createdProduct: any = null;
+  // 2. Guarantee unique slug
+  let baseSlug = data.slug?.trim() ? slugify(data.slug) : slugify(data.name);
+  if (!baseSlug) baseSlug = `prod-${Date.now().toString(36)}`;
+  let uniqueSlug = baseSlug;
+  let slugCounter = 1;
+  while (await db.product.findUnique({ where: { slug: uniqueSlug } }).catch(() => null)) {
+    uniqueSlug = `${baseSlug}-${slugCounter++}`;
+  }
 
+  // 3. Guarantee unique SKU
+  let baseSku = data.sku?.trim() ? data.sku.trim().toUpperCase() : generateSku(data.name);
+  let uniqueSku = baseSku;
+  let skuCounter = 1;
+  while (await db.product.findUnique({ where: { sku: uniqueSku } }).catch(() => null)) {
+    uniqueSku = `${baseSku}-${skuCounter++}`;
+  }
+
+  // 4. Clean and normalize image list
+  const imageList: Array<{ url: string; altText: string; isPrimary: boolean; position: number }> = [];
+  if (Array.isArray(data.images) && data.images.length > 0) {
+    data.images.forEach((img: any, idx: number) => {
+      const url = typeof img === "object" && img.url ? img.url : String(img);
+      if (url && typeof url === "string" && url.trim()) {
+        imageList.push({
+          url: url.trim(),
+          altText: typeof img === "object" && img.altText ? img.altText : `${data.name} Image ${idx + 1}`,
+          isPrimary: typeof img === "object" && img.isPrimary !== undefined ? img.isPrimary : idx === 0,
+          position: typeof img === "object" && img.position !== undefined ? img.position : idx,
+        });
+      }
+    });
+  } else if (data.imageUrl && typeof data.imageUrl === "string" && data.imageUrl.trim()) {
+    imageList.push({
+      url: data.imageUrl.trim(),
+      altText: `${data.name} Primary Image`,
+      isPrimary: true,
+      position: 0,
+    });
+  }
+
+  // 5. Create product in live PostgreSQL with connected images
   try {
-    createdProduct = await db.product.create({
+    const createdProduct = await db.product.create({
       data: {
-        name: data.name,
-        slug,
-        sku,
+        name: data.name.trim(),
+        slug: uniqueSlug,
+        sku: uniqueSku,
         description: data.description || "",
         shortDescription: data.shortDescription || "",
-        categoryId: categoryId!,
-        basePrice: data.basePrice,
-        compareAtPrice: data.compareAtPrice ?? null,
-        costPerUnit: data.costPerUnit ?? null,
-        discountPercentage: data.discountPercentage ?? null,
+        categoryId: resolvedCategoryId!,
+        basePrice: Number(data.basePrice),
+        compareAtPrice: data.compareAtPrice !== undefined && data.compareAtPrice !== null ? Number(data.compareAtPrice) : null,
+        costPerUnit: data.costPerUnit !== undefined && data.costPerUnit !== null ? Number(data.costPerUnit) : null,
+        discountPercentage: data.discountPercentage !== undefined && data.discountPercentage !== null ? Math.round(Number(data.discountPercentage)) : null,
         trackInventory: data.trackInventory ?? true,
-        stockQuantity: data.stockQuantity ?? 100,
-        lowStockThreshold: data.lowStockThreshold ?? 10,
+        stockQuantity: data.stockQuantity !== undefined ? Math.round(Number(data.stockQuantity)) : 100,
+        lowStockThreshold: data.lowStockThreshold !== undefined ? Math.round(Number(data.lowStockThreshold)) : 10,
         status: data.status || "draft",
         isFeatured: data.isFeatured ?? false,
         metaTitle: data.metaTitle || `${data.name} | Star Press`,
         metaDescription: data.metaDescription || data.shortDescription || "",
         metaKeywords: data.metaKeywords || "",
-        images: data.images && data.images.length > 0
+        images: imageList.length > 0
           ? {
-              create: data.images.map((img, idx) => ({
+              create: imageList.map((img, idx) => ({
                 url: img.url,
-                altText: img.altText || `${data.name} Image ${idx + 1}`,
-                isPrimary: img.isPrimary ?? idx === 0,
-                position: img.position ?? idx,
+                altText: img.altText,
+                isPrimary: img.isPrimary,
+                position: img.position,
                 displayOrder: idx,
               })),
             }
-          : data.imageUrl
-            ? {
-                create: [
-                  {
-                    url: data.imageUrl,
-                    altText: `${data.name} Primary Image`,
-                    isPrimary: true,
-                    position: 0,
-                  },
-                ],
-              }
-            : undefined,
+          : undefined,
       },
       include: {
         category: true,
-        images: true,
+        images: {
+          orderBy: { position: "asc" },
+        },
       },
     });
 
-    // Write audit log
+    // 6. Write admin audit log
     await db.adminAuditLog.create({
       data: {
         adminEmail,
@@ -656,72 +693,43 @@ export async function createAdminProduct(
         entityId: createdProduct.id,
         action: "create",
         changes: {
-          name: data.name,
-          sku,
+          name: createdProduct.name,
+          sku: uniqueSku,
           price: data.basePrice,
           status: data.status || "draft",
+          imageCount: imageList.length,
         },
         ipAddress: ipAddress || null,
       },
-    });
-  } catch (err: any) {
-    console.warn("[Create Product] Database error, saving to persistent store:", err?.message);
-    const virtualProduct: AdminProductDto = {
-      id: `prod-${Date.now()}`,
-      sku,
-      name: data.name,
-      slug,
-      description: data.description || "",
-      shortDescription: data.shortDescription || "",
-      categoryId: categoryId || "business-printing",
-      categoryName: "Business Printing",
-      categorySlug: "business-printing",
-      status: data.status || "published",
-      basePrice: data.basePrice,
-      compareAtPrice: data.compareAtPrice,
-      costPerUnit: data.costPerUnit,
-      discountPercentage: data.discountPercentage || 0,
-      marginPercent: calculateMargin(data.basePrice, data.costPerUnit),
-      trackInventory: data.trackInventory ?? true,
-      stockQuantity: data.stockQuantity ?? 100,
-      lowStockThreshold: data.lowStockThreshold ?? 10,
-      isFeatured: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      images: data.imageUrl
-        ? [
-            {
-              id: `img-${Date.now()}`,
-              url: data.imageUrl,
-              altText: data.name,
-              isPrimary: true,
-              position: 0,
-            },
-          ]
-        : [],
-    };
-    persistentStore.saveCustomProduct(virtualProduct);
-    return {
-      success: true,
-      product: virtualProduct,
-    };
-  }
+    }).catch(() => {});
 
-  if (createdProduct) {
-    persistentStore.saveCustomProduct({
+    // 7. Format clean DTO
+    const formatted: AdminProductDto = {
       id: createdProduct.id,
-      sku: createdProduct.sku,
+      sku: createdProduct.sku || uniqueSku,
       name: createdProduct.name,
       slug: createdProduct.slug,
-      description: createdProduct.description,
-      shortDescription: createdProduct.shortDescription,
+      description: createdProduct.description || "",
+      shortDescription: createdProduct.shortDescription || "",
       categoryId: createdProduct.categoryId,
       categoryName: createdProduct.category?.name || "Business Printing",
       categorySlug: createdProduct.category?.slug || "business-printing",
-      status: createdProduct.status,
+      status: createdProduct.status as any,
       basePrice: Number(createdProduct.basePrice),
       compareAtPrice: createdProduct.compareAtPrice ? Number(createdProduct.compareAtPrice) : null,
       costPerUnit: createdProduct.costPerUnit ? Number(createdProduct.costPerUnit) : null,
+      discountPercentage: createdProduct.discountPercentage || null,
+      marginPercent: calculateMargin(Number(createdProduct.basePrice), createdProduct.costPerUnit ? Number(createdProduct.costPerUnit) : null),
+      trackInventory: createdProduct.trackInventory ?? true,
+      stockQuantity: createdProduct.stockQuantity ?? 100,
+      lowStockThreshold: createdProduct.lowStockThreshold ?? 10,
+      isFeatured: createdProduct.isFeatured ?? false,
+      metaTitle: createdProduct.metaTitle,
+      metaDescription: createdProduct.metaDescription,
+      metaKeywords: createdProduct.metaKeywords,
+      publishedAt: createdProduct.publishedAt ? createdProduct.publishedAt.toISOString() : null,
+      createdAt: createdProduct.createdAt.toISOString(),
+      updatedAt: createdProduct.updatedAt.toISOString(),
       images: (createdProduct.images || []).map((img: any) => ({
         id: img.id,
         url: img.url,
@@ -729,13 +737,15 @@ export async function createAdminProduct(
         isPrimary: img.isPrimary,
         position: img.position,
       })),
-      createdAt: createdProduct.createdAt.toISOString(),
-      updatedAt: createdProduct.updatedAt.toISOString(),
-    });
-  }
+    };
 
-  return { success: true, product: createdProduct };
+    return { success: true, product: formatted };
+  } catch (err: any) {
+    console.error("[Create Product] Database error:", err);
+    throw new Error(`Failed to save product in database: ${err?.message || err}`);
+  }
 }
+
 
 /**
  * Update an existing product and log audit diff
@@ -902,10 +912,30 @@ export async function updateAdminProduct(
       console.log(`[Update Product] Created new product "${updatedProduct.name}" (${updatedProduct.id}) in database.`);
     }
 
-    // 5. Handle image syncing
+    // 5. Handle image syncing with Supabase Storage cleanup
     const imagesToSync = data.images;
     if (Array.isArray(imagesToSync) && updatedProduct) {
       try {
+        // Find existing images to detect which ones were removed
+        const existingImages = await db.productImage.findMany({
+          where: { productId: updatedProduct.id },
+        });
+
+        const newUrls = new Set(
+          imagesToSync
+            .map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)).trim())
+            .filter(Boolean)
+        );
+
+        // Delete removed images from Supabase Storage
+        const removedImages = existingImages.filter((img) => !newUrls.has(img.url.trim()));
+        for (const rem of removedImages) {
+          if (rem.url) {
+            await deleteStorageImage(rem.url, BUCKETS.PRODUCT_IMAGES);
+          }
+        }
+
+        // Wipe old DB product images and insert new ones
         await db.productImage.deleteMany({
           where: { productId: updatedProduct.id },
         });
@@ -935,6 +965,7 @@ export async function updateAdminProduct(
         console.error("[Update Product] Image sync error:", imgErr?.message);
       }
     }
+
 
     // 6. Audit log
     if (updatedProduct) {
@@ -996,9 +1027,27 @@ export async function deleteAdminProduct(id: string, adminEmail: string, ipAddre
           ...(catalogProd ? [{ id: catalogProd.id }] : []),
         ],
       },
+      include: {
+        images: true,
+      },
     });
 
     if (targetProduct) {
+      // 1. Delete all associated images from Supabase Storage
+      if (targetProduct.images && targetProduct.images.length > 0) {
+        for (const img of targetProduct.images) {
+          if (img.url) {
+            await deleteStorageImage(img.url, BUCKETS.PRODUCT_IMAGES);
+          }
+        }
+      }
+
+      // 2. Delete product images from DB first
+      await db.productImage.deleteMany({
+        where: { productId: targetProduct.id },
+      }).catch(() => {});
+
+      // 3. Delete product from DB
       await db.product.delete({
         where: { id: targetProduct.id },
       });
@@ -1010,7 +1059,7 @@ export async function deleteAdminProduct(id: string, adminEmail: string, ipAddre
             entityType: "product",
             entityId: targetProduct.id,
             action: "delete",
-            changes: { deletedId: targetProduct.id },
+            changes: { deletedId: targetProduct.id, name: targetProduct.name },
             ipAddress: ipAddress || null,
           },
         });
@@ -1025,6 +1074,7 @@ export async function deleteAdminProduct(id: string, adminEmail: string, ipAddre
 
   return { success: true };
 }
+
 
 /**
  * Return all categories for admin category selection
@@ -1070,7 +1120,9 @@ export async function bulkUpdateProductStatus(ids: string[], status: string) {
  */
 import { cache } from "react";
 
-export const getLiveCatalogProducts = cache(async function getLiveCatalogProducts(): Promise<CatalogProduct[]> {
+const safeCache = typeof cache === "function" ? cache : <T extends (...args: any[]) => any>(fn: T): T => fn;
+
+export const getLiveCatalogProducts = safeCache(async function getLiveCatalogProducts(): Promise<CatalogProduct[]> {
   const base = getAllProducts();
   
   let dbProducts: any[] = [];

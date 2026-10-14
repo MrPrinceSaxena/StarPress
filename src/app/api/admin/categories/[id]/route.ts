@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminAccess } from "@/lib/admin/auth-check";
 import { db } from "@/lib/db";
+import { deleteStorageImage, BUCKETS } from "@/lib/supabase/storage";
 
 interface RouteParams {
   params: { id: string };
@@ -35,6 +36,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (body.displayOrder !== undefined)
       updateData.displayOrder = body.displayOrder;
 
+    // If image is being replaced or removed, clean up old image from storage
+    if (body.imageUrl !== undefined) {
+      const existing = await db.category.findUnique({
+        where: { id: params.id },
+        select: { imageUrl: true },
+      });
+      if (existing?.imageUrl && existing.imageUrl !== body.imageUrl) {
+        await deleteStorageImage(existing.imageUrl, BUCKETS.CATEGORY_IMAGES);
+      }
+    }
+
     const category = await db.category.update({
       where: { id: params.id },
       data: updateData,
@@ -42,6 +54,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         _count: { select: { products: true } },
       },
     });
+
 
     // Audit log
     try {
@@ -123,6 +136,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         where: { categoryId: params.id },
         data: { categoryId: fallback.id },
       });
+    }
+
+    if (category.imageUrl) {
+      await deleteStorageImage(category.imageUrl, BUCKETS.CATEGORY_IMAGES);
     }
 
     await db.category.delete({ where: { id: params.id } });

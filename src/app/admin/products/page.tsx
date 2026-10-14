@@ -106,8 +106,10 @@ export default function ProductsPage() {
       setTotal(result.total);
       setTotalPages(result.totalPages);
 
-      // Fetch overall catalog stats if available or compute from result
-      if (result.total > 0 && catalogStats.total === 0) {
+      // Real-time catalog stats from database
+      if ((result as any).stats) {
+        setCatalogStats((result as any).stats);
+      } else if (result.total > 0 && catalogStats.total === 0) {
         setCatalogStats((prev) => ({
           ...prev,
           total: result.total,
@@ -120,7 +122,8 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, statusTab, selectedCategory, sortBy, sortOrder, page, catalogStats.total]);
+  }, [debouncedSearch, statusTab, selectedCategory, sortBy, sortOrder, page]);
+
 
   useEffect(() => {
     loadProducts();

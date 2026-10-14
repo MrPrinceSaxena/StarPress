@@ -40,7 +40,7 @@ export default function NewProductPage() {
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
   const [sku, setSku] = useState('');
-  const [categoryId, setCategoryId] = useState('cat-1');
+  const [categoryId, setCategoryId] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [brand, setBrand] = useState('Star Press');
@@ -83,8 +83,14 @@ export default function NewProductPage() {
 
   // Load categories
   React.useEffect(() => {
-    categoryService.getCategories().then(setCategories);
+    categoryService.getCategories().then((cats) => {
+      setCategories(cats);
+      if (cats && cats.length > 0) {
+        setCategoryId(cats[0].id);
+      }
+    });
   }, []);
+
 
   // Auto-generate slug from name
   React.useEffect(() => {

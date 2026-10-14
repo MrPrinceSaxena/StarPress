@@ -1,6 +1,11 @@
 // src/lib/supabase/admin.ts
 import { createClient } from "@supabase/supabase-js";
 
+// Ensure Node.js runtime doesn't throw on missing native WebSocket
+if (typeof globalThis !== "undefined" && typeof (globalThis as any).WebSocket === "undefined") {
+  (globalThis as any).WebSocket = class MockWebSocket {};
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co";
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
@@ -20,8 +25,12 @@ export function getAdminClient() {
       autoRefreshToken: false,
       persistSession: false,
     },
+    realtime: {
+      transport: (globalThis as any).WebSocket,
+    },
   });
 }
+
 
 /**
  * Authoritatively assign an administrative role to a user.

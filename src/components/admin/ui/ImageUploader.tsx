@@ -231,21 +231,20 @@ export default function ImageUploader({
       const reindexed = newImages.map((im, i) => ({ ...im, position: i }));
       onChange(reindexed);
 
-      // Delete from storage in background (non-blocking)
-      if (img.storagePath) {
+      // Delete from storage and DB in background (non-blocking)
+      if (img.url || img.storagePath) {
         fetch('/api/admin/upload', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bucket, path: img.storagePath }),
-        }).catch(() => {});
-      } else if (img.url && img.url.includes('supabase')) {
-        fetch('/api/admin/upload', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bucket, url: img.url }),
+          body: JSON.stringify({
+            bucket,
+            path: img.storagePath || undefined,
+            url: img.url || undefined,
+          }),
         }).catch(() => {});
       }
     },
+
     [images, onChange, bucket]
   );
 
