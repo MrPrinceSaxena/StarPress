@@ -220,23 +220,23 @@ export default function SettingsPage() {
   };
 
   const inputClass =
-    'w-full h-9 px-3 rounded-xl bg-[#090B12] border border-white/[0.08] text-xs sm:text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-yellow/50 transition-colors';
+    'w-full h-10 px-3.5 rounded-xl bg-white border border-[#E5E7EB] text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] transition-all shadow-2xs';
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
+      <div className="space-y-6 max-w-[1200px]">
+        <Skeleton className="h-8 w-48 rounded-xl" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full rounded-xl" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-11 w-full rounded-xl" />
             ))}
           </div>
-          <div className="md:col-span-3 bg-[#0E111B] border border-white/[0.06] rounded-2xl p-6 space-y-4">
-            <Skeleton className="h-6 w-36" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-20 w-full" />
+          <div className="md:col-span-3 bg-white border border-[#E5E7EB] rounded-xl p-6 space-y-4 shadow-sm">
+            <Skeleton className="h-6 w-36 rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-xl" />
+            <Skeleton className="h-10 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
           </div>
         </div>
       </div>
@@ -244,12 +244,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1200px]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB]">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Store Settings</h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Store Settings</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Configure store identity, homepage hero slider, payments, shipping rates, and security.
           </p>
         </div>
@@ -257,7 +257,7 @@ export default function SettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-brand-yellow text-black hover:bg-[#FFE04D] transition-all shadow-[0_0_15px_rgba(245,186,19,0.2)] disabled:opacity-50 self-start sm:self-auto"
+          className="flex items-center gap-2 px-4.5 py-2 rounded-xl text-xs font-semibold bg-[#F5A623] text-black hover:bg-[#e0961e] transition-all shadow-xs disabled:opacity-50 self-start sm:self-auto cursor-pointer"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           <span>{saving ? 'Saving Changes…' : 'Save Changes'}</span>
@@ -274,13 +274,13 @@ export default function SettingsPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-medium transition-all ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   active
-                    ? 'bg-brand-yellow/15 text-brand-yellow font-semibold border border-brand-yellow/30'
-                    : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                    ? 'bg-white text-slate-900 border border-[#E5E7EB] shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent'
                 }`}
               >
-                <Icon size={16} className={active ? 'text-brand-yellow' : 'text-slate-400'} />
+                <Icon size={16} className={active ? 'text-[#F5A623]' : 'text-slate-400'} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -288,13 +288,17 @@ export default function SettingsPage() {
         </div>
 
         {/* Tab Panel */}
-        <div className="lg:col-span-3 bg-[#0E111B] border border-white/[0.06] rounded-2xl p-5 sm:p-6 shadow-elevation-sm">
+        <div className="lg:col-span-3 bg-white border border-[#E5E7EB] rounded-xl p-5 sm:p-6 shadow-sm">
           {/* General Tab */}
           {activeTab === 'general' && (
             <div className="space-y-5">
-              <h2 className="text-sm font-semibold text-white">Store Identity &amp; Contact Information</h2>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Store Identity & Contact Information</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Primary business name, address, and legal tax identifiers.</p>
+              </div>
+
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300">Store Name</label>
+                <label className="text-xs font-semibold text-slate-700">Store Name</label>
                 <input
                   type="text"
                   value={storeName}
@@ -305,7 +309,7 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">Official Support Email</label>
+                  <label className="text-xs font-semibold text-slate-700">Official Support Email</label>
                   <input
                     type="email"
                     value={storeEmail}
@@ -314,7 +318,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">Customer Helpline / WhatsApp</label>
+                  <label className="text-xs font-semibold text-slate-700">Customer Helpline / WhatsApp</label>
                   <input
                     type="text"
                     value={storePhone}
@@ -325,18 +329,18 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300">Physical Store / Factory Address</label>
+                <label className="text-xs font-semibold text-slate-700">Physical Store / Factory Address</label>
                 <textarea
                   value={storeAddress}
                   onChange={(e) => setStoreAddress(e.target.value)}
                   rows={2}
-                  className={inputClass.replace('h-9', 'h-auto py-2.5 resize-none')}
+                  className={inputClass.replace('h-10', 'h-auto py-2.5 resize-none')}
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">Currency</label>
+                  <label className="text-xs font-semibold text-slate-700">Currency</label>
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
@@ -347,7 +351,7 @@ export default function SettingsPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">Timezone</label>
+                  <label className="text-xs font-semibold text-slate-700">Timezone</label>
                   <select
                     value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
@@ -358,7 +362,7 @@ export default function SettingsPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">GSTIN Identifier</label>
+                  <label className="text-xs font-semibold text-slate-700">GSTIN Identifier</label>
                   <input
                     type="text"
                     value={gstin}
@@ -373,28 +377,30 @@ export default function SettingsPage() {
           {/* Slider Tab */}
           {activeTab === 'slider' && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5E7EB]">
                 <div>
-                  <h2 className="text-sm font-semibold text-white">Homepage Hero Slider Slides</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <h2 className="text-base font-bold text-slate-900">Homepage Hero Slider Slides</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Images and promotions displayed on the store homepage hero carousel.
                   </p>
                 </div>
                 <button
                   onClick={handleAddSlide}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-brand-yellow/10 hover:bg-brand-yellow/20 text-brand-yellow border border-brand-yellow/30 transition-all"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#F5A623] hover:bg-[#e0961e] text-black transition-all shadow-xs cursor-pointer self-start sm:self-auto"
                 >
                   <Plus size={14} /> Add Slide
                 </button>
               </div>
 
               {/* Live Preview Container */}
-              <div className="rounded-xl border border-white/[0.08] overflow-hidden bg-black relative mb-6">
-                <div className="p-3 border-b border-white/[0.08] bg-[#0E111B] flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><Eye size={14} className="text-brand-yellow" /> Live Preview</span>
+              <div className="rounded-xl border border-[#E5E7EB] overflow-hidden bg-slate-950 relative mb-6 shadow-sm">
+                <div className="p-3 border-b border-slate-800 bg-slate-900 flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <Eye size={14} className="text-[#F5A623]" /> Live Preview
+                  </span>
                 </div>
-                <div className="w-full h-[400px] overflow-hidden relative pointer-events-none">
-                  {/* We scale the preview down to 50% to fit it nicely while preserving standard aspect ratio */}
+                <div className="w-full h-[380px] overflow-hidden relative pointer-events-none">
+                  {/* Scaled preview */}
                   <div className="absolute top-0 left-0 w-[200%] h-[200%] origin-top-left scale-50">
                     <Hero slides={slides.length > 0 ? slides : undefined} />
                   </div>
@@ -405,15 +411,15 @@ export default function SettingsPage() {
                 {slides.map((slide, idx) => (
                   <div
                     key={idx}
-                    className="p-4 sm:p-5 rounded-2xl bg-[#090B12] border border-white/[0.08] relative space-y-4 hover:border-white/[0.14] transition-all"
+                    className="p-4 sm:p-5 rounded-xl bg-slate-50/70 border border-[#E5E7EB] relative space-y-4 hover:border-slate-300 transition-all"
                   >
                     {/* Header with reordering and delete */}
-                    <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded-md bg-brand-yellow/15 border border-brand-yellow/30 text-brand-yellow text-xs font-bold font-mono">
+                        <span className="px-2.5 py-0.5 rounded-lg bg-white border border-[#E5E7EB] text-slate-800 text-xs font-bold font-mono shadow-2xs">
                           Slide #{idx + 1}
                         </span>
-                        <span className="text-xs text-slate-400 truncate max-w-[200px]">
+                        <span className="text-xs font-semibold text-slate-700 truncate max-w-[200px]">
                           {slide.headline?.[0]} {slide.headline?.[1]}
                         </span>
                       </div>
@@ -423,27 +429,27 @@ export default function SettingsPage() {
                           type="button"
                           disabled={idx === 0}
                           onClick={() => handleMoveSlide(idx, 'up')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors disabled:opacity-30"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors disabled:opacity-30 cursor-pointer"
                           title="Move up"
                         >
-                          <ArrowUp size={14} />
+                          <ArrowUp size={15} />
                         </button>
                         <button
                           type="button"
                           disabled={idx === slides.length - 1}
                           onClick={() => handleMoveSlide(idx, 'down')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors disabled:opacity-30"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors disabled:opacity-30 cursor-pointer"
                           title="Move down"
                         >
-                          <ArrowDown size={14} />
+                          <ArrowDown size={15} />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleRemoveSlide(idx)}
-                          className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors ml-1"
+                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors ml-1 cursor-pointer"
                           title="Remove slide"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </div>
@@ -466,7 +472,7 @@ export default function SettingsPage() {
                       />
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <label className="text-[11px] font-semibold text-slate-300">Image Source (URL or Path)</label>
+                          <label className="text-[11px] font-semibold text-slate-700">Image Source (URL or Path)</label>
                           <input
                             type="text"
                             value={slide.src}
@@ -476,7 +482,7 @@ export default function SettingsPage() {
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[11px] font-semibold text-slate-300">Alt Text (Accessibility)</label>
+                          <label className="text-[11px] font-semibold text-slate-700">Alt Text (Accessibility)</label>
                           <input
                             type="text"
                             value={slide.alt}
@@ -491,7 +497,7 @@ export default function SettingsPage() {
                     {/* Headline and Copy */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-slate-300">Badge Text</label>
+                        <label className="text-[11px] font-semibold text-slate-700">Badge Text</label>
                         <input
                           type="text"
                           value={slide.badge}
@@ -501,7 +507,7 @@ export default function SettingsPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-slate-300">Headline Line 1</label>
+                        <label className="text-[11px] font-semibold text-slate-700">Headline Line 1</label>
                         <input
                           type="text"
                           value={slide.headline?.[0] || ''}
@@ -511,7 +517,7 @@ export default function SettingsPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-slate-300">Headline Line 2</label>
+                        <label className="text-[11px] font-semibold text-slate-700">Headline Line 2</label>
                         <input
                           type="text"
                           value={slide.headline?.[1] || ''}
@@ -523,20 +529,20 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-slate-300">
+                      <label className="text-[11px] font-semibold text-slate-700">
                         Subtext / Description (Use \n for line breaks)
                       </label>
                       <textarea
                         value={slide.sub}
                         onChange={(e) => updateSlide(idx, 'sub', e.target.value)}
                         rows={2}
-                        className={inputClass.replace('h-9', 'h-auto py-2.5 resize-none')}
+                        className={inputClass.replace('h-10', 'h-auto py-2.5 resize-none')}
                       />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-slate-300">CTA Button Label</label>
+                        <label className="text-[11px] font-semibold text-slate-700">CTA Button Label</label>
                         <input
                           type="text"
                           value={slide.cta?.label || ''}
@@ -547,10 +553,10 @@ export default function SettingsPage() {
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-semibold text-slate-300">CTA Link Target</label>
+                          <label className="text-[11px] font-semibold text-slate-700">CTA Link Target</label>
                           {categories.length > 0 && (
                             <select
-                              className="text-[9px] bg-white/[0.04] border border-white/10 rounded px-1.5 py-0.5 text-slate-300 outline-none cursor-pointer"
+                              className="text-[10px] bg-white border border-[#E5E7EB] rounded-md px-2 py-0.5 text-slate-700 outline-none cursor-pointer"
                               onChange={(e) => {
                                 const val = e.target.value;
                                 if (!val) return;
@@ -559,7 +565,7 @@ export default function SettingsPage() {
                                   updateSlide(idx, 'cta.href', `/shop/category/${cat.slug}`);
                                   if (!slide.cta?.label) updateSlide(idx, 'cta.label', `Explore ${cat.name}`);
                                 }
-                                e.target.value = ''; // Reset select
+                                e.target.value = '';
                               }}
                             >
                               <option value="">Auto-link Category...</option>
@@ -582,8 +588,8 @@ export default function SettingsPage() {
                 ))}
 
                 {slides.length === 0 && (
-                  <div className="p-8 text-center border border-dashed border-white/10 rounded-2xl">
-                    <p className="text-xs text-slate-400">No custom slides defined. Using system default hero slides.</p>
+                  <div className="p-8 text-center border border-dashed border-[#E5E7EB] rounded-2xl bg-slate-50">
+                    <p className="text-xs text-slate-500">No custom slides defined. Using system default hero slides.</p>
                   </div>
                 )}
               </div>
@@ -593,60 +599,63 @@ export default function SettingsPage() {
           {/* Payments Tab */}
           {activeTab === 'payments' && (
             <div className="space-y-5">
-              <h2 className="text-sm font-semibold text-white">Payment Gateways &amp; Checkout Rules</h2>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Payment Gateways & Checkout Rules</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Manage live Razorpay credentials and offline COD rules.</p>
+              </div>
               
-              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.08] space-y-4">
+              <div className="p-5 rounded-xl bg-slate-50 border border-[#E5E7EB] space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xs font-bold text-white flex items-center gap-2">
-                      <CreditCard size={15} className="text-brand-yellow" />
+                    <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                      <CreditCard size={15} className="text-[#F5A623]" />
                       Razorpay Payment Gateway Integration
                     </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-slate-500 mt-0.5">
                       Processes UPI (Google Pay, PhonePe, Paytm), NetBanking, RuPay, Visa, and Mastercard.
                     </p>
                   </div>
                   <span
-                    className={`px-2.5 py-1 rounded text-[10px] font-bold tracking-wider uppercase border ${
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase border ${
                       gatewayStatus.isRazorpayConfigured
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-rose-50 text-rose-700 border-rose-200'
                     }`}
                   >
                     {gatewayStatus.isRazorpayConfigured ? 'CONFIGURED' : 'NOT CONFIGURED'}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-white/[0.06] text-xs">
-                  <div className="p-3 rounded-xl bg-[#090B12] border border-white/[0.06]">
-                    <span className="text-[10px] text-slate-500 font-semibold uppercase block mb-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-[#E5E7EB] text-xs">
+                  <div className="p-3 rounded-xl bg-white border border-[#E5E7EB] shadow-2xs">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase block mb-1">
                       Key ID (Public)
                     </span>
-                    <span className="font-mono text-white text-xs font-medium">
+                    <span className="font-mono text-slate-800 text-xs font-medium">
                       {gatewayStatus.keyIdMasked || 'Missing in env'}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-[#090B12] border border-white/[0.06]">
-                    <span className="text-[10px] text-slate-500 font-semibold uppercase block mb-1">
+                  <div className="p-3 rounded-xl bg-white border border-[#E5E7EB] shadow-2xs">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase block mb-1">
                       Key Secret
                     </span>
                     <span
                       className={`font-semibold text-xs ${
-                        gatewayStatus.hasKeySecret ? 'text-emerald-400' : 'text-rose-400'
+                        gatewayStatus.hasKeySecret ? 'text-emerald-700' : 'text-rose-600'
                       }`}
                     >
                       {gatewayStatus.hasKeySecret ? '✓ Configured in env' : '✗ Missing in env'}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-[#090B12] border border-white/[0.06]">
-                    <span className="text-[10px] text-slate-500 font-semibold uppercase block mb-1">
+                  <div className="p-3 rounded-xl bg-white border border-[#E5E7EB] shadow-2xs">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase block mb-1">
                       Webhook Secret
                     </span>
                     <span
                       className={`font-semibold text-xs ${
-                        gatewayStatus.hasWebhookSecret ? 'text-emerald-400' : 'text-rose-400'
+                        gatewayStatus.hasWebhookSecret ? 'text-emerald-700' : 'text-rose-600'
                       }`}
                     >
                       {gatewayStatus.hasWebhookSecret ? '✓ Configured in env' : '✗ Missing in env'}
@@ -654,15 +663,15 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-300 leading-relaxed">
-                  🔒 <strong>Zero-Trust Credential Security:</strong> Razorpay credentials stay strictly in secure server environment variables (<code className="font-mono text-white">NEXT_PUBLIC_RAZORPAY_KEY_ID</code>, <code className="font-mono text-white">RAZORPAY_KEY_SECRET</code>, <code className="font-mono text-white">RAZORPAY_WEBHOOK_SECRET</code>). For production safety, secrets are never stored in the database or exposed to the client browser.
+                <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-[11px] text-blue-900 leading-relaxed">
+                  🔒 <strong>Zero-Trust Credential Security:</strong> Razorpay credentials stay strictly in secure server environment variables (<code className="font-mono font-bold text-blue-950">NEXT_PUBLIC_RAZORPAY_KEY_ID</code>, <code className="font-mono font-bold text-blue-950">RAZORPAY_KEY_SECRET</code>, <code className="font-mono font-bold text-blue-950">RAZORPAY_WEBHOOK_SECRET</code>). For production safety, secrets are never stored in the database or exposed to the client browser.
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.08] flex items-center justify-between">
+              <div className="p-4.5 rounded-xl bg-slate-50 border border-[#E5E7EB] flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-bold text-white">Pay After Proof (COD / Manual Verification)</h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <h3 className="text-xs font-bold text-slate-900">Pay After Proof (COD / Manual Verification)</h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
                     Allow customers to review pre-press digital proofs on WhatsApp before fulfilling payment.
                   </p>
                 </div>
@@ -670,12 +679,12 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => setCodEnabled(!codEnabled)}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    codEnabled ? 'bg-brand-yellow' : 'bg-white/[0.1]'
+                    codEnabled ? 'bg-[#F5A623]' : 'bg-slate-300'
                   }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-black shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      codEnabled ? 'translate-x-5' : 'translate-x-0 bg-white'
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                      codEnabled ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />
                 </button>
@@ -686,10 +695,13 @@ export default function SettingsPage() {
           {/* Shipping Tab */}
           {activeTab === 'shipping' && (
             <div className="space-y-5">
-              <h2 className="text-sm font-semibold text-white">Shipping &amp; Logistics Rules</h2>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Shipping & Logistics Rules</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Default delivery partners, flat rates, and free shipping cart value.</p>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">Default Courier Partner</label>
+                  <label className="text-xs font-semibold text-slate-700">Default Courier Partner</label>
                   <select
                     value={defaultCourier}
                     onChange={(e) => setDefaultCourier(e.target.value)}
@@ -703,7 +715,7 @@ export default function SettingsPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">Standard Flat Delivery Fee (₹)</label>
+                  <label className="text-xs font-semibold text-slate-700">Standard Flat Delivery Fee (₹)</label>
                   <input
                     type="number"
                     value={flatShippingFee}
@@ -713,7 +725,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300">Free Shipping Minimum Cart Value (₹)</label>
+                <label className="text-xs font-semibold text-slate-700">Free Shipping Minimum Cart Value (₹)</label>
                 <input
                   type="number"
                   value={freeShippingThreshold}
@@ -727,25 +739,28 @@ export default function SettingsPage() {
           {/* Notifications Tab */}
           {activeTab === 'notifications' && (
             <div className="space-y-5">
-              <h2 className="text-sm font-semibold text-white">Automated Notifications</h2>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Automated Notifications</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Automated customer SMS/WhatsApp triggers and owner alerts.</p>
+              </div>
               <div className="space-y-3">
-                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.08] flex items-center justify-between">
+                <div className="p-4.5 rounded-xl bg-slate-50 border border-[#E5E7EB] flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-white">Instant WhatsApp Order Notification</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-xs font-bold text-slate-900">Instant WhatsApp Order Notification</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
                       Sends live order confirmation and tracking link to customer WhatsApp.
                     </p>
                   </div>
-                  <span className="text-xs font-bold text-emerald-400">ENABLED</span>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg">ENABLED</span>
                 </div>
-                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.08] flex items-center justify-between">
+                <div className="p-4.5 rounded-xl bg-slate-50 border border-[#E5E7EB] flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-white">Admin Email Alert on New Order</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-xs font-bold text-slate-900">Admin Email Alert on New Order</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
                       Sends copy of each order receipt to store notification email.
                     </p>
                   </div>
-                  <span className="text-xs font-bold text-emerald-400">ENABLED</span>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg">ENABLED</span>
                 </div>
               </div>
             </div>
@@ -754,15 +769,18 @@ export default function SettingsPage() {
           {/* Security Tab */}
           {activeTab === 'security' && (
             <div className="space-y-5">
-              <h2 className="text-sm font-semibold text-white">Security &amp; Access Controls</h2>
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.08] space-y-3 text-xs">
-                <p className="font-semibold text-white">Cryptographic Session Verification</p>
-                <p className="text-slate-400 leading-relaxed">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Security & Access Controls</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Session security, cryptographic tokens, and brute-force defenses.</p>
+              </div>
+              <div className="p-5 rounded-xl bg-slate-50 border border-[#E5E7EB] space-y-3 text-xs">
+                <p className="font-bold text-slate-900">Cryptographic Session Verification</p>
+                <p className="text-slate-600 leading-relaxed">
                   Administrative access is enforced via strict server-side cookie sessions. Every administrative API
                   route verifies authoritative role clearances before processing commands.
                 </p>
-                <div className="pt-2 text-[11px] text-brand-yellow flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow animate-pulse" />
+                <div className="pt-2 text-[11px] text-amber-800 font-semibold flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#F5A623] animate-pulse" />
                   Brute-force protection: Active (account locks after 5 consecutive failed attempts)
                 </div>
               </div>

@@ -178,62 +178,62 @@ export default function FinancesPage() {
   if (loading || !summary) {
     return (
       <div className="flex items-center justify-center py-32">
-        <div className="w-6 h-6 border-2 border-brand-yellow border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1400px] space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-white">Payment Health & Finances</h1>
-        <p className="text-sm text-text-muted mt-0.5">
+      <div className="pb-2 border-b border-[#E5E7EB]">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#111827] tracking-tight">Payment Health &amp; Finances</h1>
+        <p className="text-xs sm:text-sm text-[#667085] mt-1">
           Real-time gateway transactions, automated refunds, and payment security monitoring.
         </p>
       </div>
 
       {/* Payment Health Alert Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className={`p-4 rounded-xl border flex items-center gap-3.5 ${paymentHealth.unpaidStaleCount > 0 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-bg-surface border-border-subtle'}`}>
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+        <div className={`p-4 rounded-xl border flex items-center gap-3.5 ${paymentHealth.unpaidStaleCount > 0 ? 'bg-amber-50 border-amber-200' : 'bg-white border-[#E5E7EB]'}`}>
+          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
             <AlertTriangle size={20} />
           </div>
           <div>
-            <div className="text-sm font-bold text-white">{paymentHealth.unpaidStaleCount} Orders</div>
-            <div className="text-xs text-text-muted">Unpaid &gt; 1h (Expiry Pending)</div>
+            <div className="text-sm font-bold text-slate-900">{paymentHealth.unpaidStaleCount} Orders</div>
+            <div className="text-xs text-slate-500">Unpaid &gt; 1h (Expiry Pending)</div>
           </div>
         </div>
 
-        <div className={`p-4 rounded-xl border flex items-center gap-3.5 ${paymentHealth.disputedCount > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-bg-surface border-border-subtle'}`}>
-          <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center shrink-0">
+        <div className={`p-4 rounded-xl border flex items-center gap-3.5 ${paymentHealth.disputedCount > 0 ? 'bg-rose-50 border-rose-200' : 'bg-white border-[#E5E7EB]'}`}>
+          <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center shrink-0">
             <ShieldAlert size={20} />
           </div>
           <div>
-            <div className="text-sm font-bold text-white">{paymentHealth.disputedCount} Disputed</div>
-            <div className="text-xs text-text-muted">Bank Chargebacks / Tampering</div>
+            <div className="text-sm font-bold text-slate-900">{paymentHealth.disputedCount} Disputed</div>
+            <div className="text-xs text-slate-500">Bank Chargebacks / Tampering</div>
           </div>
         </div>
 
-        <div className={`p-4 rounded-xl border flex items-center gap-3.5 ${paymentHealth.refundFlaggedCount > 0 ? 'bg-purple-500/10 border-purple-500/30' : 'bg-bg-surface border-border-subtle'}`}>
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
+        <div className={`p-4 rounded-xl border flex items-center gap-3.5 ${paymentHealth.refundFlaggedCount > 0 ? 'bg-purple-50 border-purple-200' : 'bg-white border-[#E5E7EB]'}`}>
+          <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center shrink-0">
             <RotateCcw size={20} />
           </div>
           <div>
-            <div className="text-sm font-bold text-white">{paymentHealth.refundFlaggedCount} Flagged</div>
-            <div className="text-xs text-text-muted">Duplicate Payments in Refund Queue</div>
+            <div className="text-sm font-bold text-slate-900">{paymentHealth.refundFlaggedCount} Flagged</div>
+            <div className="text-xs text-slate-500">Duplicate Payments in Refund Queue</div>
           </div>
         </div>
       </div>
 
       {refundAlerts.length > 0 && (
-        <section className="mt-4 rounded-xl border border-red-500/40 bg-red-500/10 p-4" aria-label="Refund accounting alerts">
-          <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-red-300">
+        <section className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4" aria-label="Refund accounting alerts">
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-rose-800">
             <ShieldAlert size={17} /> Over-refund accounting alerts ({refundAlerts.length})
           </h2>
           <ul className="space-y-1">
             {refundAlerts.map((alert) => (
-              <li key={alert.id} className="text-xs text-red-100">
+              <li key={alert.id} className="text-xs text-rose-700">
                 Order {alert.orderNumber}: {alert.refundFlag}
               </li>
             ))}
@@ -242,66 +242,66 @@ export default function FinancesPage() {
       )}
 
       {/* Primary KPI Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-        <StatCard icon={TrendingUp} title="Total Revenue" value={`₹${formatPrice(summary.totalRevenue)}`} iconColor="text-emerald-400" />
-        <StatCard icon={DollarSign} title="Net Sales" value={`₹${formatPrice(summary.netSales)}`} iconColor="text-blue-400" />
-        <StatCard icon={ReceiptText} title="Refunds" value={`₹${formatPrice(summary.totalRefunds)}`} iconColor="text-rose-400" />
-        <StatCard icon={Banknote} title="Tax Collected" value={`₹${formatPrice(summary.totalTax)}`} iconColor="text-amber-400" />
-        <StatCard icon={ArrowUpRight} title="Payouts" value={`₹${formatPrice(summary.totalPayouts)}`} iconColor="text-cyan-400" />
-        <StatCard icon={ArrowDownRight} title="Pending" value={`₹${formatPrice(summary.pendingPayouts)}`} iconColor="text-orange-400" />
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 sm:gap-4">
+        <StatCard icon={TrendingUp} title="Total Revenue" value={`₹${formatPrice(summary.totalRevenue)}`} iconColor="text-emerald-500" />
+        <StatCard icon={DollarSign} title="Net Sales" value={`₹${formatPrice(summary.netSales)}`} iconColor="text-blue-500" />
+        <StatCard icon={ReceiptText} title="Refunds" value={`₹${formatPrice(summary.totalRefunds)}`} iconColor="text-rose-500" />
+        <StatCard icon={Banknote} title="Tax Collected" value={`₹${formatPrice(summary.totalTax)}`} iconColor="text-amber-500" />
+        <StatCard icon={ArrowUpRight} title="Payouts" value={`₹${formatPrice(summary.totalPayouts)}`} iconColor="text-cyan-500" />
+        <StatCard icon={ArrowDownRight} title="Pending" value={`₹${formatPrice(summary.pendingPayouts)}`} iconColor="text-orange-500" />
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-border-subtle gap-2 sm:gap-6 overflow-x-auto pb-px">
+      <div className="flex border-b border-[#E5E7EB] gap-2 sm:gap-6 overflow-x-auto pb-px">
         <button
           type="button"
           onClick={() => setActiveTab('overview')}
-          className={`pb-3 px-2 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`pb-3 px-2 text-xs sm:text-sm font-bold tracking-tight border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'overview'
-              ? 'border-brand-yellow text-brand-yellow'
-              : 'border-transparent text-text-secondary hover:text-white'
+              ? 'border-[#F5A623] text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <DollarSign size={16} />
+          <DollarSign size={16} className={activeTab === 'overview' ? 'text-[#F5A623]' : ''} />
           <span>Accounting Ledger</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('gateway')}
-          className={`pb-3 px-2 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`pb-3 px-2 text-xs sm:text-sm font-bold tracking-tight border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'gateway'
-              ? 'border-brand-yellow text-brand-yellow'
-              : 'border-transparent text-text-secondary hover:text-white'
+              ? 'border-[#F5A623] text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <CreditCard size={16} />
+          <CreditCard size={16} className={activeTab === 'gateway' ? 'text-[#F5A623]' : ''} />
           <span>Razorpay Transactions ({gatewayTxs.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('refunds')}
-          className={`pb-3 px-2 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`pb-3 px-2 text-xs sm:text-sm font-bold tracking-tight border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'refunds'
-              ? 'border-brand-yellow text-brand-yellow'
-              : 'border-transparent text-text-secondary hover:text-white'
+              ? 'border-[#F5A623] text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <RotateCcw size={16} />
+          <RotateCcw size={16} className={activeTab === 'refunds' ? 'text-[#F5A623]' : ''} />
           <span>Refund Queue ({refundQueue.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('audit')}
-          className={`pb-3 px-2 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`pb-3 px-2 text-xs sm:text-sm font-bold tracking-tight border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeTab === 'audit'
-              ? 'border-brand-yellow text-brand-yellow'
-              : 'border-transparent text-text-secondary hover:text-white'
+              ? 'border-[#F5A623] text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Activity size={16} />
+          <Activity size={16} className={activeTab === 'audit' ? 'text-[#F5A623]' : ''} />
           <span>Security Audit Trail</span>
         </button>
       </div>
@@ -311,15 +311,15 @@ export default function FinancesPage() {
         <div
           className={`p-4 rounded-xl border text-xs flex items-center justify-between gap-3 ${
             refundNotification.type === 'success'
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-              : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}
         >
           <span>{refundNotification.message}</span>
           <button
             type="button"
             onClick={() => setRefundNotification(null)}
-            className="text-white hover:underline text-[11px]"
+            className="text-slate-700 font-semibold hover:underline text-[11px]"
           >
             Dismiss
           </button>
@@ -328,43 +328,43 @@ export default function FinancesPage() {
 
       {/* TAB 1: OVERVIEW LEDGER */}
       {activeTab === 'overview' && (
-        <div className="bg-bg-surface border border-border-subtle rounded-xl overflow-hidden shadow-lg">
-          <div className="p-4 border-b border-border-subtle flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Sales &amp; Refunds Ledger</h2>
-            <span className="text-xs text-text-muted">{transactions.length} entries</span>
+        <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-[#E5E7EB] flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-900">Sales &amp; Refunds Ledger</h2>
+            <span className="text-xs text-slate-500">{transactions.length} entries</span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-border-subtle bg-bg-surface-alt">
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Date</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Type</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Description</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Reference</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-text-muted">Amount</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Status</th>
+                <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB] text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Description</th>
+                  <th className="px-4 py-3">Reference</th>
+                  <th className="px-4 py-3 text-right">Amount</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[#E5E7EB] text-xs text-slate-700">
                 {transactions.map((txn) => (
-                  <tr key={txn.id} className="border-b border-border-subtle/50 hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3 text-xs text-text-muted">
+                  <tr key={txn.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-4 py-3 text-slate-500">
                       {new Date(txn.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium capitalize ${
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
                         txn.type === 'sale'
-                          ? 'bg-emerald-500/10 text-emerald-400'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : txn.type === 'refund'
-                          ? 'bg-rose-500/10 text-rose-400'
-                          : 'bg-blue-500/10 text-blue-400'
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          : 'bg-blue-50 text-blue-700 border border-blue-200'
                       }`}>
                         {txn.type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-secondary max-w-xs truncate">{txn.description}</td>
-                    <td className="px-4 py-3 text-xs font-mono text-text-muted">{txn.reference}</td>
-                    <td className={`px-4 py-3 text-xs font-medium text-right ${txn.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <td className="px-4 py-3 text-slate-800 max-w-xs truncate font-medium">{txn.description}</td>
+                    <td className="px-4 py-3 font-mono text-slate-500">{txn.reference}</td>
+                    <td className={`px-4 py-3 font-mono font-bold text-right ${txn.amount >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                       {txn.amount >= 0 ? '+' : '−'}₹{formatPrice(txn.amount)}
                     </td>
                     <td className="px-4 py-3">
@@ -380,27 +380,27 @@ export default function FinancesPage() {
 
       {/* TAB 2: GATEWAY TRANSACTIONS */}
       {activeTab === 'gateway' && (
-        <div className="bg-bg-surface border border-border-subtle rounded-xl overflow-hidden shadow-lg">
-          <div className="p-4 border-b border-border-subtle flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Live Razorpay Payment Transactions</h2>
-            <span className="text-xs text-text-muted">Last 50 captured/failed gateway events</span>
+        <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-[#E5E7EB] flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-900">Live Razorpay Payment Transactions</h2>
+            <span className="text-xs text-slate-500">Last 50 captured/failed gateway events</span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-border-subtle bg-bg-surface-alt">
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Date</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Payment ID</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Order #</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Method / Details</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-text-muted">Amount</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Gateway Status</th>
+                <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB] text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Payment ID</th>
+                  <th className="px-4 py-3">Order #</th>
+                  <th className="px-4 py-3">Method / Details</th>
+                  <th className="px-4 py-3 text-right">Amount</th>
+                  <th className="px-4 py-3">Gateway Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[#E5E7EB] text-xs text-slate-700">
                 {gatewayTxs.map((gtx) => (
-                  <tr key={gtx.id} className="border-b border-border-subtle/50 hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3 text-xs text-text-muted whitespace-nowrap">
+                  <tr key={gtx.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                       {new Date(gtx.createdAt).toLocaleString('en-IN', {
                         day: '2-digit',
                         month: 'short',
@@ -408,32 +408,32 @@ export default function FinancesPage() {
                         minute: '2-digit',
                       })}
                     </td>
-                    <td className="px-4 py-3 text-xs font-mono text-white select-all">
+                    <td className="px-4 py-3 font-mono text-slate-900 font-semibold select-all">
                       {gtx.gatewayPaymentId || 'N/A'}
                     </td>
-                    <td className="px-4 py-3 text-xs font-mono text-brand-yellow">
+                    <td className="px-4 py-3 font-mono font-bold text-[#F5A623]">
                       {gtx.order?.orderNumber || 'Unknown'}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-secondary">
+                    <td className="px-4 py-3 text-slate-600">
                       <div className="flex items-center gap-1.5">
-                        <span className="capitalize font-medium text-white">{gtx.method || 'online'}</span>
-                        {gtx.cardNetwork && <span className="text-[10px] text-text-muted">({gtx.cardNetwork} ••{gtx.cardLast4})</span>}
-                        {gtx.vpa && <span className="text-[10px] text-text-muted">({gtx.vpa})</span>}
-                        {gtx.bank && <span className="text-[10px] text-text-muted">({gtx.bank})</span>}
+                        <span className="capitalize font-semibold text-slate-900">{gtx.method || 'online'}</span>
+                        {gtx.cardNetwork && <span className="text-[10px] text-slate-400">({gtx.cardNetwork} ••{gtx.cardLast4})</span>}
+                        {gtx.vpa && <span className="text-[10px] text-slate-400">({gtx.vpa})</span>}
+                        {gtx.bank && <span className="text-[10px] text-slate-400">({gtx.bank})</span>}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs font-mono font-bold text-right text-white">
+                    <td className="px-4 py-3 font-mono font-bold text-right text-slate-900">
                       ₹{formatPrice(Number(gtx.amount))}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                         gtx.status === 'CAPTURED'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : gtx.status === 'REFUND_FLAGGED'
-                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
                           : gtx.status === 'REFUND_PROCESSED' || gtx.status === 'REFUNDED'
-                          ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
-                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                          ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200'
                       }`}>
                         {gtx.status}
                       </span>
@@ -448,45 +448,45 @@ export default function FinancesPage() {
 
       {/* TAB 3: REFUND QUEUE */}
       {activeTab === 'refunds' && (
-        <div className="bg-bg-surface border border-border-subtle rounded-xl overflow-hidden shadow-lg space-y-4 p-6">
-          <div className="flex items-center justify-between pb-4 border-b border-border-subtle">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-sm space-y-4 p-6">
+          <div className="flex items-center justify-between pb-4 border-b border-[#E5E7EB]">
             <div>
-              <h2 className="text-base font-bold text-white">Pending Automated Refund Queue</h2>
-              <p className="text-xs text-text-muted">
+              <h2 className="text-base font-bold text-slate-900">Pending Automated Refund Queue</h2>
+              <p className="text-xs text-slate-500">
                 Payments flagged due to duplicate checkout attempts or multi-tab orders. These are refunded automatically every 4 hours or instantly below.
               </p>
             </div>
-            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
               {refundQueue.length} Pending Actions
             </span>
           </div>
 
           {refundQueue.length === 0 ? (
             <div className="text-center py-12 space-y-2">
-              <CheckCircle2 size={32} className="text-emerald-400 mx-auto" />
-              <h3 className="font-bold text-white text-sm">Refund Queue is Clear</h3>
-              <p className="text-xs text-text-muted">No duplicate transactions or pending refund flags detected.</p>
+              <CheckCircle2 size={32} className="text-emerald-500 mx-auto" />
+              <h3 className="font-bold text-slate-900 text-sm">Refund Queue is Clear</h3>
+              <p className="text-xs text-slate-500">No duplicate transactions or pending refund flags detected.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {refundQueue.map((item) => (
                 <div
                   key={item.id}
-                  className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                  className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-white text-sm">
+                      <span className="font-mono font-bold text-slate-900 text-sm">
                         Order #{item.order?.orderNumber || 'Unknown'}
                       </span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                         DUPLICATE PAYMENT
                       </span>
                     </div>
-                    <div className="text-xs text-text-secondary flex flex-wrap gap-x-4">
-                      <span>Gateway ID: <strong className="font-mono text-white">{item.gatewayPaymentId}</strong></span>
-                      <span>Initial Paid ID: <strong className="font-mono text-white">{item.order?.paymentId || 'N/A'}</strong></span>
-                      <span>Amount: <strong className="text-brand-yellow font-mono">₹{formatPrice(Number(item.amount))}</strong></span>
+                    <div className="text-xs text-slate-600 flex flex-wrap gap-x-4">
+                      <span>Gateway ID: <strong className="font-mono text-slate-900">{item.gatewayPaymentId}</strong></span>
+                      <span>Initial Paid ID: <strong className="font-mono text-slate-900">{item.order?.paymentId || 'N/A'}</strong></span>
+                      <span>Amount: <strong className="text-slate-900 font-mono">₹{formatPrice(Number(item.amount))}</strong></span>
                     </div>
                   </div>
 
@@ -494,7 +494,7 @@ export default function FinancesPage() {
                     type="button"
                     onClick={() => handleProcessRefund(item)}
                     disabled={processingRefundId === item.id}
-                    className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                    className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer shrink-0 shadow-xs"
                   >
                     {processingRefundId === item.id ? (
                       <>
@@ -517,42 +517,42 @@ export default function FinancesPage() {
 
       {/* TAB 4: AUDIT TRAIL */}
       {activeTab === 'audit' && (
-        <div className="bg-bg-surface border border-border-subtle rounded-xl overflow-hidden shadow-lg space-y-4 p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border-subtle">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-sm space-y-4 p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E5E7EB]">
             <div>
-              <h2 className="text-base font-bold text-white">PCI-DSS Payment Audit Trail</h2>
-              <p className="text-xs text-text-muted">
+              <h2 className="text-base font-bold text-slate-900">PCI-DSS Payment Audit Trail</h2>
+              <p className="text-xs text-slate-500">
                 Immutable chronological log of all HMAC verifications, gateway requests, and webhook lifecycle events.
               </p>
             </div>
 
             <div className="relative max-w-xs w-full">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search action or order..."
                 value={auditSearch}
                 onChange={(e) => setAuditSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border-subtle bg-bg-surface-alt text-xs text-white focus:outline-none focus:border-brand-yellow"
+                className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#F5A623]"
               />
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-border-subtle bg-bg-surface-alt">
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Timestamp</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Action</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Actor / Source</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">IP Address</th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Metadata</th>
+                <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB] text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-2.5">Timestamp</th>
+                  <th className="px-4 py-2.5">Action</th>
+                  <th className="px-4 py-2.5">Actor / Source</th>
+                  <th className="px-4 py-2.5">IP Address</th>
+                  <th className="px-4 py-2.5">Metadata</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[#E5E7EB] text-xs text-slate-700">
                 {filteredAuditLogs.map((log) => (
-                  <tr key={log.id} className="border-b border-border-subtle/50 hover:bg-white/[0.02] text-xs">
-                    <td className="px-4 py-2.5 text-text-muted font-mono whitespace-nowrap">
+                  <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-4 py-2.5 text-slate-500 font-mono whitespace-nowrap">
                       {new Date(log.createdAt).toLocaleString('en-IN', {
                         day: '2-digit',
                         month: 'short',
@@ -564,17 +564,17 @@ export default function FinancesPage() {
                     <td className="px-4 py-2.5">
                       <span className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold ${
                         log.action.includes('SUCCESS') || log.action.includes('CAPTURED') || log.action.includes('VERIFIED')
-                          ? 'bg-emerald-500/10 text-emerald-400'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : log.action.includes('FAILED') || log.action.includes('DISPUTED') || log.action.includes('MISMATCH')
-                          ? 'bg-rose-500/10 text-rose-400'
-                          : 'bg-white/5 text-slate-300'
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          : 'bg-slate-100 text-slate-700'
                       }`}>
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-text-secondary font-mono">{log.actor || 'SYSTEM'}</td>
-                    <td className="px-4 py-2.5 text-text-muted font-mono">{log.ipAddress || '—'}</td>
-                    <td className="px-4 py-2.5 text-text-muted font-mono max-w-xs truncate select-all">
+                    <td className="px-4 py-2.5 text-slate-700 font-mono font-medium">{log.actor || 'SYSTEM'}</td>
+                    <td className="px-4 py-2.5 text-slate-500 font-mono">{log.ipAddress || '—'}</td>
+                    <td className="px-4 py-2.5 text-slate-500 font-mono max-w-xs truncate select-all">
                       {log.details ? JSON.stringify(log.details) : '—'}
                     </td>
                   </tr>
