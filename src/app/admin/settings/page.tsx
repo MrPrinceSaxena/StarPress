@@ -25,6 +25,9 @@ import {
   ExternalLink,
   RotateCcw,
   Sparkles,
+  Send,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { showToast } from '@/components/admin/ui/Toast';
 import { Skeleton } from '@/components/admin/ui/Skeleton';
@@ -121,6 +124,44 @@ function SettingsContent() {
   const [defaultCourier, setDefaultCourier] = useState('Shiprocket');
   const [flatShippingFee, setFlatShippingFee] = useState('99');
   const [freeShippingThreshold, setFreeShippingThreshold] = useState('999');
+
+  // Test Email state
+  const [testEmailRecipient, setTestEmailRecipient] = useState('starpress.print@gmail.com');
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleSendTestEmail = async () => {
+    if (!testEmailRecipient.trim()) {
+      showToast('Please enter a recipient email address', 'error');
+      return;
+    }
+    setSendingTestEmail(true);
+    setTestEmailResult(null);
+    try {
+      const res = await fetch('/api/admin/email/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: testEmailRecipient.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to dispatch test email');
+      }
+      setTestEmailResult({
+        success: true,
+        message: `Test email dispatched successfully to ${data.recipient}! Check your inbox.`,
+      });
+      showToast('Test email sent successfully!', 'success');
+    } catch (err: any) {
+      setTestEmailResult({
+        success: false,
+        message: err.message || 'Failed to send test email',
+      });
+      showToast(err.message || 'Error sending test email', 'error');
+    } finally {
+      setSendingTestEmail(false);
+    }
+  };
 
   useEffect(() => {
     async function load() {
@@ -916,6 +957,81 @@ function SettingsContent() {
                     </p>
                   </div>
                   <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg">ENABLED</span>
+                </div>
+
+                {/* Resend Email Integration & Test Dispatcher */}
+                <div className="p-5 rounded-xl bg-slate-50 border border-[#E5E7EB] space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                        <Mail size={15} className="text-[#F5A623]" />
+                        Resend Transactional Email Engine
+                      </h3>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Sends instant HTML customer receipts, pre-press proofs, and dispatch tracking emails.
+                      </p>
+                    </div>
+                    <span
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase border ${
+                        gatewayStatus.isResendConfigured
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-rose-50 text-rose-700 border-rose-200'
+                      }`}
+                    >
+                      {gatewayStatus.isResendConfigured ? 'CONNECTED' : 'KEY MISSING'}
+                    </span>
+                  </div>
+
+                  {/* Test Email Form */}
+                  <div className="pt-3 border-t border-[#E5E7EB] space-y-3">
+                    <label className="text-xs font-semibold text-slate-800 block">
+                      Send Test Email via Resend
+                    </label>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                      <input
+                        type="email"
+                        placeholder="recipient@example.com"
+                        value={testEmailRecipient}
+                        onChange={(e) => setTestEmailRecipient(e.target.value)}
+                        className={inputClass + ' flex-1'}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSendTestEmail}
+                        disabled={sendingTestEmail}
+                        className="px-4 py-2.5 rounded-xl bg-[#F5A623] hover:bg-[#e0961e] text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-50 shrink-0"
+                      >
+                        {sendingTestEmail ? (
+                          <>
+                            <Loader2 size={14} className="animate-spin" />
+                            <span>Sending…</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send size={14} />
+                            <span>Send Test Email</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {testEmailResult && (
+                      <div
+                        className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                          testEmailResult.success
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                            : 'bg-rose-50 border-rose-200 text-rose-800'
+                        }`}
+                      >
+                        {testEmailResult.success ? (
+                          <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                        ) : (
+                          <AlertCircle size={15} className="text-rose-600 shrink-0" />
+                        )}
+                        <span>{testEmailResult.message}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
