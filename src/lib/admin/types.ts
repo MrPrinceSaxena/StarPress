@@ -147,6 +147,7 @@ export interface AdminCustomer {
   createdAt: string;
   address: string;
   avatar: string | null;
+  role?: string;
 }
 
 // --- Discount ---

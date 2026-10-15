@@ -51,3 +51,59 @@ export async function ensureDbUser(user: UserInput) {
     return null;
   }
 }
+
+/**
+ * Authoritatively syncs all registered users from Supabase Auth (`auth.users`)
+ * into Prisma PostgreSQL `User` table so that admin panel reflects every account.
+ */
+export async function syncAllSupabaseUsersToDb(): Promise<number> {
+  try {
+    const { getAdminClient } = await import("@/lib/supabase/admin");
+    const adminClient = getAdminClient();
+    const { data, error } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+    if (error || !data?.users) {
+      console.warn("[syncAllSupabaseUsersToDb] Supabase admin error:", error);
+      return 0;
+    }
+
+    let syncedCount = 0;
+    for (const u of data.users) {
+      if (!u.email) continue;
+      const email = u.email.toLowerCase().trim();
+      const name =
+        u.user_metadata?.name ||
+        u.user_metadata?.full_name ||
+        u.user_metadata?.display_name ||
+        email.split("@")[0] ||
+        "Customer";
+      const phone = u.phone || u.user_metadata?.phone || null;
+      const isAppAdmin =
+        u.app_metadata?.role === "ADMIN" ||
+        email === "starpress.print@gmail.com" ||
+        email === "princesaxena511@gmail.com";
+
+      await db.user.upsert({
+        where: { email },
+        update: {
+          name,
+          phone: phone || undefined,
+          role: isAppAdmin ? "ADMIN" : "CUSTOMER",
+        },
+        create: {
+          id: u.id,
+          email,
+          name,
+          phone,
+          role: isAppAdmin ? "ADMIN" : "CUSTOMER",
+        },
+      });
+      syncedCount++;
+    }
+
+    return syncedCount;
+  } catch (err: any) {
+    console.warn("[syncAllSupabaseUsersToDb] Notice:", err?.message);
+    return 0;
+  }
+}
+

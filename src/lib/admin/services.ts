@@ -391,9 +391,15 @@ export const orderService = {
 // =============================================================================
 
 export const customerService = {
-  async getCustomers(search?: string, page = 1, pageSize = 10): Promise<PaginatedResult<AdminCustomer>> {
+  async getCustomers(
+    search?: string,
+    page = 1,
+    pageSize = 25,
+    filter?: string
+  ): Promise<PaginatedResult<AdminCustomer> & { stats?: { total: number; withOrders: number; noOrders: number } }> {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
+    if (filter && filter !== 'all') params.set('filter', filter);
     params.set('page', page.toString());
     params.set('limit', pageSize.toString());
 
@@ -401,6 +407,7 @@ export const customerService = {
       const res = await apiFetch<{
         success: boolean;
         customers: AdminCustomer[];
+        stats?: { total: number; withOrders: number; noOrders: number };
         total: number;
         totalPages: number;
         page: number;
@@ -411,12 +418,13 @@ export const customerService = {
         data: res.customers || [],
         total: res.total || 0,
         page: res.page || 1,
-        pageSize: res.limit || 10,
+        pageSize: res.limit || 25,
         totalPages: res.totalPages || 1,
+        stats: res.stats,
       };
     } catch (err) {
       console.error('[customerService.getCustomers] error:', err);
-      return { data: [], total: 0, page: 1, pageSize: 10, totalPages: 1 };
+      return { data: [], total: 0, page: 1, pageSize: 25, totalPages: 1 };
     }
   },
 };

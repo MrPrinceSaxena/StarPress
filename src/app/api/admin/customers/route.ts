@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminAccess } from "@/lib/admin/auth-check";
 import { db } from "@/lib/db";
 import { persistentStore } from "@/server/storage";
+import { syncAllSupabaseUsersToDb } from "@/lib/user-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,18 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search")?.toLowerCase().trim() || "";
+    const filter = searchParams.get("filter") || "all"; // 'all' | 'with_orders' | 'no_orders'
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const limit = parseInt(searchParams.get("limit") || "25", 10);
 
-    // 1. Fetch real orders (from Prisma or persistentStore)
+    // 1. Authoritatively sync any new/existing Supabase Auth users to Prisma User table
+    try {
+      await syncAllSupabaseUsersToDb();
+    } catch (e) {
+      console.warn("[API /api/admin/customers] Sync notice:", e);
+    }
+
+    // 2. Fetch real orders (from Prisma or persistentStore)
     let orders: any[] = [];
     try {
       orders = await db.order.findMany({
@@ -27,18 +36,18 @@ export async function GET(request: NextRequest) {
       orders = persistentStore.getOrders();
     }
 
-    // 2. Fetch registered users
+    // 3. Fetch registered users from PostgreSQL
     let users: any[] = [];
     try {
       users = await db.user.findMany({
-        where: { role: "CUSTOMER" },
         include: { addresses: true },
+        orderBy: { createdAt: "desc" },
       });
     } catch {
       users = [];
     }
 
-    // 3. Build customer aggregation map by email
+    // 4. Build customer aggregation map by email
     const customerMap = new Map<string, {
       id: string;
       name: string;
@@ -51,9 +60,10 @@ export async function GET(request: NextRequest) {
       createdAt: string;
       address: string;
       avatar: string | null;
+      role?: string;
     }>();
 
-    // Add registered users first
+    // Add ALL registered users first (even if they have 0 orders yet)
     for (const u of users) {
       const defaultAddr = u.addresses?.find((a: any) => a.isDefault) || u.addresses?.[0];
       const addrStr = defaultAddr
@@ -71,10 +81,11 @@ export async function GET(request: NextRequest) {
         createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : new Date().toISOString(),
         address: addrStr,
         avatar: null,
+        role: u.role,
       });
     }
 
-    // Aggregate orders
+    // Aggregate orders onto registered accounts or add guest accounts
     for (const o of orders) {
       const email = (o.guestEmail || o.user?.email || "").toLowerCase().trim();
       if (!email) continue;
@@ -104,6 +115,7 @@ export async function GET(request: NextRequest) {
           createdAt: orderDate,
           address: addrStr,
           avatar: null,
+          role: "GUEST",
         };
         customerMap.set(email, entry);
       } else {
@@ -119,6 +131,20 @@ export async function GET(request: NextRequest) {
 
     let customers = Array.from(customerMap.values());
 
+    // Compute stats
+    const stats = {
+      total: customers.length,
+      withOrders: customers.filter((c) => c.totalOrders > 0).length,
+      noOrders: customers.filter((c) => c.totalOrders === 0).length,
+    };
+
+    // Apply tab filter
+    if (filter === "with_orders") {
+      customers = customers.filter((c) => c.totalOrders > 0);
+    } else if (filter === "no_orders") {
+      customers = customers.filter((c) => c.totalOrders === 0);
+    }
+
     // Apply search filter
     if (search) {
       customers = customers.filter(
@@ -129,7 +155,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    customers.sort((a, b) => b.totalSpent - a.totalSpent);
+    // Sort: users with orders first (by totalSpent desc), then registered users by createdAt desc
+    customers.sort((a, b) => {
+      if (a.totalOrders > 0 && b.totalOrders > 0) {
+        return b.totalSpent - a.totalSpent;
+      }
+      if (a.totalOrders > 0 && b.totalOrders === 0) return -1;
+      if (a.totalOrders === 0 && b.totalOrders > 0) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
     const total = customers.length;
     const totalPages = Math.ceil(total / limit) || 1;
@@ -139,6 +173,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       customers: paged,
+      stats,
       total,
       totalPages,
       page,
