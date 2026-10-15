@@ -23,6 +23,8 @@ import {
   Check,
   RefreshCw,
   CreditCard,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
 import Pagination from '@/components/admin/ui/Pagination';
@@ -69,6 +71,137 @@ export default function OrdersPage() {
   const [refundReason, setRefundReason] = useState('');
   const [refundAmount, setRefundAmount] = useState('');
   const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
+
+  // Manual Order Creation Modal State
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [newOrderForm, setNewOrderForm] = useState({
+    customerName: '',
+    customerPhone: '',
+    customerEmail: '',
+    addressLine1: 'Star Press Counter / Walk-in',
+    city: 'Khatima',
+    state: 'Uttarakhand',
+    pincode: '262308',
+    paymentMethod: 'CASH',
+    paymentStatus: 'PAID',
+    orderStatus: 'CONFIRMED',
+    shippingFee: '0',
+    discountAmount: '0',
+    notes: '',
+  });
+
+  const [orderItems, setOrderItems] = useState<Array<{ productName: string; quantity: number; unitPrice: number }>>([
+    { productName: 'Visiting Cards (Premium 350 GSM)', quantity: 500, unitPrice: 450 },
+  ]);
+
+  const handleAddItem = () => {
+    setOrderItems((prev) => [...prev, { productName: '', quantity: 100, unitPrice: 200 }]);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    if (orderItems.length <= 1) {
+      showToast('At least one item is required', 'error');
+      return;
+    }
+    setOrderItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleItemChange = (index: number, field: string, value: any) => {
+    setOrderItems((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const calculateSubtotal = () =>
+    orderItems.reduce((sum, it) => sum + (Number(it.unitPrice) || 0) * (Number(it.quantity) || 1), 0);
+
+  const calculateTotal = () => {
+    const sub = calculateSubtotal();
+    const ship = Number(newOrderForm.shippingFee) || 0;
+    const disc = Number(newOrderForm.discountAmount) || 0;
+    return Math.max(0, sub + ship - disc);
+  };
+
+  const handleCreateOrderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newOrderForm.customerName.trim()) {
+      showToast('Customer name is required', 'error');
+      return;
+    }
+    if (!newOrderForm.customerPhone.trim()) {
+      showToast('Customer phone number is required', 'error');
+      return;
+    }
+    for (let i = 0; i < orderItems.length; i++) {
+      if (!orderItems[i].productName.trim()) {
+        showToast(`Item #${i + 1} name cannot be empty`, 'error');
+        return;
+      }
+    }
+
+    setIsSubmittingOrder(true);
+    try {
+      const payload = {
+        customerName: newOrderForm.customerName.trim(),
+        customerPhone: newOrderForm.customerPhone.trim(),
+        customerEmail: newOrderForm.customerEmail.trim() || undefined,
+        shippingAddress: {
+          fullName: newOrderForm.customerName.trim(),
+          phone: newOrderForm.customerPhone.trim(),
+          addressLine1: newOrderForm.addressLine1.trim(),
+          city: newOrderForm.city.trim(),
+          state: newOrderForm.state.trim(),
+          pincode: newOrderForm.pincode.trim(),
+        },
+        items: orderItems.map((it) => ({
+          productName: it.productName.trim(),
+          quantity: Number(it.quantity) || 1,
+          unitPrice: Number(it.unitPrice) || 0,
+          lineTotal: (Number(it.unitPrice) || 0) * (Number(it.quantity) || 1),
+        })),
+        paymentMethod: newOrderForm.paymentMethod,
+        paymentStatus: newOrderForm.paymentStatus,
+        status: newOrderForm.orderStatus,
+        shippingFee: Number(newOrderForm.shippingFee) || 0,
+        discountAmount: Number(newOrderForm.discountAmount) || 0,
+        notes: newOrderForm.notes.trim() || undefined,
+      };
+
+      const res = await orderService.createOrder(payload);
+      if (res.success && res.order) {
+        showToast(`Order #${res.order.orderNumber} created successfully!`);
+        setCreateModalOpen(false);
+        setNewOrderForm({
+          customerName: '',
+          customerPhone: '',
+          customerEmail: '',
+          addressLine1: 'Star Press Counter / Walk-in',
+          city: 'Khatima',
+          state: 'Uttarakhand',
+          pincode: '262308',
+          paymentMethod: 'CASH',
+          paymentStatus: 'PAID',
+          orderStatus: 'CONFIRMED',
+          shippingFee: '0',
+          discountAmount: '0',
+          notes: '',
+        });
+        setOrderItems([
+          { productName: 'Visiting Cards (Premium 350 GSM)', quantity: 500, unitPrice: 450 },
+        ]);
+        await loadOrders();
+      } else {
+        showToast(res.error || 'Failed to create order', 'error');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error creating order', 'error');
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
 
   const [orderStats, setOrderStats] = useState({
     total: 0,
@@ -287,13 +420,25 @@ export default function OrdersPage() {
           </p>
         </div>
 
-        <button
-          onClick={loadOrders}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-[#E5E7EB] shadow-xs transition-all self-start sm:self-auto"
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin text-[#F5A623]' : ''} />
-          <span>Refresh List</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setCreateModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-[#111827] hover:bg-black shadow-xs transition-all cursor-pointer"
+          >
+            <Plus size={14} />
+            <span>+ Create Order</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={loadOrders}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-[#E5E7EB] shadow-xs transition-all cursor-pointer"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin text-[#F5A623]' : ''} />
+            <span>Refresh List</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -868,6 +1013,339 @@ export default function OrdersPage() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Order Creation Modal */}
+      {createModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-[#E5E7EB] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-[#E5E7EB] flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                  <Plus size={16} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Create New Customer Order</h3>
+                  <p className="text-xs text-slate-500">Record a walk-in, phone, or WhatsApp job with live syncing.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCreateModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Form Body */}
+            <form onSubmit={handleCreateOrderSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+              {/* Customer Information */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <Phone size={13} className="text-blue-500" />
+                  <span>Customer Details</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                      Customer Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Ramesh Kumar"
+                      value={newOrderForm.customerName}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, customerName: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                      Phone / WhatsApp Number <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. +91 98765 43210"
+                      value={newOrderForm.customerPhone}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, customerPhone: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                      Email Address (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="e.g. customer@gmail.com"
+                      value={newOrderForm.customerEmail}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, customerEmail: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Delivery Address */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <MapPin size={13} className="text-emerald-500" />
+                  <span>Delivery Address</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-3">
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                      Address / Counter Pickup
+                    </label>
+                    <input
+                      type="text"
+                      value={newOrderForm.addressLine1}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, addressLine1: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">City</label>
+                    <input
+                      type="text"
+                      value={newOrderForm.city}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, city: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">State</label>
+                    <input
+                      type="text"
+                      value={newOrderForm.state}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, state: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">Pincode</label>
+                    <input
+                      type="text"
+                      value={newOrderForm.pincode}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, pincode: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <Package size={13} className="text-indigo-500" />
+                    <span>Order Items</span>
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={handleAddItem}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer"
+                  >
+                    <Plus size={13} />
+                    <span>Add Item</span>
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {orderItems.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]"
+                    >
+                      <div className="flex-1">
+                        <label className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5 sm:hidden">
+                          Product Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Product Name (e.g. Flex Banner 10x4)"
+                          value={item.productName}
+                          onChange={(e) => handleItemChange(idx, 'productName', e.target.value)}
+                          className="w-full h-8 px-2.5 rounded-lg border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                        />
+                      </div>
+                      <div className="w-24">
+                        <label className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5 sm:hidden">
+                          Quantity
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          required
+                          placeholder="Qty"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(idx, 'quantity', parseInt(e.target.value, 10) || 1)}
+                          className="w-full h-8 px-2.5 rounded-lg border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623] text-center"
+                        />
+                      </div>
+                      <div className="w-28">
+                        <label className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5 sm:hidden">
+                          Unit Price (₹)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          required
+                          placeholder="Price"
+                          value={item.unitPrice}
+                          onChange={(e) => handleItemChange(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          className="w-full h-8 px-2.5 rounded-lg border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623] text-right"
+                        />
+                      </div>
+                      <div className="w-24 text-right font-bold text-xs text-slate-900 self-center px-1">
+                        ₹{(Number(item.quantity) || 1) * (Number(item.unitPrice) || 0)}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(idx)}
+                        disabled={orderItems.length <= 1}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-30 cursor-pointer self-center"
+                        title="Remove item"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payment & Order Status */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <CreditCard size={13} className="text-amber-500" />
+                  <span>Payment &amp; Fulfillment</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">Payment Method</label>
+                    <select
+                      value={newOrderForm.paymentMethod}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, paymentMethod: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    >
+                      <option value="CASH">Cash Counter</option>
+                      <option value="UPI">UPI / QR Code</option>
+                      <option value="BANK_TRANSFER">Bank Transfer / NEFT</option>
+                      <option value="PAY_AFTER_PROOF">Pay After Proof Approval</option>
+                      <option value="ONLINE">Online (Prepaid)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">Payment Status</label>
+                    <select
+                      value={newOrderForm.paymentStatus}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, paymentStatus: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    >
+                      <option value="PAID">PAID</option>
+                      <option value="UNPAID">UNPAID (Pending)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">Production Status</label>
+                    <select
+                      value={newOrderForm.orderStatus}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, orderStatus: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    >
+                      <option value="CONFIRMED">Confirmed / Processing</option>
+                      <option value="PENDING">Pending Artwork</option>
+                      <option value="IN_PRODUCTION">In Production / Printing</option>
+                      <option value="DISPATCHED">Dispatched / Out for Delivery</option>
+                      <option value="DELIVERED">Delivered / Handed Over</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">Shipping Fee (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={newOrderForm.shippingFee}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, shippingFee: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">Discount (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={newOrderForm.discountAmount}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, discountAmount: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">Internal Notes</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Urgent morning pickup"
+                      value={newOrderForm.notes}
+                      onChange={(e) => setNewOrderForm((prev) => ({ ...prev, notes: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Calculation Card */}
+              <div className="p-3.5 rounded-xl border border-[#E5E7EB] bg-slate-50 flex items-center justify-between">
+                <div className="space-y-0.5 text-xs text-slate-600">
+                  <div>Subtotal: ₹{calculateSubtotal()}</div>
+                  {Number(newOrderForm.shippingFee) > 0 && <div>Shipping: +₹{newOrderForm.shippingFee}</div>}
+                  {Number(newOrderForm.discountAmount) > 0 && <div>Discount: -₹{newOrderForm.discountAmount}</div>}
+                </div>
+                <div className="text-right">
+                  <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Total Amount</div>
+                  <div className="text-xl font-black text-slate-900">₹{calculateTotal()}</div>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E5E7EB]">
+                <button
+                  type="button"
+                  onClick={() => setCreateModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-[#E5E7EB] text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingOrder}
+                  className="px-5 py-2 rounded-xl bg-[#111827] hover:bg-black text-white text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  {isSubmittingOrder ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Creating Order...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      <span>Confirm &amp; Create Order</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

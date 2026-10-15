@@ -1,6 +1,55 @@
 {
   "orders": [
     {
+      "id": "cmv96ujky000028jy3ssl3u14",
+      "orderNumber": "SP-2026-UHVS28997",
+      "userId": null,
+      "guestName": "Khatima Test Client",
+      "guestPhone": "+91 99999 11111",
+      "guestEmail": "khatimatest@gmail.com",
+      "status": "CONFIRMED",
+      "subtotal": 1200,
+      "gstAmount": null,
+      "shippingFee": 0,
+      "discountAmount": 100,
+      "totalAmount": 1100,
+      "shippingAddress": {
+        "fullName": "Khatima Test Client",
+        "phone": "+91 99999 11111",
+        "addressLine1": "Main Market, Khatima",
+        "addressLine2": "",
+        "city": "Khatima",
+        "state": "Uttarakhand",
+        "pincode": "262308"
+      },
+      "billingAddress": {
+        "fullName": "Khatima Test Client",
+        "phone": "+91 99999 11111",
+        "addressLine1": "Main Market, Khatima",
+        "addressLine2": "",
+        "city": "Khatima",
+        "state": "Uttarakhand",
+        "pincode": "262308"
+      },
+      "paymentMethod": "CASH",
+      "paymentStatus": "PAID",
+      "notes": "Walk-in test order created via admin service",
+      "items": [
+        {
+          "id": "item_0_1792047564066",
+          "productId": null,
+          "productName": "Custom 3D Acrylic Board (Test)",
+          "productSlug": "custom-3d-acrylic-board-test",
+          "quantity": 1,
+          "unitPrice": 1200,
+          "lineTotal": 1200,
+          "customText": null
+        }
+      ],
+      "createdAt": "2026-10-15T06:59:20.866Z",
+      "updatedAt": "2026-10-15T06:59:24.067Z"
+    },
+    {
       "id": "cmudt07a20001ou4uozjdcbs8",
       "orderNumber": "SP-2026-60247",
       "userId": null,
@@ -55,5 +104,56 @@
     "timezone": "Asia/Kolkata",
     "gstin": "07AAAAA0000A1Z5"
   },
-  "productOverrides": {}
+  "productOverrides": {
+    "cmv8eqruk0001p7xlim6dffsx": {
+      "name": "Test Sync Product 1792000351094 (Updated)",
+      "images": [
+        {
+          "url": "https://gqkybxdlixnfwxryqqrk.supabase.co/storage/v1/object/public/product-images/product-images/products/test/test-image-1.webp",
+          "altText": "Test Image 1",
+          "isPrimary": true,
+          "position": 0
+        }
+      ],
+      "updatedAt": "2026-10-14T17:53:03.148Z",
+      "status": "archived"
+    },
+    "test-sync-product-1792000351094": {
+      "name": "Test Sync Product 1792000351094 (Updated)",
+      "images": [
+        {
+          "url": "https://gqkybxdlixnfwxryqqrk.supabase.co/storage/v1/object/public/product-images/product-images/products/test/test-image-1.webp",
+          "altText": "Test Image 1",
+          "isPrimary": true,
+          "position": 0
+        }
+      ],
+      "updatedAt": "2026-10-14T17:52:57.000Z"
+    },
+    "cmv8ewqwv0001v9nxt2yg1bjh": {
+      "name": "Test Sync Product 1792000629819 (Updated)",
+      "images": [
+        {
+          "url": "https://gqkybxdlixnfwxryqqrk.supabase.co/storage/v1/object/public/product-images/product-images/products/test/test-image-1.webp",
+          "altText": "Test Image 1",
+          "isPrimary": true,
+          "position": 0
+        }
+      ],
+      "updatedAt": "2026-10-14T17:57:42.598Z",
+      "status": "archived"
+    },
+    "test-sync-product-1792000629819": {
+      "name": "Test Sync Product 1792000629819 (Updated)",
+      "images": [
+        {
+          "url": "https://gqkybxdlixnfwxryqqrk.supabase.co/storage/v1/object/public/product-images/product-images/products/test/test-image-1.webp",
+          "altText": "Test Image 1",
+          "isPrimary": true,
+          "position": 0
+        }
+      ],
+      "updatedAt": "2026-10-14T17:57:28.682Z"
+    }
+  }
 }

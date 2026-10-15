@@ -5,8 +5,7 @@ import { ArrowRight, Sparkles, Layers } from "lucide-react";
 import { Metadata } from "next";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { getAllCategories } from "@/lib/catalog";
-import { getLiveProductsByCategory } from "@/server/products";
+import { getLiveProductsByCategory, getLiveCategories } from "@/server/products";
 
 export const metadata: Metadata = {
   title: "All Print Categories | Star Press Khatima",
@@ -20,7 +19,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function CategoriesPage() {
-  const categories = getAllCategories();
+  const categories = await getLiveCategories();
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">

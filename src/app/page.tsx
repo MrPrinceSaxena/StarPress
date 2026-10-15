@@ -12,19 +12,18 @@ import PromoBanner from "@/components/sections/PromoBanner";
 import Testimonials from "@/components/sections/Testimonials";
 import CTASection from "@/components/sections/CTASection";
 import Newsletter from "@/components/sections/Newsletter";
-import { getAllCategories } from "@/lib/catalog";
-import { getLiveCatalogProducts } from "@/server/products";
+import { getLiveCatalogProducts, getLiveCategories } from "@/server/products";
 
 import { db } from "@/lib/db";
 import type { Slide } from "@/components/sections/Hero";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function HomePage() {
-  const categories = getAllCategories();
-  
   // Run independent DB queries in parallel for faster TTFB
-  const [allProducts, slideSettingResult] = await Promise.all([
+  const [categories, allProducts, slideSettingResult] = await Promise.all([
+    getLiveCategories(),
     getLiveCatalogProducts(),
     db.storeSetting.findUnique({ where: { key: "HERO_SLIDER" } }).catch(err => {
       console.warn("Failed to fetch dynamic slides:", err);

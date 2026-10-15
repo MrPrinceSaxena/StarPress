@@ -370,6 +370,17 @@ export const orderService = {
     });
   },
 
+  async createOrder(data: any): Promise<{ success: boolean; order?: any; error?: string }> {
+    try {
+      return await apiFetch<{ success: boolean; order?: any }>('/api/admin/orders', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to create order' };
+    }
+  },
+
   getStats() {
     return { total: 0, pending: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0, refunded: 0 };
   },

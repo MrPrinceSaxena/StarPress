@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listOrders, getOrderStats } from "@/server/orders";
+import { revalidatePath } from "next/cache";
+import { listOrders, getOrderStats, createAdminOrder } from "@/server/orders";
 import { verifyAdminAccess } from "@/lib/admin/auth-check";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +66,11 @@ export async function GET(request: NextRequest) {
           .join(", ");
       }
 
+      const rawStatus = String(o.status || "pending").toLowerCase();
+      let normalizedDisplayStatus = rawStatus;
+      if (rawStatus === "dispatched") normalizedDisplayStatus = "shipped";
+      else if (rawStatus === "confirmed" || rawStatus === "in_production") normalizedDisplayStatus = "processing";
+
       return {
         id: o.id,
         orderNumber: o.orderNumber,
@@ -90,8 +96,8 @@ export async function GET(request: NextRequest) {
         total,
         paymentMethod: o.paymentMethod || "ONLINE",
         paymentStatus: (o.paymentStatus || "unpaid").toLowerCase(),
-        fulfillmentStatus: (o.status === "DELIVERED" || o.status === "DISPATCHED" ? "fulfilled" : o.status === "IN_PRODUCTION" ? "partial" : "unfulfilled"),
-        status: o.status === "DISPATCHED" ? "shipped" : o.status.toLowerCase(),
+        fulfillmentStatus: (rawStatus === "delivered" || rawStatus === "dispatched" ? "fulfilled" : rawStatus === "in_production" ? "partial" : "unfulfilled"),
+        status: normalizedDisplayStatus,
         shippingAddress: shippingAddrStr,
         trackingNumber: o.trackingNumber || null,
         courierPartner: o.courierPartner || null,
@@ -114,6 +120,42 @@ export async function GET(request: NextRequest) {
     console.error("API /api/admin/orders error:", error);
     return NextResponse.json(
       { error: "Failed to fetch orders." },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/admin/orders
+ * Create a new manual order from admin panel (walk-in, phone, WhatsApp).
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const auth = await verifyAdminAccess(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
+    const body = await request.json();
+    if (!body.customerName || !body.customerPhone || !Array.isArray(body.items) || body.items.length === 0) {
+      return NextResponse.json(
+        { error: "Customer name, phone number, and at least one item are required." },
+        { status: 400 }
+      );
+    }
+
+    const ipAddress = request.headers.get("x-forwarded-for") || undefined;
+    const result = await createAdminOrder(body, auth.user?.email || "admin@starpress.in", ipAddress);
+
+    revalidatePath("/admin/orders");
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/account");
+
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error("API /api/admin/orders POST error:", error);
+    return NextResponse.json(
+      { error: error?.message || "Failed to create order." },
       { status: 500 }
     );
   }

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getAllProducts, CATALOG_CATEGORIES, PRODUCT_SLUG_ALIASES, type CatalogProduct } from "@/lib/catalog";
+import { getAllProducts, getAllCategories, CATALOG_CATEGORIES, PRODUCT_SLUG_ALIASES, type CatalogProduct, type CatalogCategory } from "@/lib/catalog";
 import { persistentStore } from "@/server/storage";
 import { deleteStorageImage, BUCKETS } from "@/lib/supabase/storage";
 
@@ -1122,6 +1122,62 @@ import { cache } from "react";
 
 const safeCache = typeof cache === "function" ? cache : <T extends (...args: any[]) => any>(fn: T): T => fn;
 
+/**
+ * Return live categories merging database categories with baseline catalog categories.
+ * Used by storefront (/shop, /categories, home) so any new category created in admin appears immediately.
+ */
+export async function getLiveCategories(): Promise<CatalogCategory[]> {
+  const base = getAllCategories();
+  let dbCategories: any[] = [];
+  try {
+    dbCategories = await db.category.findMany({
+      orderBy: { displayOrder: "asc" },
+      include: {
+        _count: { select: { products: true } },
+      },
+    });
+  } catch (err) {
+    console.warn("[Live Categories] DB fetch error:", err);
+  }
+
+  if (!dbCategories || dbCategories.length === 0) {
+    return base;
+  }
+
+  const baseMap = new Map<string, CatalogCategory>();
+  base.forEach((c) => {
+    baseMap.set(c.slug, c);
+    baseMap.set(c.id, c);
+  });
+
+  const result: CatalogCategory[] = [];
+  const seenSlugs = new Set<string>();
+
+  for (const dbc of dbCategories) {
+    const matchedBase = baseMap.get(dbc.slug) || baseMap.get(dbc.id);
+    seenSlugs.add(dbc.slug);
+    result.push({
+      id: dbc.id,
+      slug: dbc.slug,
+      name: dbc.name,
+      tagline: matchedBase?.tagline || `Commercial ${dbc.name} Services`,
+      description: dbc.description || matchedBase?.description || `Explore our high quality ${dbc.name} printing solutions.`,
+      imageUrl: dbc.imageUrl || matchedBase?.imageUrl || "/images/cat-stationery.jpg",
+      badgeColorClass: matchedBase?.badgeColorClass || "bg-blue-500/20 text-blue-300 border-blue-500/30",
+      accentColor: matchedBase?.accentColor || "#3B82F6",
+    });
+  }
+
+  for (const bc of base) {
+    if (!seenSlugs.has(bc.slug)) {
+      result.push(bc);
+      seenSlugs.add(bc.slug);
+    }
+  }
+
+  return result;
+}
+
 export const getLiveCatalogProducts = safeCache(async function getLiveCatalogProducts(): Promise<CatalogProduct[]> {
   const base = getAllProducts();
   
@@ -1203,13 +1259,16 @@ export const getLiveCatalogProducts = safeCache(async function getLiveCatalogPro
       const imgUrls = c.images && c.images.length > 0
         ? c.images.map((img: any) => img.url)
         : ["/images/hero-composition.jpg"];
+      
+      const catSlug = c.category?.slug || (c.categoryId && !c.categoryId.startsWith("cm") ? c.categoryId : "business-printing");
+      const catName = c.category?.name || "Business Printing";
         
       return {
         id: c.id,
         name: c.name,
         slug: c.slug,
-        categorySlug: c.category?.slug || c.categoryId || "business-printing",
-        categoryName: c.category?.name || "Business Printing",
+        categorySlug: catSlug,
+        categoryName: catName,
         basePrice: Number(c.basePrice || 0),
         rating: 4.9,
         reviewCount: 18,
@@ -1218,7 +1277,7 @@ export const getLiveCatalogProducts = safeCache(async function getLiveCatalogPro
         images: imgUrls,
         isFeatured: c.isFeatured || false,
         isBestSeller: false,
-        tags: [c.category?.slug || "custom-print"],
+        tags: [catSlug || "custom-print"],
         sizeOptions: [
           { id: "std", label: "Standard", multiplier: 1, default: true },
         ],
@@ -1302,7 +1361,13 @@ export async function getLiveProductBySlug(slug: string): Promise<CatalogProduct
   const products = await getLiveCatalogProducts();
   const normalized = slug.toLowerCase().trim();
   const targetSlug = PRODUCT_SLUG_ALIASES[normalized] || normalized;
-  return products.find((p) => p.slug === targetSlug || p.id === targetSlug);
+  return products.find(
+    (p) =>
+      p.slug.toLowerCase() === targetSlug ||
+      p.id.toLowerCase() === targetSlug ||
+      p.slug.toLowerCase() === normalized ||
+      p.id.toLowerCase() === normalized
+  );
 }
 
 /**
@@ -1311,6 +1376,7 @@ export async function getLiveProductBySlug(slug: string): Promise<CatalogProduct
 export async function getLiveProductsByCategory(categorySlug: string): Promise<CatalogProduct[]> {
   const allLive = await getLiveCatalogProducts();
   if (!categorySlug || categorySlug === "all") return allLive;
-  return allLive.filter((p) => p.categorySlug === categorySlug);
+  const normalized = categorySlug.toLowerCase().trim();
+  return allLive.filter((p) => p.categorySlug.toLowerCase() === normalized);
 }
 

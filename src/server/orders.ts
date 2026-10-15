@@ -3,6 +3,8 @@ import { Prisma, OrderStatus } from "@prisma/client";
 import { env } from "@/lib/env";
 import { quoteOrder, QuoteItemInput } from "@/server/quote";
 import { sendOrderPlacedProofEmail } from "@/server/email";
+import { persistentStore, type PersistedOrder } from "@/server/storage";
+import { slugify } from "@/server/products";
 
 export interface CreateOrderInput {
   userId?: string;
@@ -330,6 +332,49 @@ export async function createOrder(input: CreateOrderInput, client: typeof db = d
       }).catch((e) => console.warn("Failed to dispatch order placed proof email:", e));
     }
 
+    // Mirror to persistentStore for multi-source resilience
+    try {
+      persistentStore.saveOrder({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        userId: order.userId,
+        guestEmail: order.guestEmail,
+        guestPhone: order.guestPhone,
+        guestName: order.guestName,
+        status: order.status,
+        subtotal: Number(order.subtotal),
+        gstAmount: order.gstAmount ? Number(order.gstAmount) : null,
+        shippingFee: Number(order.shippingFee),
+        discountAmount: Number(order.discountAmount),
+        totalAmount: Number(order.totalAmount),
+        shippingAddress: order.shippingAddress,
+        billingAddress: order.billingAddress,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        paymentId: order.paymentId,
+        trackingNumber: order.trackingNumber,
+        courierPartner: order.courierPartner,
+        notes: order.notes,
+        items: (order.items || []).map((it: any) => ({
+          id: it.id,
+          productId: it.productId,
+          productName: it.productName,
+          productSlug: it.productSlug,
+          quantity: it.quantity,
+          unitPrice: Number(it.unitPrice),
+          lineTotal: Number(it.lineTotal),
+          specs: it.specs,
+          customText: it.customText,
+          artworkUrl: it.artworkUrl,
+          previewUrl: it.previewUrl,
+        })),
+        createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : String(order.createdAt),
+        updatedAt: order.updatedAt instanceof Date ? order.updatedAt.toISOString() : String(order.updatedAt),
+      });
+    } catch (saveErr) {
+      console.warn("Could not mirror order to persistentStore:", saveErr);
+    }
+
     return { success: true, order };
 }
 
@@ -348,6 +393,11 @@ export async function getOrderById(idOrNumber: string) {
   } catch (error) {
     console.warn("getOrderById database error:", error);
   }
+
+  try {
+    const local = persistentStore.getOrderById(idOrNumber);
+    if (local) return local;
+  } catch {}
 
   return null;
 }
@@ -374,12 +424,44 @@ export async function trackOrder(orderNumber: string, phoneOrEmail: string) {
     console.warn("trackOrder database error:", error);
   }
 
+  try {
+    const local = persistentStore.getOrderById(normalizedOrderNumber);
+    if (local) {
+      const email = (local.guestEmail || "").toLowerCase();
+      const phone = (local.guestPhone || "").replace(/\D/g, "");
+      const cleanInput = normalizedInput.replace(/\D/g, "");
+      if (email === normalizedInput || (cleanInput && phone.includes(cleanInput))) {
+        return local;
+      }
+    }
+  } catch {}
+
   return null;
 }
 
 export async function getOrderStats() {
+  const stats = {
+    total: 0,
+    pending: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+    refunded: 0,
+    unpaid: 0,
+    paid: 0,
+  };
+
+  const norm = (s?: string) => {
+    const v = (s || "").toUpperCase().trim();
+    if (v === "DISPATCHED") return "SHIPPED";
+    if (v === "CONFIRMED" || v === "IN_PRODUCTION") return "PROCESSING";
+    return v;
+  };
+
+  let dbOrders: any[] = [];
   try {
-    const [statusCounts, paymentCounts, total] = await Promise.all([
+    const [statusCounts, paymentCounts, dbTotal] = await Promise.all([
       db.order.groupBy({
         by: ['status'],
         _count: {
@@ -394,25 +476,6 @@ export async function getOrderStats() {
       }),
       db.order.count(),
     ]);
-
-    const stats = {
-      total,
-      pending: 0,
-      processing: 0,
-      shipped: 0,
-      delivered: 0,
-      cancelled: 0,
-      refunded: 0,
-      unpaid: 0,
-      paid: 0,
-    };
-
-    const norm = (s?: string) => {
-      const v = (s || "").toUpperCase().trim();
-      if (v === "DISPATCHED") return "SHIPPED";
-      if (v === "CONFIRMED" || v === "IN_PRODUCTION") return "PROCESSING";
-      return v;
-    };
 
     for (const group of statusCounts) {
       const normalizedStatus = norm(group.status);
@@ -431,21 +494,38 @@ export async function getOrderStats() {
       else if (ps === "PAID") stats.paid += group._count.paymentStatus;
     }
 
-    return stats;
+    stats.total = dbTotal;
+
+    dbOrders = await db.order.findMany({ select: { id: true, orderNumber: true } }).catch(() => []);
   } catch (error) {
     console.warn("getOrderStats database error:", error);
-    return {
-      total: 0,
-      pending: 0,
-      processing: 0,
-      shipped: 0,
-      delivered: 0,
-      cancelled: 0,
-      refunded: 0,
-      unpaid: 0,
-      paid: 0,
-    };
   }
+
+  // Include any extra local orders from persistentStore not present in DB
+  try {
+    const localOrders = persistentStore.getOrders();
+    const dbKeys = new Set(dbOrders.map((o) => (o.orderNumber || o.id || "").toUpperCase().trim()));
+
+    for (const lo of localOrders) {
+      const key = (lo.orderNumber || lo.id || "").toUpperCase().trim();
+      if (key && !dbKeys.has(key)) {
+        stats.total++;
+        const s = norm(lo.status);
+        if (s === "PENDING") stats.pending++;
+        else if (s === "PROCESSING") stats.processing++;
+        else if (s === "SHIPPED") stats.shipped++;
+        else if (s === "DELIVERED") stats.delivered++;
+        else if (s === "CANCELLED") stats.cancelled++;
+        else if (s === "REFUNDED") stats.refunded++;
+
+        const ps = (lo.paymentStatus || "").toUpperCase().trim();
+        if (ps === "UNPAID") stats.unpaid++;
+        else if (ps === "PAID") stats.paid++;
+      }
+    }
+  } catch {}
+
+  return stats;
 }
 
 export async function listOrders(options?: {
@@ -455,6 +535,7 @@ export async function listOrders(options?: {
   limit?: number;
   skip?: number;
 }) {
+  let dbOrders: any[] = [];
   try {
     const where: any = {};
 
@@ -488,24 +569,86 @@ export async function listOrders(options?: {
       ];
     }
 
-    const [dbOrders, total] = await Promise.all([
-      db.order.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        include: {
-          items: true,
-        },
-        skip: options?.skip || 0,
-        take: options?.limit || 50,
-      }),
-      db.order.count({ where }),
-    ]);
-
-    return { orders: dbOrders, total };
+    dbOrders = await db.order.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        items: true,
+      },
+    });
   } catch (error) {
-    console.error("listOrders database error:", error);
-    return { orders: [], total: 0 };
+    console.error("listOrders database query error:", error);
   }
+
+  // Fetch persistentStore orders
+  let localOrders: any[] = [];
+  try {
+    localOrders = persistentStore.getOrders();
+  } catch (error) {
+    console.warn("listOrders persistentStore fetch error:", error);
+  }
+
+  // Combine and deduplicate by orderNumber or id
+  const combinedMap = new Map<string, any>();
+  for (const o of dbOrders) {
+    const key = (o.orderNumber || o.id || "").toUpperCase().trim();
+    if (key) combinedMap.set(key, o);
+  }
+
+  for (const lo of localOrders) {
+    const key = (lo.orderNumber || lo.id || "").toUpperCase().trim();
+    if (key && !combinedMap.has(key)) {
+      combinedMap.set(key, lo);
+    }
+  }
+
+  let allOrders = Array.from(combinedMap.values());
+
+  // Apply filters in memory so any persistentStore orders match the criteria
+  if (options?.status && options.status !== "all" && options.status !== "ALL") {
+    const st = options.status.toUpperCase();
+    allOrders = allOrders.filter((o) => {
+      const ost = (o.status || "").toUpperCase();
+      if (st === "SHIPPED") return ost === "DISPATCHED" || ost === "SHIPPED";
+      if (st === "PROCESSING") return ost === "CONFIRMED" || ost === "IN_PRODUCTION" || ost === "PROCESSING";
+      return ost === st;
+    });
+  }
+
+  if (options?.paymentStatus && options.paymentStatus !== "all" && options.paymentStatus !== "ALL") {
+    const ps = options.paymentStatus.toUpperCase();
+    allOrders = allOrders.filter((o) => {
+      if (ps === "PAY_AFTER_PROOF") {
+        return (o.paymentMethod || "").toUpperCase() === "PAY_AFTER_PROOF";
+      }
+      return (o.paymentStatus || "").toUpperCase() === ps;
+    });
+  }
+
+  if (options?.search?.trim()) {
+    const q = options.search.trim().toLowerCase();
+    allOrders = allOrders.filter((o) => {
+      const num = (o.orderNumber || "").toLowerCase();
+      const name = (o.guestName || "").toLowerCase();
+      const email = (o.guestEmail || "").toLowerCase();
+      const phone = (o.guestPhone || "").toLowerCase();
+      return num.includes(q) || name.includes(q) || email.includes(q) || phone.includes(q);
+    });
+  }
+
+  // Sort descending by createdAt
+  allOrders.sort((a, b) => {
+    const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dbTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dbTime - da;
+  });
+
+  const total = allOrders.length;
+  const skip = options?.skip || 0;
+  const limit = options?.limit || 50;
+  const pagedOrders = allOrders.slice(skip, skip + limit);
+
+  return { orders: pagedOrders, total };
 }
 
 export async function updateOrderStatus(
@@ -518,11 +661,25 @@ export async function updateOrderStatus(
   if (normalizedStatus === "SHIPPED") normalizedStatus = "DISPATCHED";
   if (normalizedStatus === "PROCESSING") normalizedStatus = "IN_PRODUCTION";
 
+  // Always mirror to persistentStore
+  try {
+    persistentStore.updateOrderStatus(id, normalizedStatus, tracking);
+  } catch (e) {
+    console.warn("persistentStore updateOrderStatus error:", e);
+  }
+
   try {
     const result = await client.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${id} FOR UPDATE`;
       const existing = await tx.order.findUnique({ where: { id }, include: { items: true } });
-      if (!existing) return { success: false as const, error: "Order not found" };
+      if (!existing) {
+        // If not found in DB, check persistentStore
+        const local = persistentStore.getOrderById(id);
+        if (local) {
+          return { success: true as const, order: local };
+        }
+        return { success: false as const, error: "Order not found" };
+      }
 
       const targetStatus = normalizedStatus as OrderStatus;
       const isNowCancelled = targetStatus === OrderStatus.CANCELLED;
@@ -582,6 +739,195 @@ export async function updateOrderStatus(
 
     return result;
   } catch (error) {
+    // If DB transaction failed, return local order if available
+    const local = persistentStore.getOrderById(id);
+    if (local) {
+      return { success: true, order: local };
+    }
     return { success: false, error: (error as Error).message };
   }
+}
+
+export interface CreateAdminOrderInput {
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  shippingAddress?: {
+    fullName?: string;
+    phone?: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+  };
+  items: Array<{
+    productId?: string;
+    productName: string;
+    productSlug?: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal?: number;
+    customText?: string;
+  }>;
+  paymentMethod?: string; // "CASH", "UPI", "BANK_TRANSFER", "ONLINE", "PAY_AFTER_PROOF"
+  paymentStatus?: string; // "PAID", "UNPAID"
+  status?: string; // "PENDING", "CONFIRMED", "IN_PRODUCTION", "DISPATCHED", "DELIVERED", "CANCELLED"
+  shippingFee?: number;
+  discountAmount?: number;
+  notes?: string;
+}
+
+/**
+ * Create a manual order from the admin panel (walk-in, phone, WhatsApp).
+ * Saves to both PostgreSQL and persistentStore with full audit trail.
+ */
+export async function createAdminOrder(
+  data: CreateAdminOrderInput,
+  adminEmail: string,
+  ipAddress?: string
+) {
+  const orderNumber = generateOrderNumber();
+  const customerName = data.customerName.trim();
+  const customerPhone = data.customerPhone.trim();
+  const customerEmail = (data.customerEmail?.trim() || `${customerPhone.replace(/\D/g, '') || "customer"}@starpress.in`).toLowerCase();
+
+  const shippingAddrObj = {
+    fullName: data.shippingAddress?.fullName || customerName,
+    phone: data.shippingAddress?.phone || customerPhone,
+    addressLine1: data.shippingAddress?.addressLine1 || "Star Press Counter / Walk-in",
+    addressLine2: data.shippingAddress?.addressLine2 || "",
+    city: data.shippingAddress?.city || "Khatima",
+    state: data.shippingAddress?.state || "Uttarakhand",
+    pincode: data.shippingAddress?.pincode || "262308",
+  };
+
+  const cleanItems = data.items.map((it) => {
+    const qty = Math.max(1, Math.round(Number(it.quantity) || 1));
+    const price = Math.max(0, Number(it.unitPrice) || 0);
+    const lineTotal = it.lineTotal !== undefined ? Number(it.lineTotal) : price * qty;
+    return {
+      productId: it.productId || null,
+      productName: it.productName.trim(),
+      productSlug: it.productSlug?.trim() || slugify(it.productName),
+      quantity: qty,
+      unitPrice: price,
+      lineTotal,
+      customText: it.customText?.trim() || null,
+    };
+  });
+
+  const subtotal = cleanItems.reduce((acc, it) => acc + it.lineTotal, 0);
+  const shippingFee = Math.max(0, Number(data.shippingFee) || 0);
+  const discountAmount = Math.max(0, Number(data.discountAmount) || 0);
+  const totalAmount = Math.max(0, subtotal + shippingFee - discountAmount);
+
+  let normalizedPaymentMethod = (data.paymentMethod || "CASH").toUpperCase().trim();
+  let normalizedPaymentStatus = (data.paymentStatus || "UNPAID").toUpperCase().trim();
+  let normalizedStatus = (data.status || "CONFIRMED").toUpperCase().trim();
+  if (normalizedStatus === "PROCESSING") normalizedStatus = "IN_PRODUCTION";
+  if (normalizedStatus === "SHIPPED") normalizedStatus = "DISPATCHED";
+
+  let createdDbOrder: any = null;
+
+  try {
+    createdDbOrder = await db.order.create({
+      data: {
+        orderNumber,
+        guestName: customerName,
+        guestPhone: customerPhone,
+        guestEmail: customerEmail,
+        shippingAddress: shippingAddrObj,
+        billingAddress: shippingAddrObj,
+        paymentMethod: normalizedPaymentMethod,
+        paymentStatus: normalizedPaymentStatus,
+        status: normalizedStatus as any,
+        subtotal,
+        shippingFee,
+        discountAmount,
+        totalAmount,
+        notes: data.notes?.trim() || "Manual Order via Admin Panel",
+        items: {
+          create: cleanItems.map((it) => ({
+            productId: it.productId || null,
+            productName: it.productName,
+            productSlug: it.productSlug,
+            quantity: it.quantity,
+            unitPrice: it.unitPrice,
+            lineTotal: it.lineTotal,
+            customText: it.customText,
+          })),
+        },
+      },
+      include: {
+        items: true,
+      },
+    });
+  } catch (dbErr) {
+    console.error("[createAdminOrder] Database order creation error:", dbErr);
+  }
+
+  const orderId = createdDbOrder?.id || `ord_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
+
+  // Always mirror to persistentStore
+  const persisted: PersistedOrder = {
+    id: orderId,
+    orderNumber,
+    userId: null,
+    guestName: customerName,
+    guestPhone: customerPhone,
+    guestEmail: customerEmail,
+    status: normalizedStatus,
+    subtotal,
+    gstAmount: null,
+    shippingFee,
+    discountAmount,
+    totalAmount,
+    shippingAddress: shippingAddrObj,
+    billingAddress: shippingAddrObj,
+    paymentMethod: normalizedPaymentMethod,
+    paymentStatus: normalizedPaymentStatus,
+    notes: data.notes?.trim() || "Manual Order via Admin Panel",
+    items: cleanItems.map((it, idx) => ({
+      id: `item_${idx}_${Date.now()}`,
+      productId: it.productId,
+      productName: it.productName,
+      productSlug: it.productSlug,
+      quantity: it.quantity,
+      unitPrice: it.unitPrice,
+      lineTotal: it.lineTotal,
+      customText: it.customText,
+    })),
+    createdAt: createdDbOrder?.createdAt ? new Date(createdDbOrder.createdAt).toISOString() : new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    persistentStore.saveOrder(persisted);
+  } catch (storeErr) {
+    console.warn("[createAdminOrder] persistentStore error:", storeErr);
+  }
+
+  // Audit log
+  try {
+    await db.adminAuditLog.create({
+      data: {
+        adminEmail,
+        entityType: "order",
+        entityId: orderId,
+        action: "create",
+        changes: {
+          orderNumber,
+          customerName,
+          totalAmount,
+          paymentMethod: normalizedPaymentMethod,
+          paymentStatus: normalizedPaymentStatus,
+          status: normalizedStatus,
+        },
+        ipAddress: ipAddress || null,
+      },
+    });
+  } catch {}
+
+  return { success: true, order: createdDbOrder || persisted };
 }

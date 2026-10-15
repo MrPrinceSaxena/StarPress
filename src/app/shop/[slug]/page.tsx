@@ -20,7 +20,9 @@ import {
   getLiveProductsByCategory,
 } from "@/server/products";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const products = await getLiveCatalogProducts();
