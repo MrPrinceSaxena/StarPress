@@ -99,6 +99,10 @@ export interface AdminOrderItem {
   unitPrice: number;
   total: number;
   image: string;
+  specs?: Record<string, any> | null;
+  customText?: string | null;
+  artworkUrl?: string | null;
+  previewUrl?: string | null;
 }
 
 export interface AdminOrder {
@@ -117,9 +121,13 @@ export interface AdminOrder {
   total: number;
   paymentStatus: PaymentStatus;
   paymentMethod?: string;
+  paymentId?: string | null;
+  razorpayOrderId?: string | null;
   fulfillmentStatus: FulfillmentStatus;
   status: OrderStatus;
   shippingAddress: string;
+  rawShippingAddress?: any;
+  billingAddress?: any;
   trackingNumber?: string | null;
   courierPartner?: string | null;
   notes: string;
