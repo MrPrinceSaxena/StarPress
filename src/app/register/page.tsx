@@ -277,7 +277,24 @@ function RegisterForm() {
         return;
       }
 
-      // If session is null, Supabase sent a confirmation email
+      // If user was created, attempt immediate sign-in in case confirm email is not enforced
+      if (data?.user) {
+        try {
+          const { data: signInData } = await supabase.auth.signInWithPassword({
+            email: formData.email.trim(),
+            password: formData.password,
+          });
+
+          if (signInData?.session) {
+            window.location.href = callbackUrl;
+            return;
+          }
+        } catch {
+          // Fall through to confirmation screen if confirmation is strictly required
+        }
+      }
+
+      // If session is still null, Supabase requires email verification
       setIsConfirmationSent(true);
       setIsLoading(false);
     } catch {
