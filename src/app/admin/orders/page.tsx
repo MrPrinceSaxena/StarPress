@@ -1142,7 +1142,7 @@ export default function OrdersPage() {
                       </button>
                     </div>
                     <p className="text-xs font-medium text-amber-950 bg-white/90 p-3 rounded-lg border border-amber-200 leading-relaxed font-sans">
-                      "{selectedOrder.notes}"
+                      &ldquo;{selectedOrder.notes}&rdquo;
                     </p>
                   </div>
                 )}
