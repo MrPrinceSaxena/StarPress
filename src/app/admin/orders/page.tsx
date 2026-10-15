@@ -77,10 +77,6 @@ export default function OrdersPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isMarkingPaid, setIsMarkingPaid] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [refundModalOpen, setRefundModalOpen] = useState(false);
-  const [refundReason, setRefundReason] = useState('');
-  const [refundAmount, setRefundAmount] = useState('');
-  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
 
   // Order Card Detail Drawer state
   const [drawerTab, setDrawerTab] = useState<'all' | 'production' | 'customer' | 'dispatch' | 'payment'>('all');
@@ -363,40 +359,6 @@ export default function OrdersPage() {
     }
   };
 
-  const handleIssueRefund = async () => {
-    if (!selectedOrder) return;
-    if (!refundReason.trim()) {
-      showToast('A refund reason is required', 'error');
-      return;
-    }
-
-    setIsSubmittingRefund(true);
-    try {
-      const res = await fetch(`/api/admin/orders/${selectedOrder.id}/refund`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reason: refundReason.trim(),
-          amount: refundAmount.trim() ? Number(refundAmount) : undefined,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to issue refund');
-      }
-
-      showToast(`Refund of ₹${data.amount} initiated successfully.`);
-      setRefundModalOpen(false);
-      setRefundReason('');
-      setRefundAmount('');
-      loadOrders();
-    } catch (err: any) {
-      showToast(err.message || 'Refund failed', 'error');
-    } finally {
-      setIsSubmittingRefund(false);
-    }
-  };
 
   const escapeHtml = (str: string): string => {
     if (!str) return '';
@@ -1444,18 +1406,45 @@ export default function OrdersPage() {
                           <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
                           <span>Payment verified and captured. Job approved for printing.</span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRefundAmount('');
-                            setRefundReason('');
-                            setRefundModalOpen(true);
-                          }}
-                          className="w-full flex items-center justify-center gap-2 h-8 rounded-xl text-xs font-semibold bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-all cursor-pointer"
-                        >
-                          <RotateCcw size={13} />
-                          <span>Issue Refund (Partial or Full)</span>
-                        </button>
+                        {/* Manual Refund / Cancellation Contact */}
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-800 text-[11px] flex items-center gap-1.5">
+                              <MessageSquare size={13} className="text-emerald-600" />
+                              Manual Refund / Cancellation
+                            </span>
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              Direct Refund Disabled
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">
+                            Direct automated refunds are turned off. For cancellations or refunds, contact the customer directly via WhatsApp or phone to coordinate manual refund via UPI or net banking.
+                          </p>
+                          <div className="flex items-center gap-2 pt-1">
+                            {selectedOrder.customerPhone ? (
+                              <a
+                                href={`https://wa.me/${selectedOrder.customerPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                                  `Hello ${selectedOrder.customerName || 'Customer'}, regarding your StarPress Order #${selectedOrder.orderNumber}: `
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 flex items-center justify-center gap-1.5 h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] transition-all shadow-xs cursor-pointer"
+                              >
+                                <MessageSquare size={13} />
+                                <span>WhatsApp Customer</span>
+                              </a>
+                            ) : null}
+                            {selectedOrder.customerPhone ? (
+                              <a
+                                href={`tel:${selectedOrder.customerPhone}`}
+                                className="px-3 h-8 rounded-lg bg-white hover:bg-slate-50 text-slate-700 font-semibold text-[11px] border border-[#E5E7EB] flex items-center justify-center gap-1 transition-all cursor-pointer"
+                              >
+                                <Phone size={12} />
+                                <span>Call</span>
+                              </a>
+                            ) : null}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1507,91 +1496,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* Admin Refund Modal */}
-      {refundModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="bg-white border border-[#E5E7EB] rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
-              <div className="flex items-center gap-2 text-rose-600 font-bold text-sm">
-                <RotateCcw size={16} />
-                <span>Issue Razorpay Refund</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setRefundModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                <X size={16} />
-              </button>
-            </div>
 
-            <div className="text-xs text-slate-600 space-y-1">
-              <p>
-                Initiate an automated refund via Razorpay for Order <strong className="font-mono text-slate-900">#{selectedOrder.orderNumber}</strong>.
-              </p>
-              <p className="text-[11px] text-slate-500">
-                Order Total: <strong className="text-slate-900 font-mono">₹{formatPrice(selectedOrder.total)}</strong>
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider block mb-1">
-                  Refund Amount (₹) <span className="text-slate-400 font-normal">(Leave blank for full amount)</span>
-                </label>
-                <input
-                  type="number"
-                  placeholder={`Full amount: ${selectedOrder.total}`}
-                  value={refundAmount}
-                  onChange={(e) => setRefundAmount(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623]"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider block mb-1">
-                  Reason for Refund <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="e.g. Customer cancelled before proofing, quality defect, double charged"
-                  value={refundReason}
-                  onChange={(e) => setRefundReason(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] bg-white text-xs text-slate-900 focus:outline-none focus:border-[#F5A623] resize-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setRefundModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-[#E5E7EB] text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleIssueRefund}
-                disabled={isSubmittingRefund || !refundReason.trim()}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
-              >
-                {isSubmittingRefund ? (
-                  <>
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Processing Refund...</span>
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw size={14} />
-                    <span>Confirm &amp; Refund</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Manual Order Creation Modal */}
       {createModalOpen && (

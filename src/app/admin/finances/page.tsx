@@ -17,6 +17,8 @@ import {
   XCircle,
   CreditCard,
   Search,
+  ExternalLink,
+  MessageSquare,
 } from 'lucide-react';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
 import StatCard from '@/components/admin/ui/StatCard';
@@ -99,8 +101,6 @@ export default function FinancesPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'gateway' | 'refunds' | 'audit'>('overview');
   const [auditSearch, setAuditSearch] = useState('');
-  const [processingRefundId, setProcessingRefundId] = useState<string | null>(null);
-  const [refundNotification, setRefundNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const fetchFinanceData = async () => {
     try {
@@ -126,42 +126,6 @@ export default function FinancesPage() {
     fetchFinanceData();
   }, []);
 
-  const handleProcessRefund = async (item: RefundQueueItem) => {
-    if (!item.order?.id) return;
-    setProcessingRefundId(item.id);
-    setRefundNotification(null);
-
-    try {
-      const res = await fetch(`/api/admin/orders/${item.order.id}/refund`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: Number(item.amount),
-          reason: 'Duplicate payment auto-refund approved by admin',
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to process refund.');
-      }
-
-      setRefundNotification({
-        type: 'success',
-        message: `Refund of ₹${item.amount} initiated successfully for Order #${item.order.orderNumber}.`,
-      });
-
-      // Refresh list
-      fetchFinanceData();
-    } catch (err: any) {
-      setRefundNotification({
-        type: 'error',
-        message: err.message || 'Refund processing failed.',
-      });
-    } finally {
-      setProcessingRefundId(null);
-    }
-  };
 
   const formatPrice = (n: number) => new Intl.NumberFormat('en-IN').format(Math.abs(n));
 
@@ -289,7 +253,7 @@ export default function FinancesPage() {
           }`}
         >
           <RotateCcw size={16} className={activeTab === 'refunds' ? 'text-[#F5A623]' : ''} />
-          <span>Refund Queue ({refundQueue.length})</span>
+          <span>Flagged Payments ({refundQueue.length})</span>
         </button>
 
         <button
@@ -306,25 +270,7 @@ export default function FinancesPage() {
         </button>
       </div>
 
-      {/* Notifications */}
-      {refundNotification && (
-        <div
-          className={`p-4 rounded-xl border text-xs flex items-center justify-between gap-3 ${
-            refundNotification.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50 border-rose-200 text-rose-800'
-          }`}
-        >
-          <span>{refundNotification.message}</span>
-          <button
-            type="button"
-            onClick={() => setRefundNotification(null)}
-            className="text-slate-700 font-semibold hover:underline text-[11px]"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
+
 
       {/* TAB 1: OVERVIEW LEDGER */}
       {activeTab === 'overview' && (
@@ -446,26 +392,26 @@ export default function FinancesPage() {
         </div>
       )}
 
-      {/* TAB 3: REFUND QUEUE */}
+      {/* TAB 3: FLAGGED PAYMENTS REVIEW */}
       {activeTab === 'refunds' && (
         <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-sm space-y-4 p-6">
           <div className="flex items-center justify-between pb-4 border-b border-[#E5E7EB]">
             <div>
-              <h2 className="text-base font-bold text-slate-900">Pending Automated Refund Queue</h2>
+              <h2 className="text-base font-bold text-slate-900">Flagged / Duplicate Payments Review</h2>
               <p className="text-xs text-slate-500">
-                Payments flagged due to duplicate checkout attempts or multi-tab orders. These are refunded automatically every 4 hours or instantly below.
+                Payments flagged due to duplicate checkout attempts or multi-tab orders. Direct automated refunds are disabled. Coordinate manual resolution via WhatsApp/UPI or review in your Razorpay Dashboard.
               </p>
             </div>
             <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-              {refundQueue.length} Pending Actions
+              {refundQueue.length} Flagged
             </span>
           </div>
 
           {refundQueue.length === 0 ? (
             <div className="text-center py-12 space-y-2">
               <CheckCircle2 size={32} className="text-emerald-500 mx-auto" />
-              <h3 className="font-bold text-slate-900 text-sm">Refund Queue is Clear</h3>
-              <p className="text-xs text-slate-500">No duplicate transactions or pending refund flags detected.</p>
+              <h3 className="font-bold text-slate-900 text-sm">No Flagged Payments</h3>
+              <p className="text-xs text-slate-500">No duplicate transactions or pending payment review flags detected.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -490,24 +436,26 @@ export default function FinancesPage() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleProcessRefund(item)}
-                    disabled={processingRefundId === item.id}
-                    className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer shrink-0 shadow-xs"
-                  >
-                    {processingRefundId === item.id ? (
-                      <>
-                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Initiating Refund...</span>
-                      </>
-                    ) : (
-                      <>
-                        <RotateCcw size={14} />
-                        <span>Issue Instant Refund</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={`https://dashboard.razorpay.com/app/payments/${item.gatewayPaymentId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    >
+                      <ExternalLink size={13} />
+                      <span>Razorpay Dashboard</span>
+                    </a>
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(`Hello, regarding StarPress Order #${item.order?.orderNumber || ''} payment reference ${item.gatewayPaymentId}: `)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    >
+                      <MessageSquare size={13} />
+                      <span>WhatsApp Customer</span>
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>
