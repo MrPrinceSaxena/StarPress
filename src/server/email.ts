@@ -9,7 +9,7 @@ import { env } from "@/lib/env";
 const STORE_NAME = "Star Press Print Studio";
 const APP_URL = env.NEXT_PUBLIC_APP_URL || "https://starpress.in";
 const RESEND_API_URL = "https://api.resend.com/emails";
-const SENDER_EMAIL = process.env.NOTIFICATION_EMAIL || "onboarding@resend.dev";
+const SENDER_EMAIL = process.env.NOTIFICATION_EMAIL || "orders@starpress.in";
 const OWNER_EMAIL =
   process.env.ORDER_NOTIFY_EMAIL ||
   process.env.OWNER_ALERT_EMAIL ||

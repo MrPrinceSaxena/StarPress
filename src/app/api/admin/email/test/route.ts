@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const recipient = String(body.to || "starpress.print@gmail.com").trim();
 
-    const senderEmail = process.env.NOTIFICATION_EMAIL || "onboarding@resend.dev";
+    const senderEmail = process.env.NOTIFICATION_EMAIL || "orders@starpress.in";
     const storeName = "Star Press Print Studio";
 
     const res = await fetch("https://api.resend.com/emails", {
