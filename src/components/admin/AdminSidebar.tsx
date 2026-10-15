@@ -45,8 +45,15 @@ const BASE_MAIN_NAV: Omit<NavItem, 'badge'>[] = [
       { label: 'Categories', href: '/admin/categories' },
     ],
   },
-  { label: 'Customers', href: '/admin/customers', icon: Users },
-  { label: 'Content', href: '/admin/content', icon: FileText },
+  {
+    label: 'Content',
+    href: '/admin/content',
+    icon: FileText,
+    children: [
+      { label: 'Pages & Blogs', href: '/admin/content' },
+      { label: 'Hero Slider', href: '/admin/settings?tab=slider' },
+    ],
+  },
   {
     label: 'Marketing',
     href: '/admin/marketing',

@@ -32,6 +32,14 @@ const nextConfig = {
         hostname: "*.supabase.co",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+      },
     ],
   },
   /**
@@ -61,7 +69,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://api.razorpay.com",
               "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
               "connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://*.razorpay.com https://*.supabase.co wss://*.supabase.co",
-              "img-src 'self' data: blob: https://*.supabase.co https://*.razorpay.com https://*.cloudinary.com",
+              "img-src 'self' data: blob: https: http: https://*.supabase.co https://*.razorpay.com https://*.cloudinary.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "object-src 'none'",

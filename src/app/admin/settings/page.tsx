@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Settings,
   Store,
@@ -22,11 +23,43 @@ import {
   Eye,
   Check,
   ExternalLink,
+  RotateCcw,
+  Sparkles,
 } from 'lucide-react';
 import { showToast } from '@/components/admin/ui/Toast';
 import { Skeleton } from '@/components/admin/ui/Skeleton';
 import ImageUploader from '@/components/admin/ui/ImageUploader';
 import Hero from '@/components/sections/Hero';
+
+const DEFAULT_SLIDES = [
+  {
+    src: '/images/Slider/NamePlates.jpeg',
+    alt: 'LED Name Plates custom printing by Star Press',
+    badge: 'Illuminated Signage',
+    headline: ['LIGHT UP YOUR', 'BRAND IDENTITY'],
+    highlightIndex: 1,
+    sub: 'Premium name plates for offices, homes & showrooms. Custom colours, shapes & sizes available.',
+    cta: { label: 'Explore Name Plates', href: '/shop/name-plates' },
+  },
+  {
+    src: '/images/Slider/NeonBoards.jpeg',
+    alt: 'Neon Boards custom printing by Star Press',
+    badge: 'Neon & Glow Signs',
+    headline: ['GLOW DIFFERENT,', 'GLOW BOLD'],
+    highlightIndex: 1,
+    sub: 'Eye-catching neon boards for cafes, studios & events. Bring vibrant energy to any space.',
+    cta: { label: 'Explore Neon Boards', href: '/shop/neon-boards' },
+  },
+  {
+    src: '/images/Slider/3dBoards.jpeg',
+    alt: '3D Letter Board custom printing by Star Press',
+    badge: 'Signage & Displays',
+    headline: ['STAND OUT WITH', '3D LETTER BOARDS'],
+    highlightIndex: 1,
+    sub: 'Dimensional letters that demand attention. Perfect for retail, events & corporate spaces.',
+    cta: { label: 'Explore 3D Letter Boards', href: '/shop/3d-letter-board' },
+  },
+];
 
 const TABS = [
   { key: 'general', label: 'General Info', icon: Store },
@@ -39,8 +72,19 @@ const TABS = [
 
 type TabKey = typeof TABS[number]['key'];
 
-export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<TabKey>('general');
+function SettingsContent() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    tabParam && TABS.some((t) => t.key === tabParam) ? (tabParam as TabKey) : 'general'
+  );
+
+  useEffect(() => {
+    if (tabParam && TABS.some((t) => t.key === tabParam)) {
+      setActiveTab(tabParam as TabKey);
+    }
+  }, [tabParam]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -105,8 +149,10 @@ export default function SettingsPage() {
 
         if (sliderRes.ok) {
           const sliderData = await sliderRes.json();
-          if (sliderData.slides && Array.isArray(sliderData.slides)) {
+          if (sliderData.slides && Array.isArray(sliderData.slides) && sliderData.slides.length > 0) {
             setSlides(sliderData.slides);
+          } else {
+            setSlides(DEFAULT_SLIDES);
           }
         }
         
@@ -125,24 +171,46 @@ export default function SettingsPage() {
     load();
   }, []);
 
-  const handleSave = async () => {
+  const saveHeroSlider = async (slidesToSave = slides) => {
     setSaving(true);
     try {
-      if (activeTab === 'slider') {
-        const res = await fetch('/api/admin/settings/slider', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slides }),
-        });
-        if (res.ok) {
-          showToast('Hero slider settings updated & saved to Supabase');
-        } else {
-          showToast('Failed to save slider settings', 'error');
+      const res = await fetch('/api/admin/settings/slider', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slides: slidesToSave }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.slides) {
+          setSlides(data.slides);
         }
-        setSaving(false);
-        return;
+        showToast('Hero slider published & live on storefront!');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || 'Failed to save slider settings', 'error');
       }
+    } catch {
+      showToast('Network error while saving slider settings', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
 
+  const handleResetDefaultSlides = () => {
+    if (confirm('Reset hero slider to the Star Press factory default slides?')) {
+      setSlides(DEFAULT_SLIDES);
+      showToast('Loaded default slides. Click "Publish to Store" to push live.');
+    }
+  };
+
+  const handleSave = async () => {
+    if (activeTab === 'slider') {
+      await saveHeroSlider();
+      return;
+    }
+
+    setSaving(true);
+    try {
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -202,21 +270,30 @@ export default function SettingsPage() {
   };
 
   const updateSlide = (idx: number, field: string, value: any) => {
-    const newSlides = [...slides];
-    const keys = field.split('.');
-    if (keys.length === 2) {
-      newSlides[idx][keys[0]][keys[1]] = value;
-    } else {
-      newSlides[idx][field] = value;
-    }
-    setSlides(newSlides);
+    setSlides((prev) => {
+      const next = [...prev];
+      const target = { ...next[idx] };
+      const keys = field.split('.');
+      if (keys.length === 2) {
+        target[keys[0]] = { ...(target[keys[0]] || {}), [keys[1]]: value };
+      } else {
+        target[field] = value;
+      }
+      next[idx] = target;
+      return next;
+    });
   };
 
   const updateHeadline = (idx: number, lineIdx: number, value: string) => {
-    const newSlides = [...slides];
-    if (!newSlides[idx].headline) newSlides[idx].headline = ['', ''];
-    newSlides[idx].headline[lineIdx] = value;
-    setSlides(newSlides);
+    setSlides((prev) => {
+      const next = [...prev];
+      const target = { ...next[idx] };
+      const headline = Array.isArray(target.headline) ? [...target.headline] : ['', ''];
+      headline[lineIdx] = value;
+      target.headline = headline;
+      next[idx] = target;
+      return next;
+    });
   };
 
   const inputClass =
@@ -379,17 +456,43 @@ export default function SettingsPage() {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5E7EB]">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">Homepage Hero Slider Slides</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold text-slate-900">Homepage Hero Slider Slides</h2>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Store Sync
+                    </span>
+                  </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Images and promotions displayed on the store homepage hero carousel.
+                    Images, badges, headlines, and links displayed in real time on the store homepage hero carousel.
                   </p>
                 </div>
-                <button
-                  onClick={handleAddSlide}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#F5A623] hover:bg-[#e0961e] text-black transition-all shadow-xs cursor-pointer self-start sm:self-auto"
-                >
-                  <Plus size={14} /> Add Slide
-                </button>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={handleResetDefaultSlides}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-[#E5E7EB] hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
+                    title="Reset to 3 factory default slides"
+                  >
+                    <RotateCcw size={13} />
+                    <span>Reset Defaults</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddSlide}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-[#E5E7EB] hover:bg-slate-50 text-slate-800 transition-all shadow-xs cursor-pointer"
+                  >
+                    <Plus size={14} /> Add Slide
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => saveHeroSlider()}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#F5A623] hover:bg-[#e0961e] text-black transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    <span>{saving ? 'Publishing…' : 'Publish to Store'}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Live Preview Container */}
@@ -592,6 +695,58 @@ export default function SettingsPage() {
                     <p className="text-xs text-slate-500">No custom slides defined. Using system default hero slides.</p>
                   </div>
                 )}
+
+                {/* Bottom Sticky Action Bar for quick adding & publishing */}
+                <div className="sticky bottom-4 z-20 mt-6 p-4 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl border border-slate-700 shadow-2xl flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <div>
+                      <p className="text-xs font-bold text-white">
+                        {slides.length} {slides.length === 1 ? 'Slide' : 'Slides'} in Hero Carousel
+                      </p>
+                      <p className="text-[11px] text-slate-300">
+                        Changes sync live to store landing page instantly upon saving.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleResetDefaultSlides}
+                      className="px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-all border border-slate-600 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RotateCcw size={13} />
+                      Reset Defaults
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddSlide}
+                      className="px-3.5 py-2 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-all border border-slate-600 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus size={14} />
+                      Add Slide
+                    </button>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => saveHeroSlider()}
+                      className="px-4 py-2 text-xs font-bold text-slate-950 bg-[#F5A623] hover:bg-[#d98f16] active:scale-98 rounded-xl transition-all shadow-md flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" />
+                          Publishing...
+                        </>
+                      ) : (
+                        <>
+                          <Save size={14} />
+                          Save & Publish to Store
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -789,5 +944,24 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 space-y-4">
+          <Skeleton className="h-8 w-48 rounded-lg" />
+          <Skeleton className="h-4 w-72 rounded-lg" />
+          <div className="mt-8 space-y-3">
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-64 w-full rounded-2xl" />
+          </div>
+        </div>
+      }
+    >
+      <SettingsContent />
+    </Suspense>
   );
 }

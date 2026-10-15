@@ -33,7 +33,16 @@ export default async function HomePage() {
   
   let dynamicSlides: Slide[] | undefined = undefined;
   if (slideSettingResult && slideSettingResult.value) {
-    dynamicSlides = slideSettingResult.value as unknown as Slide[];
+    if (Array.isArray(slideSettingResult.value)) {
+      dynamicSlides = slideSettingResult.value as unknown as Slide[];
+    } else if (typeof slideSettingResult.value === "string") {
+      try {
+        const parsed = JSON.parse(slideSettingResult.value);
+        if (Array.isArray(parsed)) dynamicSlides = parsed;
+      } catch (err) {
+        console.warn("Failed to parse HERO_SLIDER JSON string:", err);
+      }
+    }
   }
 
   return (

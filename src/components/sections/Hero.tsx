@@ -52,12 +52,33 @@ interface HeroProps {
 }
 
 export default function Hero({ slides: propSlides }: HeroProps) {
+  // Normalize and sanitize slide data to prevent any runtime crashes or broken image states
   const rawSlides = propSlides && propSlides.length > 0 ? propSlides : defaultSlides;
-  // Normalize path casing so /images/slider/ always points to /images/Slider/
-  const slides = rawSlides.map((s) => ({
-    ...s,
-    src: s.src.replace(/^\/images\/slider\//i, "/images/Slider/"),
-  }));
+  const validSlides = rawSlides
+    .filter((s) => s && typeof s === 'object')
+    .map((s, idx) => {
+      const normalizedSrc = s.src
+        ? s.src.replace(/^\/images\/slider\//i, '/images/Slider/')
+        : defaultSlides[idx % defaultSlides.length]?.src || '/images/Slider/NamePlates.jpeg';
+
+      const headlineArray = Array.isArray(s.headline)
+        ? s.headline
+        : typeof s.headline === 'string'
+        ? [s.headline]
+        : ['PREMIUM', 'PRINTING'];
+
+      return {
+        src: normalizedSrc,
+        alt: s.alt || 'Star Press Printing Banner',
+        badge: s.badge || 'Featured Products',
+        headline: headlineArray,
+        highlightIndex: typeof s.highlightIndex === 'number' ? s.highlightIndex : 1,
+        sub: typeof s.sub === 'string' ? s.sub : 'Premium commercial printing delivered with perfection.',
+        cta: s.cta && s.cta.label && s.cta.href ? s.cta : { label: 'Explore Products', href: '/shop' },
+      };
+    });
+
+  const slides = validSlides.length > 0 ? validSlides : defaultSlides;
   const [current, setCurrent] = useState(0);
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
 
@@ -147,7 +168,7 @@ export default function Hero({ slides: propSlides }: HeroProps) {
           const isActive = index === current;
           return (
             <div
-              key={s.src}
+              key={`${s.src}-${index}`}
               className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
                 isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
               }`}
@@ -162,6 +183,7 @@ export default function Hero({ slides: propSlides }: HeroProps) {
                     src={s.src}
                     alt={s.alt}
                     fill
+                    unoptimized
                     priority={index === 0}
                     sizes="100vw"
                     className="object-cover object-center"
@@ -170,7 +192,19 @@ export default function Hero({ slides: propSlides }: HeroProps) {
                     }}
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#1b1e28] via-[#0B0C10] to-[#12141a]" />
+                  <img
+                    src={s.src}
+                    alt={s.alt}
+                    className="w-full h-full object-cover object-center absolute inset-0"
+                    onError={(e) => {
+                      // Fallback to default slide if external url is invalid
+                      const target = e.currentTarget;
+                      if (!target.dataset.fallbackApplied) {
+                        target.dataset.fallbackApplied = "true";
+                        target.src = defaultSlides[index % defaultSlides.length]?.src || "/images/Slider/NamePlates.jpeg";
+                      }
+                    }}
+                  />
                 )}
               </div>
 

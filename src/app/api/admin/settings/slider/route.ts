@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { verifyAdminAccess } from "@/lib/admin/auth-check";
 import { db } from "@/lib/db";
 
@@ -16,7 +17,12 @@ export async function GET(request: NextRequest) {
     });
     
     if (dbSetting && dbSetting.value) {
-      return NextResponse.json({ success: true, slides: dbSetting.value });
+      const slides = Array.isArray(dbSetting.value)
+        ? dbSetting.value
+        : typeof dbSetting.value === "string"
+        ? JSON.parse(dbSetting.value)
+        : [];
+      return NextResponse.json({ success: true, slides });
     }
 
     return NextResponse.json({ success: true, slides: [] });
@@ -45,11 +51,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Clean and validate slides before saving
+    const sanitizedSlides = body.slides.map((s: any, idx: number) => ({
+      src: String(s.src || "").trim(),
+      alt: String(s.alt || `Star Press Slide ${idx + 1}`).trim(),
+      badge: String(s.badge || "Featured").trim(),
+      headline: Array.isArray(s.headline)
+        ? s.headline.map((h: any) => String(h || "").trim())
+        : [String(s.headline || "PREMIUM").trim(), "PRINTING"],
+      highlightIndex: typeof s.highlightIndex === "number" ? s.highlightIndex : 1,
+      sub: String(s.sub || "High quality commercial printing for your brand.").trim(),
+      cta: {
+        label: String(s.cta?.label || "Explore Shop").trim(),
+        href: String(s.cta?.href || "/shop").trim(),
+      },
+    }));
+
     const saved = await db.storeSetting.upsert({
       where: { key: "HERO_SLIDER" },
-      update: { value: body.slides },
-      create: { key: "HERO_SLIDER", value: body.slides },
+      update: { value: sanitizedSlides },
+      create: { key: "HERO_SLIDER", value: sanitizedSlides },
     });
+
+    // Instantly purge ISR / Edge cache for the live store homepage
+    try {
+      revalidatePath("/");
+      revalidatePath("/admin/settings");
+    } catch (revalidateErr) {
+      console.warn("revalidatePath notice:", revalidateErr);
+    }
 
     return NextResponse.json({ success: true, slides: saved.value });
   } catch (error) {
