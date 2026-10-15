@@ -313,22 +313,45 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* 1. Page Heading and Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
-          <h1 className="text-2xl sm:text-[26px] font-bold text-[#111827] tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-xs sm:text-sm text-[#667085] mt-0.5">
-            Overview of your store performance and recent activity.
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Dashboard
+            </h1>
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live &amp; Synced
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Real-time store performance, print press order pipeline, and quick catalog actions.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Quick Action Buttons */}
+          <Link
+            href="/admin/products/new"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#F5A623] hover:bg-[#E09612] text-slate-950 transition-all shadow-xs active:scale-[0.98]"
+          >
+            <Plus size={14} />
+            <span>+ Product</span>
+          </Link>
+
+          <Link
+            href="/admin/orders?create=true"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#111827] hover:bg-black text-white transition-all shadow-xs active:scale-[0.98]"
+          >
+            <ShoppingCart size={14} className="text-[#F5A623]" />
+            <span>+ Order</span>
+          </Link>
+
           {/* Refresh Button */}
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
-            className="p-2.5 rounded-xl border border-[#E5E7EB] bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-sm disabled:opacity-50"
+            className="p-2 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-2xs disabled:opacity-50"
             title="Refresh dashboard data"
             aria-label="Refresh data"
           >
@@ -339,9 +362,9 @@ export default function DashboardPage() {
           <div className="relative">
             <button
               onClick={() => setDateDropdownOpen(!dateDropdownOpen)}
-              className="flex items-center gap-2 h-10 px-3.5 rounded-xl border border-[#E5E7EB] bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 shadow-sm transition-all"
+              className="flex items-center gap-2 h-9 px-3 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 shadow-2xs transition-all"
             >
-              <Calendar size={15} className="text-slate-500" />
+              <Calendar size={14} className="text-slate-500" />
               <span>
                 {dateRange === '30d'
                   ? 'Last 30 days'
@@ -352,7 +375,7 @@ export default function DashboardPage() {
                   : 'All time'}
               </span>
               <ChevronDown
-                size={14}
+                size={13}
                 className={`text-slate-400 transition-transform ${
                   dateDropdownOpen ? 'rotate-180' : ''
                 }`}
@@ -360,7 +383,7 @@ export default function DashboardPage() {
             </button>
 
             {dateDropdownOpen && (
-              <div className="absolute right-0 mt-1.5 w-44 bg-white border border-[#E5E7EB] rounded-xl shadow-lg py-1 z-30 animate-fadeIn">
+              <div className="absolute right-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl py-1 z-30 animate-fadeIn">
                 {[
                   { key: '7d', label: 'Last 7 days' },
                   { key: '30d', label: 'Last 30 days' },
@@ -389,60 +412,60 @@ export default function DashboardPage() {
       </div>
 
       {/* 2. Business Summary Metrics (4 Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Total Revenue */}
-        <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 shadow-sm hover:shadow transition-all">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] hover:shadow-[0_4px_16px_0_rgba(15,23,42,0.05)] transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-[#667085]">Total Revenue</span>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <TrendingUp size={20} />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Revenue</span>
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              <TrendingUp size={18} />
             </div>
           </div>
           <div>
-            <div className="text-[26px] font-bold text-[#111827] tracking-tight">
+            <div className="text-2xl sm:text-[26px] font-black text-slate-900 tracking-tight font-mono">
               ₹{formatPrice(stats?.totalRevenue ?? 2169)}
             </div>
             <div className="flex items-center gap-1.5 mt-2">
-              <span className="text-xs font-bold text-[#15803D]">↑ +12%</span>
-              <span className="text-xs text-[#667085]">vs last month</span>
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200/60">↑ +12%</span>
+              <span className="text-xs text-slate-400 font-medium">vs last month</span>
             </div>
           </div>
         </div>
 
         {/* Total Orders */}
-        <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 shadow-sm hover:shadow transition-all">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] hover:shadow-[0_4px_16px_0_rgba(15,23,42,0.05)] transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-[#667085]">Total Orders</span>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-              <ShoppingCart size={20} />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Orders</span>
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 flex items-center justify-center shrink-0">
+              <ShoppingCart size={18} />
             </div>
           </div>
           <div>
-            <div className="text-[26px] font-bold text-[#111827] tracking-tight">
+            <div className="text-2xl sm:text-[26px] font-black text-slate-900 tracking-tight font-mono">
               {stats?.totalOrders ?? 4}
             </div>
             <div className="flex items-center gap-1.5 mt-2">
-              <span className="text-xs font-bold text-[#15803D]">↑ +0%</span>
-              <span className="text-xs text-[#667085]">vs last month</span>
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200/60">↑ +0%</span>
+              <span className="text-xs text-slate-400 font-medium">vs last month</span>
             </div>
           </div>
         </div>
 
         {/* Products */}
-        <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 shadow-sm hover:shadow transition-all">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] hover:shadow-[0_4px_16px_0_rgba(15,23,42,0.05)] transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-[#667085]">Products</span>
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-              <Package size={20} />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Products in Catalog</span>
+            <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 border border-purple-500/20 flex items-center justify-center shrink-0">
+              <Package size={18} />
             </div>
           </div>
           <div>
-            <div className="text-[26px] font-bold text-[#111827] tracking-tight">
+            <div className="text-2xl sm:text-[26px] font-black text-slate-900 tracking-tight font-mono">
               {stats?.totalProducts ?? 49}
             </div>
             <div className="flex items-center gap-1.5 mt-2">
-              <span className="text-xs font-bold text-[#15803D]">↑ +0%</span>
-              <span className="text-xs text-[#667085]">vs last month</span>
+              <span className="text-xs font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded-md border border-purple-200/60">Active</span>
+              <span className="text-xs text-slate-400 font-medium">live inventory</span>
             </div>
           </div>
         </div>

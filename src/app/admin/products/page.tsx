@@ -26,6 +26,7 @@ import {
   Layers,
   ArrowUpDown,
   RefreshCw,
+  ExternalLink,
 } from 'lucide-react';
 import StatCard from '@/components/admin/ui/StatCard';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
@@ -190,6 +191,25 @@ export default function ProductsPage() {
     setSelectedIds(new Set());
     showToast(`${count} product${count !== 1 ? 's' : ''} set to ${status}`);
     loadProducts();
+  };
+
+  const handleToggleProductStatus = async (product: AdminProduct) => {
+    const newStatus: ProductStatus = product.status === 'published' ? 'draft' : 'published';
+    // Optimistic update
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, status: newStatus } : p))
+    );
+    try {
+      const res = await productService.updateProduct(product.id, { status: newStatus });
+      if (res) {
+        showToast(`"${product.name}" is now ${newStatus === 'published' ? 'Active on store' : 'Draft'}`);
+      } else {
+        throw new Error('Failed to update');
+      }
+    } catch {
+      showToast('Failed to update product status', 'error');
+      loadProducts();
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -594,18 +614,34 @@ export default function ProductsPage() {
                           {product.stockQuantity} in stock
                         </span>
                       </td>
-                      <td className="px-4 py-3.5">
-                        <StatusBadge status={product.stockQuantity === 0 ? 'out_of_stock' : product.status} />
+                      <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleProductStatus(product)}
+                          title={`Click to switch between Active and Draft`}
+                          className="inline-flex items-center gap-1.5 transition-all hover:opacity-80 active:scale-95 cursor-pointer"
+                        >
+                          <StatusBadge status={product.stockQuantity === 0 ? 'out_of_stock' : product.status} />
+                        </button>
                       </td>
                       <td className="px-4 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="relative">
+                        <div className="flex items-center justify-end gap-1">
                           <button
-                            onClick={() => setActionMenuId(actionMenuId === product.id ? null : product.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                            aria-label="Actions"
+                            type="button"
+                            onClick={() => window.open(`/shop/${product.slug}`, '_blank')}
+                            title="Preview on Live Storefront"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                           >
-                            <MoreHorizontal size={16} />
+                            <ExternalLink size={14} />
                           </button>
+                          <div className="relative">
+                            <button
+                              onClick={() => setActionMenuId(actionMenuId === product.id ? null : product.id)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                              aria-label="Actions"
+                            >
+                              <MoreHorizontal size={16} />
+                            </button>
                           {actionMenuId === product.id && (
                             <>
                               <div className="fixed inset-0 z-10" onClick={() => setActionMenuId(null)} />
@@ -650,6 +686,7 @@ export default function ProductsPage() {
                               </div>
                             </>
                           )}
+                          </div>
                         </div>
                       </td>
                     </tr>

@@ -105,10 +105,12 @@ export default function AdminSidebar() {
         <div className="relative shrink-0 flex items-center justify-center">
           <item.icon
             size={18}
-            className={`transition-colors duration-150 ${active ? 'text-[#F5A623]' : 'text-slate-400 group-hover:text-slate-200'}`}
+            className={`transition-all duration-200 ${
+              active ? 'text-[#F5A623] scale-105' : 'text-slate-400 group-hover:text-slate-200'
+            }`}
           />
           {collapsed && item.badge && item.badge > 0 && (
-            <span className="absolute -top-1.5 -right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#12161F]" />
+            <span className="absolute -top-1.5 -right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0F172A]" />
           )}
         </div>
 
@@ -116,7 +118,7 @@ export default function AdminSidebar() {
           <>
             <span className="flex-1 truncate tracking-tight">{item.label}</span>
             {item.badge && item.badge > 0 && (
-              <span className="min-w-[20px] h-[20px] px-1.5 flex items-center justify-center rounded-full bg-rose-500 text-white text-[11px] font-bold leading-none shadow-sm">
+              <span className="min-w-[20px] h-[20px] px-1.5 flex items-center justify-center rounded-full bg-rose-500 text-white text-[11px] font-bold leading-none shadow-sm animate-pulse">
                 {item.badge}
               </span>
             )}
@@ -132,7 +134,7 @@ export default function AdminSidebar() {
 
         {/* Tooltip when collapsed */}
         {collapsed && (
-          <div className="fixed left-[76px] hidden group-hover:flex items-center px-2.5 py-1 rounded-md bg-[#1B2232] border border-white/10 text-white text-xs font-medium shadow-lg whitespace-nowrap z-[100] pointer-events-none">
+          <div className="fixed left-[76px] hidden group-hover:flex items-center px-2.5 py-1 rounded-lg bg-[#1E293B] border border-slate-700/60 text-white text-xs font-semibold shadow-xl whitespace-nowrap z-[100] pointer-events-none">
             {item.label}
             {item.badge && item.badge > 0 && (
               <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold">
@@ -144,9 +146,9 @@ export default function AdminSidebar() {
       </>
     );
 
-    const baseClasses = `flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 relative group ${
+    const baseClasses = `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 relative group ${
       active
-        ? 'bg-[#1E2536] text-white font-semibold border-l-2 border-[#F5A623]'
+        ? 'bg-gradient-to-r from-[#F5A623]/15 via-[#F5A623]/8 to-transparent text-amber-400 font-semibold border-l-2 border-[#F5A623] shadow-xs'
         : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
     } ${collapsed ? 'justify-center px-0' : ''}`;
 
@@ -166,9 +168,9 @@ export default function AdminSidebar() {
                 <Link
                   key={child.href}
                   href={child.href}
-                  className={`block px-2.5 py-1.5 rounded-md text-xs transition-colors ${
+                  className={`block px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
                     pathname === child.href
-                      ? 'text-[#F5A623] font-medium bg-[#F5A623]/10'
+                      ? 'text-[#F5A623] font-semibold bg-[#F5A623]/10'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'
                   }`}
                 >
@@ -214,7 +216,7 @@ export default function AdminSidebar() {
       )}
 
       <aside
-        className={`fixed left-0 top-0 bottom-0 z-50 flex flex-col bg-[#12161F] border-r border-[#1E2536] transition-all duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 bottom-0 z-50 flex flex-col bg-[#0F172A] border-r border-slate-800/80 transition-all duration-300 ease-in-out ${
           collapsed ? 'lg:w-[72px]' : 'lg:w-[240px]'
         } ${
           mobileOpen ? 'translate-x-0 w-[260px]' : '-translate-x-full lg:translate-x-0'
@@ -222,21 +224,22 @@ export default function AdminSidebar() {
       >
         {/* Brand Header */}
         <div
-          className={`flex items-center h-16 border-b border-[#1E2536] ${
+          className={`flex items-center h-16 border-b border-slate-800/80 ${
             collapsed ? 'justify-center px-2' : 'justify-between px-4'
           }`}
         >
           <Link href="/admin/dashboard" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-lg bg-[#F5A623] flex items-center justify-center text-slate-950 font-black text-base shrink-0 shadow-sm transition-transform group-hover:scale-105">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#F5A623] to-[#D97706] flex items-center justify-center text-slate-950 font-black text-base shrink-0 shadow-md transition-transform group-hover:scale-105">
               S
             </div>
             {!collapsed && (
               <div className="flex flex-col min-w-0">
-                <span className="font-bold text-sm tracking-wide text-white leading-tight">
+                <span className="font-extrabold text-sm tracking-wide text-white leading-tight flex items-center gap-1.5">
                   STARPRESS
                 </span>
-                <span className="text-xs text-slate-400 leading-tight">
-                  Store Admin
+                <span className="text-[11px] text-amber-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Store Manager
                 </span>
               </div>
             )}
@@ -258,17 +261,17 @@ export default function AdminSidebar() {
         </nav>
 
         {/* Bottom Section */}
-        <div className="border-t border-[#1E2536] p-3 space-y-1 bg-[#0F131B]">
+        <div className="border-t border-slate-800/80 p-3 space-y-1.5 bg-[#0B1120]">
           <Link
             href="/admin/settings"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors ${
+            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors ${
               pathname.startsWith('/admin/settings')
-                ? 'bg-[#1E2536] text-[#F5A623] font-semibold border-l-2 border-[#F5A623]'
+                ? 'bg-amber-500/10 text-[#F5A623] font-semibold border-l-2 border-[#F5A623]'
                 : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
             } ${collapsed ? 'justify-center px-0' : ''}`}
             title={collapsed ? 'Store Settings' : undefined}
           >
-            <Settings size={18} className="shrink-0" />
+            <Settings size={17} className="shrink-0" />
             {!collapsed && <span>Store Settings</span>}
           </Link>
 
@@ -276,34 +279,34 @@ export default function AdminSidebar() {
             href="https://wa.me/917456849955?text=StarPress%20Support%20Inquiry"
             target="_blank"
             rel="noopener noreferrer"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors ${
+            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors ${
               collapsed ? 'justify-center px-0' : ''
             }`}
-            title={collapsed ? 'Help & Support' : undefined}
+            title={collapsed ? 'Help & WhatsApp Support' : undefined}
           >
-            <HelpCircle size={18} className="shrink-0" />
-            {!collapsed && <span>Help & Support</span>}
+            <HelpCircle size={17} className="shrink-0 text-emerald-400" />
+            {!collapsed && <span>Help &amp; Support</span>}
           </a>
 
           {/* Dedicated View Store Bottom Card */}
           {!collapsed && (
-            <div className="pt-2">
+            <div className="pt-1.5">
               <a
                 href="/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl p-2.5 flex items-center gap-2.5 transition-colors group cursor-pointer"
+                className="w-full border border-slate-800 bg-slate-900/60 hover:bg-slate-800/80 rounded-xl p-2.5 flex items-center gap-2.5 transition-all group cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center text-slate-300 group-hover:text-white shrink-0">
-                  <Store size={16} />
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 shrink-0 transition-transform">
+                  <Store size={15} />
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <div className="text-xs font-semibold text-white flex items-center gap-1 group-hover:text-[#F5A623] transition-colors">
-                    <span>View Store</span>
+                  <div className="text-xs font-bold text-white flex items-center gap-1 group-hover:text-[#F5A623] transition-colors">
+                    <span>Live Storefront</span>
                     <ExternalLink size={11} className="opacity-70" />
                   </div>
                   <p className="text-[10px] text-slate-400 truncate">
-                    Open your online store
+                    Preview customer site
                   </p>
                 </div>
               </a>
@@ -311,7 +314,7 @@ export default function AdminSidebar() {
           )}
 
           {/* Desktop Collapse Toggle */}
-          <div className="hidden lg:block pt-2 border-t border-white/[0.06]">
+          <div className="hidden lg:block pt-1 border-t border-slate-800/60">
             <button
               onClick={toggleCollapse}
               className="w-full flex items-center justify-center p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.06] transition-all"

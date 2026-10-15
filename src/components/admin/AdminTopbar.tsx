@@ -20,6 +20,8 @@ import {
   ArrowRight,
   Settings,
   ShieldCheck,
+  Zap,
+  PercentCircle,
 } from 'lucide-react';
 import { useAuthSession } from '@/hooks/useAuthSession';
 import { useAdminSidebar } from './AdminSidebarContext';
@@ -50,6 +52,9 @@ export default function AdminTopbar() {
   const userRole = 'Store Manager';
   const userInitial = userName.charAt(0).toUpperCase() || 'P';
 
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const quickCreateRef = useRef<HTMLDivElement>(null);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -58,6 +63,9 @@ export default function AdminTopbar() {
       }
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotificationsOpen(false);
+      }
+      if (quickCreateRef.current && !quickCreateRef.current.contains(e.target as Node)) {
+        setQuickCreateOpen(false);
       }
     };
 
@@ -77,6 +85,7 @@ export default function AdminTopbar() {
         setSearchOpen(false);
         setProfileDropdownOpen(false);
         setNotificationsOpen(false);
+        setQuickCreateOpen(false);
       }
     };
 
@@ -130,39 +139,118 @@ export default function AdminTopbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 h-16 flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 bg-white border-b border-[#E5E7EB] shadow-[0_1px_3px_0_rgba(0,0,0,0.02)]">
+      <header className="sticky top-0 z-40 h-16 flex items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 lg:px-8 bg-white border-b border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] backdrop-blur-md">
         {/* Left: Mobile Hamburger & Search Input Trigger */}
-        <div className="flex items-center gap-3 flex-1 max-w-xl">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 max-w-xl">
           <button
             onClick={toggleMobile}
-            className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="lg:hidden p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
             aria-label="Open navigation sidebar"
           >
             <Menu size={20} />
           </button>
 
-          {/* Global Search Bar (Matching Reference Image) */}
+          {/* Global Search Bar with ⌘K */}
           <button
             onClick={() => {
               setSearchOpen(true);
               setTimeout(() => searchInputRef.current?.focus(), 50);
             }}
-            className="w-full max-w-md h-10 px-3.5 rounded-xl bg-[#F8F9FA] hover:bg-slate-100/80 border border-[#E5E7EB] text-left text-xs text-slate-400 flex items-center justify-between transition-all group"
+            className="w-full max-w-md h-10 px-3.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200/80 text-left text-xs text-slate-400 flex items-center justify-between transition-all group shadow-2xs"
           >
             <div className="flex items-center gap-2.5">
-              <Search size={15} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
-              <span className="text-slate-500 group-hover:text-slate-700 font-normal">
-                Search products, orders, customers...
+              <Search size={15} className="text-slate-400 group-hover:text-amber-500 transition-colors" />
+              <span className="text-slate-500 group-hover:text-slate-700 font-normal truncate">
+                Search orders, products, customers...
               </span>
             </div>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-mono text-slate-500 shadow-sm">
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-mono text-slate-500 shadow-xs">
               <span className="text-[11px]">⌘</span>K
             </kbd>
           </button>
         </div>
 
-        {/* Right: Notifications & User Profile */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        {/* Right: Quick Actions, Live DB Status, Notifications & Profile */}
+        <div className="flex items-center gap-2 sm:gap-3.5">
+          {/* Live Store Status Badge */}
+          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/70 text-[11px] font-semibold text-emerald-800 shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Store Live &bull; Supabase Synced</span>
+          </div>
+
+          {/* Quick Create Dropdown Button */}
+          <div className="relative" ref={quickCreateRef}>
+            <button
+              onClick={() => setQuickCreateOpen(!quickCreateOpen)}
+              className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold bg-[#111827] hover:bg-black text-white shadow-xs transition-all active:scale-[0.98]"
+              title="Quickly create a product, order, or coupon"
+            >
+              <Plus size={14} className="text-[#F5A623]" />
+              <span className="hidden sm:inline">Quick Action</span>
+              <ChevronDown
+                size={13}
+                className={`transition-transform duration-200 text-slate-400 ${quickCreateOpen ? 'rotate-180 text-white' : ''}`}
+              />
+            </button>
+
+            {quickCreateOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200/90 rounded-2xl shadow-xl py-1.5 z-50 animate-fadeIn">
+                <div className="px-3.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                  Quick Actions
+                </div>
+                <div className="py-1">
+                  <Link
+                    href="/admin/products/new"
+                    onClick={() => setQuickCreateOpen(false)}
+                    className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-50/70 hover:text-amber-900 transition-colors"
+                  >
+                    <Package size={14} className="text-[#F5A623]" />
+                    <span>+ New Product</span>
+                  </Link>
+                  <Link
+                    href="/admin/orders?create=true"
+                    onClick={() => setQuickCreateOpen(false)}
+                    className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-50/70 hover:text-amber-900 transition-colors"
+                  >
+                    <ShoppingCart size={14} className="text-emerald-600" />
+                    <span>+ Create Walk-in Order</span>
+                  </Link>
+                  <Link
+                    href="/admin/discounts"
+                    onClick={() => setQuickCreateOpen(false)}
+                    className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-50/70 hover:text-amber-900 transition-colors"
+                  >
+                    <Plus size={14} className="text-purple-600" />
+                    <span>+ Add Promo Coupon</span>
+                  </Link>
+                  <Link
+                    href="/admin/categories"
+                    onClick={() => setQuickCreateOpen(false)}
+                    className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-50/70 hover:text-amber-900 transition-colors"
+                  >
+                    <Sliders size={14} className="text-sky-600" />
+                    <span>+ Manage Categories</span>
+                  </Link>
+                </div>
+                <div className="border-t border-slate-100 pt-1">
+                  <a
+                    href="/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setQuickCreateOpen(false)}
+                    className="flex items-center justify-between px-3.5 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ExternalLink size={13} />
+                      <span>Open Storefront</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400">Live</span>
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Notification Bell */}
           <div className="relative" ref={notifRef}>
             <button
@@ -171,30 +259,30 @@ export default function AdminTopbar() {
               aria-label="View notifications"
               title="Notifications"
             >
-              <Bell size={19} />
+              <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
             </button>
 
             {/* Notification Dropdown */}
             {notificationsOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg p-3 z-50 animate-fadeIn">
+              <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl p-3.5 z-50 animate-fadeIn">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                   <span className="text-xs font-bold text-slate-900">Notifications</span>
                   <Link
                     href="/admin/orders?status=pending"
                     onClick={() => setNotificationsOpen(false)}
-                    className="text-[11px] font-medium text-[#F5A623] hover:underline"
+                    className="text-[11px] font-semibold text-[#F5A623] hover:underline"
                   >
-                    View Pending Orders
+                    Pending Orders
                   </Link>
                 </div>
                 <div className="py-2.5 space-y-2">
                   <Link
                     href="/admin/orders?status=pending"
                     onClick={() => setNotificationsOpen(false)}
-                    className="block p-2 rounded-lg bg-amber-50/60 hover:bg-amber-50 border border-amber-100 text-xs text-slate-800 transition-colors"
+                    className="block p-2.5 rounded-xl bg-amber-50/70 hover:bg-amber-100/60 border border-amber-200/60 text-xs text-slate-800 transition-colors"
                   >
-                    <p className="font-semibold text-amber-900">Orders Need Fulfillment</p>
+                    <p className="font-bold text-amber-900">Orders Need Fulfillment</p>
                     <p className="text-[11px] text-amber-700 mt-0.5">
                       Check your pending orders awaiting plate setup & dispatch.
                     </p>
@@ -202,25 +290,25 @@ export default function AdminTopbar() {
                   <Link
                     href="/admin/products"
                     onClick={() => setNotificationsOpen(false)}
-                    className="block p-2 rounded-lg hover:bg-slate-50 text-xs text-slate-700 transition-colors"
+                    className="block p-2.5 rounded-xl hover:bg-slate-50 text-xs text-slate-700 transition-colors border border-transparent hover:border-slate-100"
                   >
-                    <p className="font-medium text-slate-900">Database Connection Active</p>
-                    <p className="text-[11px] text-slate-500">Live PostgreSQL connection online.</p>
+                    <p className="font-semibold text-slate-900">Database Connection Active</p>
+                    <p className="text-[11px] text-slate-500">Live PostgreSQL connection online with instant store sync.</p>
                   </Link>
                 </div>
               </div>
             )}
           </div>
 
-          {/* User Profile Pill Menu (Matching Reference Image) */}
+          {/* User Profile Pill Menu */}
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-              className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-100 transition-colors text-left"
+              className="flex items-center gap-2 p-1 sm:p-1.5 rounded-xl hover:bg-slate-100 transition-colors text-left"
               aria-label="User profile menu"
             >
               {/* Round Avatar Circle (Gold with initial) */}
-              <div className="w-9 h-9 rounded-full bg-[#F5A623] flex items-center justify-center text-slate-950 font-bold text-sm shrink-0 shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F5A623] to-[#D97706] flex items-center justify-center text-slate-950 font-black text-xs shrink-0 shadow-sm">
                 {userInitial}
               </div>
 
@@ -229,13 +317,13 @@ export default function AdminTopbar() {
                 <span className="text-xs font-bold text-slate-900 leading-tight">
                   {userName}
                 </span>
-                <span className="text-[11px] text-slate-500 leading-tight">
+                <span className="text-[10px] text-slate-500 font-medium leading-tight">
                   {userRole}
                 </span>
               </div>
 
               <ChevronDown
-                size={14}
+                size={13}
                 className={`text-slate-400 transition-transform duration-200 hidden sm:block ${
                   profileDropdownOpen ? 'rotate-180' : ''
                 }`}
@@ -244,8 +332,8 @@ export default function AdminTopbar() {
 
             {/* Profile Dropdown Menu */}
             {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50 animate-fadeIn">
-                <div className="px-4 py-2 border-b border-slate-100">
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 z-50 animate-fadeIn">
+                <div className="px-4 py-2.5 border-b border-slate-100">
                   <p className="text-xs font-bold text-slate-900">{userName}</p>
                   <p className="text-[11px] text-slate-500 truncate">{userEmail}</p>
                 </div>
@@ -344,38 +432,54 @@ export default function AdminTopbar() {
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                     Quick Navigation
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <Link
                       href="/admin/products/new"
                       onClick={() => setSearchOpen(false)}
-                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-800 transition-colors"
+                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-amber-50/70 border border-slate-200/80 hover:border-amber-300 text-xs text-slate-800 transition-all shadow-2xs"
                     >
                       <Plus size={14} className="text-[#F5A623]" />
-                      <span>Create New Product</span>
+                      <span className="font-semibold">New Product</span>
                     </Link>
                     <Link
-                      href="/admin/settings?tab=slider"
+                      href="/admin/orders?create=true"
                       onClick={() => setSearchOpen(false)}
-                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-800 transition-colors"
-                    >
-                      <Sliders size={14} className="text-cyan-600" />
-                      <span>Manage Hero Slider</span>
-                    </Link>
-                    <Link
-                      href="/admin/orders?status=pending"
-                      onClick={() => setSearchOpen(false)}
-                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-800 transition-colors"
+                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 text-xs text-slate-800 transition-all shadow-2xs"
                     >
                       <ShoppingCart size={14} className="text-emerald-600" />
-                      <span>Pending Orders</span>
+                      <span className="font-semibold">Create Order</span>
+                    </Link>
+                    <Link
+                      href="/admin/orders"
+                      onClick={() => setSearchOpen(false)}
+                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50/70 border border-slate-200/80 hover:border-blue-300 text-xs text-slate-800 transition-all shadow-2xs"
+                    >
+                      <Package size={14} className="text-blue-600" />
+                      <span className="font-semibold">All Orders</span>
                     </Link>
                     <Link
                       href="/admin/categories"
                       onClick={() => setSearchOpen(false)}
-                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-800 transition-colors"
+                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-purple-50/70 border border-slate-200/80 hover:border-purple-300 text-xs text-slate-800 transition-all shadow-2xs"
                     >
-                      <Package size={14} className="text-purple-600" />
-                      <span>Product Categories</span>
+                      <Sliders size={14} className="text-purple-600" />
+                      <span className="font-semibold">Categories</span>
+                    </Link>
+                    <Link
+                      href="/admin/marketing"
+                      onClick={() => setSearchOpen(false)}
+                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-rose-50/70 border border-slate-200/80 hover:border-rose-300 text-xs text-slate-800 transition-all shadow-2xs"
+                    >
+                      <Zap size={14} className="text-rose-500" />
+                      <span className="font-semibold">Marketing</span>
+                    </Link>
+                    <Link
+                      href="/admin/discounts"
+                      onClick={() => setSearchOpen(false)}
+                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-amber-50/70 border border-slate-200/80 hover:border-amber-300 text-xs text-slate-800 transition-all shadow-2xs"
+                    >
+                      <PercentCircle size={14} className="text-amber-600" />
+                      <span className="font-semibold">Coupons</span>
                     </Link>
                   </div>
                 </div>
