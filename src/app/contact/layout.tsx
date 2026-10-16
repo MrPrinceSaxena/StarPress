@@ -5,13 +5,13 @@ export const metadata: Metadata = {
   description:
     "Contact Star Press (Amoun, Khatima, Uttarakhand). Call +91 74568 49955, email starpress.print@gmail.com, or chat on WhatsApp for printing quotes, artwork reviews, and status updates.",
   alternates: {
-    canonical: "https://www.starpress.in/contact",
+    canonical: "/contact",
   },
   openGraph: {
     title: "Contact Star Press | Printing Press in Khatima, Uttarakhand",
     description:
       "Facility address, customer hotline (+91 74568 49955), and direct WhatsApp desk for Star Press in Amoun, Khatima (Uttarakhand).",
-    url: "https://www.starpress.in/contact",
+    url: "/contact",
   },
 };
 

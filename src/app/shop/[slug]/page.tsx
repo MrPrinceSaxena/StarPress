@@ -56,12 +56,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${product.name} — Custom Printing & Pricing`,
     description: `${product.shortDescription} Manufactured at Star Press Khatima, Uttarakhand with quick doorstep delivery.`,
     alternates: {
-      canonical: `${baseUrl}/shop/${product.slug}`,
+      canonical: `/shop/${product.slug}`,
     },
     openGraph: {
       title: `${product.name} | Star Press Khatima`,
       description: product.shortDescription,
-      url: `${baseUrl}/shop/${product.slug}`,
+      url: `/shop/${product.slug}`,
       images: [
         {
           url: product.images[0] || "/images/hero-composition.jpg",

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description:
     "Explore Star Press commercial and custom printing categories in Khatima: Business Printing, Marketing Materials, Outdoor Advertising, 3D Signage, Stationery, and Custom Packaging.",
   alternates: {
-    canonical: "https://www.starpress.in/categories",
+    canonical: "/categories",
   },
 };
 
