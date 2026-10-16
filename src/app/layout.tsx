@@ -34,7 +34,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.starpress.in"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://starpress.in"),
   title: {
     default: "Star Press | Best Printing Press in Khatima, Uttarakhand",
     template: "%s | Star Press Khatima",

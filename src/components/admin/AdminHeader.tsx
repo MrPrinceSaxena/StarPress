@@ -106,7 +106,7 @@ export default function AdminHeader({ activeSection = "orders" }: AdminHeaderPro
               <span>+ New Product</span>
             </Link>
             <a
-              href="https://wa.me/919999999999?text=StarPress%20Operations%20Support"
+              href="https://wa.me/917456849955?text=StarPress%20Operations%20Support"
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1"
