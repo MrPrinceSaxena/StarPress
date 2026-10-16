@@ -1,22 +1,24 @@
 import React from "react";
 
 export default function JsonLd() {
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://starpress.in").replace(/\/$/, "");
+
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://www.starpress.in/#organization",
+        "@id": `${baseUrl}/#organization`,
         "name": "Star Press",
-        "url": "https://www.starpress.in",
+        "url": baseUrl,
         "logo": {
           "@type": "ImageObject",
-          "url": "https://www.starpress.in/images/hero-composition.jpg",
+          "url": `${baseUrl}/images/hero-composition.jpg`,
           "width": 1200,
           "height": 630,
         },
         "description":
-          "Star Press is a premier custom printing service specializing in business cards, flyers, banners, stickers, packaging, and custom merchandise.",
+          "Star Press is a premier custom printing service in Khatima, Uttarakhand specializing in business cards, flyers, banners, stickers, packaging, 3D letter signs, and corporate merchandise.",
         "sameAs": [
           "https://instagram.com",
           "https://youtube.com",
@@ -33,25 +35,25 @@ export default function JsonLd() {
       },
       {
         "@type": "WebSite",
-        "@id": "https://www.starpress.in/#website",
-        "url": "https://www.starpress.in",
+        "@id": `${baseUrl}/#website`,
+        "url": baseUrl,
         "name": "Star Press",
-        "description": "Turning Ideas Into Print — High Quality Custom Printing",
+        "description": "Turning Ideas Into Print — High Quality Custom Printing Khatima",
         "publisher": {
-          "@id": "https://www.starpress.in/#organization",
+          "@id": `${baseUrl}/#organization`,
         },
         "potentialAction": {
           "@type": "SearchAction",
           "target": {
             "@type": "EntryPoint",
-            "urlTemplate": "https://www.starpress.in/shop?q={search_term_string}",
+            "urlTemplate": `${baseUrl}/shop?q={search_term_string}`,
           },
           "query-input": "required name=search_term_string",
         },
       },
       {
         "@type": ["LocalBusiness", "PrintShop"],
-        "@id": "https://www.starpress.in/#localbusiness",
+        "@id": `${baseUrl}/#localbusiness`,
         "name": "Star Press",
         "alternateName": [
           "Star Press Khatima",
@@ -59,9 +61,9 @@ export default function JsonLd() {
           "Star Press Print Hub",
           "Star Press Amoun"
         ],
-        "image": "https://www.starpress.in/images/hero-composition.jpg",
-        "logo": "https://www.starpress.in/images/Logo.png",
-        "url": "https://www.starpress.in",
+        "image": `${baseUrl}/images/hero-composition.jpg`,
+        "logo": `${baseUrl}/images/Logo.png`,
+        "url": baseUrl,
         "telephone": "+91-74568-49955",
         "email": "starpress.print@gmail.com",
         "priceRange": "₹₹",
@@ -87,8 +89,24 @@ export default function JsonLd() {
             "name": "Khatima"
           },
           {
+            "@type": "City",
+            "name": "Tanakpur"
+          },
+          {
+            "@type": "City",
+            "name": "Sitarganj"
+          },
+          {
+            "@type": "City",
+            "name": "Banbasa"
+          },
+          {
             "@type": "AdministrativeArea",
             "name": "Udham Singh Nagar"
+          },
+          {
+            "@type": "AdministrativeArea",
+            "name": "Champawat"
           },
           {
             "@type": "AdministrativeArea",

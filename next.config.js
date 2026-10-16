@@ -57,6 +57,35 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/sitemap_index.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+      {
+        source: "/post-sitemap.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+      {
+        source: "/category-sitemap.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+      {
+        source: "/post_tag-sitemap.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+      {
+        source: "/page-sitemap.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
