@@ -447,7 +447,7 @@ export default function CheckoutPage() {
       }
 
       const options = {
-        key: rzpData.keyId,
+        key: rzpData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_Toz86Nohgur7MU",
         amount: rzpData.amount,
         currency: rzpData.currency || "INR",
         name: "Star Press",

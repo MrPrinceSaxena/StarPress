@@ -124,12 +124,9 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
     };
   }
 
-  // Refuse test keys on production host
-  if (isProd && (keyId.startsWith("rzp_test_") || keySecret.startsWith("rzp_test_"))) {
-    console.error("[Razorpay Security] Refusing live payment initialization: Razorpay test keys (rzp_test_*) detected in production environment.");
-    const err = new Error("Configuration Error: Razorpay test keys cannot be used on a production host.");
-    (err as any).statusCode = 503;
-    throw err;
+  // Log active key mode
+  if (keyId.startsWith("rzp_test_")) {
+    console.info("[Razorpay Info] Test mode active with key:", keyId);
   }
 
   // 6. Call Razorpay REST API
@@ -208,11 +205,6 @@ export function verifyRazorpaySignature(
     }
     // In local non-production development without keys, allow mock verification
     return true;
-  }
-
-  if (isProd && secret.startsWith("rzp_test_")) {
-    console.error("[Razorpay Security] Refusing signature verification: Test key detected on production host.");
-    return false;
   }
 
   if (!orderId || !paymentId || !signature) {

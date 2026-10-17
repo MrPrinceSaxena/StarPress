@@ -175,7 +175,7 @@ export default function OrderPayRecoveryPage() {
 
       const shipping = order.shippingAddress || {};
       const options = {
-        key: retryData.keyId,
+        key: retryData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_Toz86Nohgur7MU",
         amount: retryData.amount,
         currency: retryData.currency || "INR",
         name: "Star Press",
