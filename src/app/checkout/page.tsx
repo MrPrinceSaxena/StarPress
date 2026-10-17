@@ -407,39 +407,6 @@ export default function CheckoutPage() {
         throw new Error(rzpData.error || "Payment gateway unavailable. Please retry or choose Pay After Proof.");
       }
 
-      // Check if dev test mock (non-production only)
-      if (rzpData.isMock) {
-        setStatusMessage("Completing development test payment simulation...");
-        const verifyRes = await fetch("/api/payments/razorpay/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: placedOrder.id,
-            razorpay_order_id: rzpData.razorpayOrderId,
-            razorpay_payment_id: `pay_mock_${Date.now()}`,
-            razorpay_signature: "mock_test_signature",
-          }),
-        });
-
-        const vData = await verifyRes.json();
-        if (verifyRes.ok && vData.success) {
-          clearCart();
-          setConfirmedOrder({
-            id: placedOrder.id,
-            orderId: placedOrder.orderNumber,
-            date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-            total: Number(placedOrder.totalAmount),
-            itemsCount: items.reduce((acc, it) => acc + it.quantity, 0),
-            shippingMethod: formData.shippingMethod,
-            paymentMethod: "ONLINE",
-            paymentStatus: "PAID",
-          });
-          setIsSubmitting(false);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          return;
-        }
-      }
-
       // Live Razorpay Checkout
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {

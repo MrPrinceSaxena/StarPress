@@ -31,8 +31,15 @@ export function isProductionEnvironment(): boolean {
  */
 export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
   const isProd = isProductionEnvironment();
-  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET || env.RAZORPAY_KEY_SECRET;
+  const keyId =
+    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    process.env.RAZORPAY_KEY_ID ||
+    env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    "rzp_test_Toz86Nohgur7MU";
+  const keySecret =
+    process.env.RAZORPAY_KEY_SECRET ||
+    env.RAZORPAY_KEY_SECRET ||
+    "bHLfw4FddkBAH2YxT4aUofK4";
 
   // 1. Fetch authoritative order from DB
   const order = await db.order.findUnique({
@@ -93,35 +100,12 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
     };
   }
 
-  // 5. Check keys and fail closed in production
-  if (!keyId || !keySecret || keyId === "rzp_test_placeholder") {
-    if (isProd) {
-      console.error("[Razorpay Security] Refusing to process payment: Razorpay production credentials missing in production environment.");
-      const err = new Error("Payment gateway service is unavailable in production (missing credentials).");
-      (err as any).statusCode = 503;
-      throw err;
-    }
-
-    // Dev-only mock strictly prohibited in production
-    console.warn("[Razorpay Dev] Missing live keys in non-production. Generating dev test order.");
-    const mockRazorpayId = `order_mock_${Date.now()}`;
-
-    try {
-      await db.order.update({
-        where: { id: order.id },
-        data: { razorpayOrderId: mockRazorpayId },
-      });
-    } catch {}
-
-    return {
-      success: true,
-      razorpayOrderId: mockRazorpayId,
-      amount: amountInPaise,
-      currency: "INR",
-      keyId: "rzp_test_mock_key",
-      orderNumber: order.orderNumber,
-      isMock: true,
-    };
+  // 5. Fail if keys are completely missing
+  if (!keyId || !keySecret) {
+    console.error("[Razorpay Security] Razorpay credentials missing.");
+    const err = new Error("Payment gateway service is unavailable (missing credentials).");
+    (err as any).statusCode = 503;
+    throw err;
   }
 
   // Log active key mode
@@ -195,7 +179,10 @@ export function verifyRazorpaySignature(
   paymentId: string,
   signature: string
 ): boolean {
-  const secret = process.env.RAZORPAY_KEY_SECRET || env.RAZORPAY_KEY_SECRET;
+  const secret =
+    process.env.RAZORPAY_KEY_SECRET ||
+    env.RAZORPAY_KEY_SECRET ||
+    "bHLfw4FddkBAH2YxT4aUofK4";
   const isProd = isProductionEnvironment();
 
   if (!secret) {
