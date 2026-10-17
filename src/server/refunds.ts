@@ -179,8 +179,15 @@ export async function initiateRefund(params: InitiateRefundParams) {
   });
 
   const isProd = isProductionEnvironment();
-  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET || env.RAZORPAY_KEY_SECRET;
+  const keyId =
+    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    process.env.RAZORPAY_KEY_ID ||
+    env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    "rzp_test_Toz86Nohgur7MU";
+  const keySecret =
+    process.env.RAZORPAY_KEY_SECRET ||
+    env.RAZORPAY_KEY_SECRET ||
+    "bHLfw4FddkBAH2YxT4aUofK4";
 
   // Dev Mock Refund
   if (!isProd && (paymentId.startsWith("pay_mock_") || !keySecret)) {

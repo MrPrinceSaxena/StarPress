@@ -128,11 +128,25 @@ export default function ContentManagementPage() {
                     <td className="px-5 py-3.5 text-xs text-slate-600 font-medium">{page.author}</td>
                     <td className="px-5 py-3.5 text-xs text-slate-800 font-semibold font-mono">{page.views.toLocaleString()}</td>
                     <td className="px-5 py-3.5 text-xs text-slate-500 font-medium">
-                      {new Date(page.updatedAt).toLocaleDateString('en-IN', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
+                      <div className="flex items-center justify-between">
+                        <span>
+                          {new Date(page.updatedAt).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
+                        <a
+                          href={`/${page.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors inline-flex items-center gap-1 text-[11px] font-semibold"
+                          title="View live page"
+                        >
+                          <ExternalLink size={13} />
+                          <span>View</span>
+                        </a>
+                      </div>
                     </td>
                   </tr>
                 ))}

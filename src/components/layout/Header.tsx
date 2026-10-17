@@ -53,6 +53,18 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const [activeSection, setActiveSection] = useState<string>("");
 
   const isHome = pathname === "/";
+  const [announcement, setAnnouncement] = useState<{ text: string; isActive: boolean; color: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/announcement")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.announcement?.isActive && data.announcement.text) {
+          setAnnouncement(data.announcement);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Profile dropdown state
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -213,6 +225,21 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             : "sticky top-0 bg-bg-base/90 backdrop-blur-md border-b border-border-subtle"
         }`}
       >
+        {announcement && announcement.isActive && announcement.text && (
+          <div
+            className={`w-full py-1.5 px-4 text-center text-[11px] sm:text-xs font-bold tracking-wide transition-colors ${
+              announcement.color === "emerald"
+                ? "bg-emerald-600 text-white"
+                : announcement.color === "crimson"
+                ? "bg-rose-600 text-white"
+                : announcement.color === "navy"
+                ? "bg-blue-600 text-white"
+                : "bg-[#F5A623] text-black"
+            }`}
+          >
+            {announcement.text}
+          </div>
+        )}
         <div className="max-w-[1440px] mx-auto px-4 xs:px-6 lg:px-8 h-16 sm:h-[68px] flex items-center justify-between gap-3 sm:gap-4">
           
           {/* Far Left: StarPress Logo (Outside Pill) */}

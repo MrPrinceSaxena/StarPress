@@ -21,7 +21,6 @@ import type {
   ProductStatus,
 } from './types';
 
-import { MOCK_DISCOUNTS, MOCK_CAMPAIGNS, MOCK_CONTENT } from './mock-data';
 
 // Helper to safely fetch from window origin
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
@@ -654,12 +653,83 @@ export const discountService = {
 
 export const marketingService = {
   async getCampaigns(): Promise<MarketingCampaign[]> {
-    return [...MOCK_CAMPAIGNS];
+    try {
+      const res = await apiFetch<{ success: boolean; campaigns: MarketingCampaign[] }>('/api/admin/marketing/campaigns');
+      return res.campaigns || [];
+    } catch (err) {
+      console.error('[marketingService.getCampaigns] error:', err);
+      return [];
+    }
+  },
+
+  async createCampaign(data: {
+    name: string;
+    type: string;
+    budget: number;
+    reach: number;
+    startDate: string;
+    endDate?: string | null;
+  }): Promise<MarketingCampaign> {
+    const res = await apiFetch<{ success: boolean; campaign: MarketingCampaign }>('/api/admin/marketing/campaigns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return res.campaign;
+  },
+
+  async toggleCampaignStatus(id: string, status?: string): Promise<MarketingCampaign> {
+    const res = await apiFetch<{ success: boolean; campaign: MarketingCampaign }>('/api/admin/marketing/campaigns', {
+      method: 'PATCH',
+      body: JSON.stringify({ id, status }),
+    });
+    return res.campaign;
+  },
+
+  async deleteCampaign(id: string): Promise<boolean> {
+    try {
+      const res = await apiFetch<{ success: boolean }>(`/api/admin/marketing/campaigns?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      return Boolean(res.success);
+    } catch {
+      return false;
+    }
+  },
+
+  async getAnnouncement(): Promise<{ text: string; isActive: boolean; color: 'gold' | 'emerald' | 'navy' | 'crimson' }> {
+    try {
+      const res = await apiFetch<{ success: boolean; announcement: any }>('/api/admin/marketing/announcement');
+      return res.announcement;
+    } catch {
+      return {
+        text: '⚡ Welcome to Star Press: Premier Commercial Printing & Custom Fabrication in Khatima!',
+        isActive: true,
+        color: 'gold',
+      };
+    }
+  },
+
+  async saveAnnouncement(data: { text: string; isActive: boolean; color: string }): Promise<boolean> {
+    try {
+      const res = await apiFetch<{ success: boolean }>('/api/admin/marketing/announcement', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      return Boolean(res.success);
+    } catch {
+      return false;
+    }
   },
 };
 
 export const contentService = {
   async getPages(): Promise<ContentPage[]> {
-    return [...MOCK_CONTENT];
+    try {
+      const res = await apiFetch<{ success: boolean; pages: ContentPage[] }>('/api/admin/content');
+      return res.pages || [];
+    } catch (err) {
+      console.error('[contentService.getPages] error:', err);
+      return [];
+    }
   },
 };

@@ -76,11 +76,19 @@ function MarketingContent() {
   const [announcementActive, setAnnouncementActive] = useState(true);
   const [announcementColor, setAnnouncementColor] = useState<'gold' | 'emerald' | 'navy' | 'crimson'>('gold');
 
-  // Load initial campaigns
+  // Load initial campaigns and live announcement
   useEffect(() => {
     marketingService.getCampaigns().then((data) => {
       setCampaigns(data);
       setLoadingCampaigns(false);
+    });
+
+    marketingService.getAnnouncement().then((ann) => {
+      if (ann) {
+        setAnnouncementText(ann.text || '');
+        setAnnouncementActive(ann.isActive ?? true);
+        setAnnouncementColor(ann.color || 'gold');
+      }
     });
   }, []);
 
@@ -110,47 +118,60 @@ function MarketingContent() {
       showToast('Campaign name is required', 'error');
       return;
     }
-    const budgetNum = Number(campaignForm.budget) || 1000;
-    const reachNum = Number(campaignForm.reach) || 5000;
+    const budgetNum = Number(campaignForm.budget) || 0;
+    const reachNum = Number(campaignForm.reach) || 0;
 
-    const newCamp: MarketingCampaign = {
-      id: `camp_${Date.now()}`,
-      name: campaignForm.name.trim(),
-      type: campaignForm.type,
-      status: 'active',
-      startDate: campaignForm.startDate || new Date().toISOString(),
-      endDate: campaignForm.endDate || null,
-      budget: budgetNum,
-      reach: reachNum,
-      clicks: Math.round(reachNum * 0.045),
-      conversions: Math.max(1, Math.round(reachNum * 0.045 * 0.08)),
-      revenue: Math.round(budgetNum * 2.8),
-    };
-
-    setCampaigns((prev) => [newCamp, ...prev]);
-    showToast(`Campaign "${newCamp.name}" launched successfully!`);
-    setIsModalOpen(false);
-    setCampaignForm({
-      name: '',
-      type: 'social',
-      budget: '',
-      reach: '',
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: '',
-    });
+    marketingService
+      .createCampaign({
+        name: campaignForm.name.trim(),
+        type: campaignForm.type,
+        budget: budgetNum,
+        reach: reachNum,
+        startDate: campaignForm.startDate || new Date().toISOString(),
+        endDate: campaignForm.endDate || null,
+      })
+      .then((newCamp) => {
+        setCampaigns((prev) => [newCamp, ...prev]);
+        showToast(`Campaign "${newCamp.name}" launched successfully!`);
+        setIsModalOpen(false);
+        setCampaignForm({
+          name: '',
+          type: 'social',
+          budget: '',
+          reach: '',
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: '',
+        });
+      })
+      .catch((err) => {
+        showToast(err.message || 'Failed to create campaign', 'error');
+      });
   };
 
   const handleToggleCampaignStatus = (id: string) => {
-    setCampaigns((prev) =>
-      prev.map((c) => {
-        if (c.id === id) {
-          const newStatus = c.status === 'active' ? 'paused' : 'active';
-          showToast(`Campaign ${c.name} ${newStatus}`);
-          return { ...c, status: newStatus };
-        }
-        return c;
+    marketingService
+      .toggleCampaignStatus(id)
+      .then((updated) => {
+        setCampaigns((prev) => prev.map((c) => (c.id === id ? updated : c)));
+        showToast(`Campaign ${updated.name} ${updated.status}`);
       })
-    );
+      .catch(() => {
+        showToast('Failed to update campaign status', 'error');
+      });
+  };
+
+  const handleDeleteCampaign = (id: string) => {
+    if (!confirm('Are you sure you want to delete this campaign?')) return;
+    marketingService
+      .deleteCampaign(id)
+      .then((ok) => {
+        if (ok) {
+          setCampaigns((prev) => prev.filter((c) => c.id !== id));
+          showToast('Campaign removed');
+        } else {
+          showToast('Failed to delete campaign', 'error');
+        }
+      });
   };
 
   const handleCopyPaymentLink = (order: AdminOrder) => {
@@ -163,7 +184,19 @@ function MarketingContent() {
   };
 
   const handleSaveAnnouncement = () => {
-    showToast('Storefront announcement updated live across the website!');
+    marketingService
+      .saveAnnouncement({
+        text: announcementText,
+        isActive: announcementActive,
+        color: announcementColor,
+      })
+      .then((ok) => {
+        if (ok) {
+          showToast('Storefront announcement updated live across the website!');
+        } else {
+          showToast('Failed to save announcement', 'error');
+        }
+      });
   };
 
   return (
@@ -320,6 +353,13 @@ function MarketingContent() {
                           className="text-[11px] font-bold text-slate-500 hover:text-slate-900 underline ml-1 cursor-pointer"
                         >
                           {camp.status === 'active' ? 'Pause' : 'Activate'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCampaign(camp.id)}
+                          className="text-[11px] font-bold text-rose-500 hover:text-rose-700 underline ml-2 cursor-pointer"
+                        >
+                          Delete
                         </button>
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5 capitalize font-medium">

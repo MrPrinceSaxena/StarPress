@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       customersChange: 0,
       averageOrderValue,
       aovChange: 0,
-      conversionRate: totalOrders > 0 ? 3.2 : 0,
+      conversionRate: totalCustomers > 0 ? Number(((nonCancelledOrders.length / totalCustomers) * 100).toFixed(1)) : 0,
       conversionChange: 0,
     };
 
