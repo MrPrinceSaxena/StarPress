@@ -20,18 +20,30 @@ import {
   Loader2,
   CreditCard,
   FileText,
+  RotateCcw,
+  Edit2,
+  Trash2,
+  Check,
+  X,
+  ChevronRight,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabase/client";
 
 interface OrderItem {
   id: string;
   productName: string;
+  productSlug?: string;
   quantity: number;
   lineTotal: number;
+  unitPrice?: number;
+  specs?: any;
+  customText?: string;
+  previewUrl?: string;
 }
 
 interface OrderRecord {
@@ -60,14 +72,50 @@ interface AddressRecord {
   isDefault: boolean;
 }
 
+const INDIAN_STATES = [
+  "Andaman and Nicobar Islands",
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chandigarh",
+  "Chhattisgarh",
+  "Delhi NCR",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jammu & Kashmir",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+];
+
 function AccountContent() {
   const { session, status, isHydrated, signOut: authSignOut } = useAuthSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { addItem } = useCart();
 
   const [activeTab, setActiveTab] = useState<"orders" | "addresses" | "profile">("orders");
 
-  // Deep-linking: sync tab from URL query param (?tab=orders|profile|addresses|settings)
+  // Deep-linking: sync tab from URL query param
   useEffect(() => {
     const tabParam = searchParams.get("tab");
     if (tabParam === "orders" || tabParam === "addresses" || tabParam === "profile") {
@@ -85,12 +133,14 @@ function AccountContent() {
   // Orders state
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [reorderedId, setReorderedId] = useState<string | null>(null);
 
   // Addresses state
   const [addresses, setAddresses] = useState<AddressRecord[]>([]);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressForm, setAddressForm] = useState({
-    label: "Main Office",
+    label: "Delivery Address",
     line1: "",
     line2: "",
     city: "New Delhi",
@@ -118,6 +168,20 @@ function AccountContent() {
     }
   }, [isHydrated, status, session, router]);
 
+  const fetchAddressesList = async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const res = await fetch("/api/account/addresses", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      if (data.addresses && Array.isArray(data.addresses)) {
+        setAddresses(data.addresses);
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     if (session?.user) {
       setProfileForm((prev) => {
@@ -131,7 +195,7 @@ function AccountContent() {
         };
       });
 
-      // Fetch user's orders with fallback
+      // Fetch user's orders
       supabase.auth.getSession().then(({ data: sessionData }: any) => {
         const token = sessionData?.session?.access_token;
         fetch("/api/account/orders", {
@@ -139,99 +203,128 @@ function AccountContent() {
         })
           .then((res) => res.json())
           .then((data) => {
-            if (data.orders && data.orders.length > 0) {
+            if (data.orders && Array.isArray(data.orders) && data.orders.length > 0) {
               setOrders(data.orders);
-            } else {
-              try {
-                const local = JSON.parse(localStorage.getItem("starpress_recent_orders") || "[]");
-                if (Array.isArray(local) && local.length > 0) {
-                  const mapped = local.map((lo: any) => ({
-                  id: lo.orderId,
-                  orderNumber: lo.orderId,
-                  status: "CONFIRMED",
-                  totalAmount: lo.total || 0,
-                  paymentStatus: "PAID",
-                  createdAt: lo.date || new Date().toISOString(),
-                  items: lo.items || [],
-                }));
-                setOrders(mapped);
-              }
-            } catch {}
-          }
-          setIsLoadingOrders(false);
-        })
-        .catch(() => {
-          try {
-            const local = JSON.parse(localStorage.getItem("starpress_recent_orders") || "[]");
-            if (Array.isArray(local) && local.length > 0) {
-              const mapped = local.map((lo: any) => ({
-                id: lo.orderId,
-                orderNumber: lo.orderId,
-                status: "CONFIRMED",
-                totalAmount: lo.total || 0,
-                paymentStatus: "PAID",
-                createdAt: lo.date || new Date().toISOString(),
-                items: lo.items || [],
-              }));
-              setOrders(mapped);
-            }
-          } catch {}
-          setIsLoadingOrders(false);
-        });
-      });
-
-      // Fetch user's addresses
-      supabase.auth.getSession().then(({ data: sessionData }: any) => {
-        const token = sessionData?.session?.access_token;
-        fetch("/api/account/addresses", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.addresses) {
-              setAddresses(data.addresses);
             }
           })
-          .catch(() => {});
+          .catch(() => {})
+          .finally(() => {
+            setIsLoadingOrders(false);
+          });
       });
+
+      fetchAddressesList();
     }
   }, [session]);
+
+  const handleReorder = (order: OrderRecord) => {
+    if (!order.items || order.items.length === 0) return;
+
+    order.items.forEach((item) => {
+      const specs = item.specs || {};
+      const customKey = `${item.productSlug || item.id}-${specs.sizeId || "std"}-${specs.materialId || "std"}-${Date.now().toString(36)}`;
+
+      addItem(
+        {
+          id: customKey,
+          productId: undefined,
+          productSlug: item.productSlug,
+          name: item.productName,
+          price: item.unitPrice || Number(item.lineTotal) / (item.quantity || 1),
+          imageSrc: item.previewUrl || "/images/hero-composition.jpg",
+          href: item.productSlug ? `/shop/${item.productSlug}` : "/shop",
+          quantity: item.quantity,
+          sizeId: specs.sizeId,
+          sizeLabel: specs.sizeLabel,
+          materialId: specs.materialId,
+          materialLabel: specs.materialLabel,
+          customText: item.customText || specs.customText,
+          customizations: {
+            personalizedText: item.customText || specs.customText,
+            notes: specs.notes,
+          },
+          specs: item.specs,
+        },
+        item.quantity
+      );
+    });
+
+    setReorderedId(order.id);
+    setTimeout(() => {
+      router.push("/cart");
+    }, 1200);
+  };
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
-      
+
+      const method = editingAddressId ? "PUT" : "POST";
+      const payload = editingAddressId ? { id: editingAddressId, ...addressForm } : addressForm;
+
       const res = await fetch("/api/account/addresses", {
-        method: "POST",
-        headers: { 
+        method,
+        headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(addressForm),
+        body: JSON.stringify(payload),
       });
+
       const data = await res.json();
-      if (res.ok && data.success && data.address) {
-        setAddresses((prev) => [data.address, ...prev]);
+      if (res.ok && data.success) {
+        await fetchAddressesList();
         setIsAddingAddress(false);
+        setEditingAddressId(null);
         setAddressForm({
-          label: "Branch Office",
+          label: "Delivery Address",
           line1: "",
           line2: "",
-          city: "",
+          city: "New Delhi",
           state: "Delhi NCR",
           pincode: "",
           phone: "",
           isDefault: false,
         });
       } else {
-        alert(data.error || "Failed to save address. Please try again.");
+        alert(data.error || "Failed to save address. Please check your inputs.");
       }
     } catch (err) {
       console.error("Failed to save address:", err);
       alert("Network error: Failed to save address.");
     }
+  };
+
+  const handleStartEdit = (addr: AddressRecord) => {
+    setEditingAddressId(addr.id);
+    setIsAddingAddress(true);
+    setAddressForm({
+      label: addr.label || "Delivery Address",
+      line1: addr.line1,
+      line2: addr.line2 || "",
+      city: addr.city,
+      state: addr.state || "Delhi NCR",
+      pincode: addr.pincode,
+      phone: addr.phone,
+      isDefault: addr.isDefault,
+    });
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this delivery address?")) return;
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      await fetch(`/api/account/addresses?id=${id}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      await fetchAddressesList();
+    } catch {}
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -261,9 +354,9 @@ function AccountContent() {
 
       const res = await fetch("/api/account/profile", {
         method: "PATCH",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           name: profileForm.name,
@@ -323,6 +416,12 @@ function AccountContent() {
 
           {/* Top Actions */}
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <Link
+              href="/shop"
+              className="px-4 py-2 rounded-xl border border-brand-yellow/40 bg-brand-yellow/10 text-brand-yellow text-xs font-bold hover:bg-brand-yellow/20 transition-colors"
+            >
+              Order New Prints
+            </Link>
 
             <button
               type="button"
@@ -410,9 +509,12 @@ function AccountContent() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border-subtle">
                       <div>
                         <div className="flex items-center gap-2.5">
-                          <span className="font-mono font-black text-sm text-white">
+                          <Link
+                            href={`/account/orders/${ord.id}`}
+                            className="font-mono font-black text-sm text-brand-yellow hover:underline"
+                          >
                             {ord.orderNumber}
-                          </span>
+                          </Link>
                           <span
                             className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                               ord.status === "DELIVERED"
@@ -456,36 +558,54 @@ function AccountContent() {
                       ))}
                     </div>
 
-                    {/* Order Actions: Tax Invoice & Courier Tracking */}
+                    {/* Actions: View Details, Track, Buy Again, Invoice */}
                     <div className="pt-3 border-t border-border-subtle/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-                      {ord.paymentStatus === "PAID" ? (
+                      <div className="flex items-center gap-3">
                         <Link
-                          href={`/account/orders/${ord.id}/invoice`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-brand-yellow hover:text-[#FFE04D] text-xs font-semibold transition-all shadow-sm"
+                          href={`/account/orders/${ord.id}`}
+                          className="font-bold text-white hover:text-brand-yellow flex items-center gap-1 transition-colors"
                         >
-                          <FileText size={13} />
-                          <span>View / Print GST Invoice</span>
+                          <span>Order Details</span>
+                          <ChevronRight size={13} />
                         </Link>
-                      ) : (
-                        <span className="text-[11px] text-text-muted">
-                          Official invoice issued once payment is confirmed.
-                        </span>
-                      )}
 
-                      {ord.trackingNumber && (
-                        <a
-                          href={`https://www.shiprocket.in/shipment-tracking/?awb=${ord.trackingNumber}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[11px] text-sky-400 hover:underline flex items-center gap-1"
+                        <Link
+                          href={`/orders/track?order=${encodeURIComponent(ord.orderNumber)}`}
+                          className="text-text-secondary hover:text-brand-yellow flex items-center gap-1 transition-colors"
                         >
                           <Truck size={13} />
-                          <span>
-                            {ord.courierPartner || "Courier"} Tracking ({ord.trackingNumber})
+                          <span>Track Package</span>
+                        </Link>
+
+                        {ord.paymentStatus === "PAID" && (
+                          <Link
+                            href={`/account/orders/${ord.id}/invoice`}
+                            className="text-text-muted hover:text-white flex items-center gap-1 transition-colors"
+                          >
+                            <FileText size={13} />
+                            <span>Tax Invoice</span>
+                          </Link>
+                        )}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReorder(ord)}
+                        className="font-bold text-xs uppercase"
+                      >
+                        {reorderedId === ord.id ? (
+                          <span className="flex items-center gap-1 text-emerald-400">
+                            <Check size={13} />
+                            <span>Added to Cart!</span>
                           </span>
-                          <ExternalLink size={12} />
-                        </a>
-                      )}
+                        ) : (
+                          <span className="flex items-center gap-1.5">
+                            <RotateCcw size={12} className="text-brand-yellow" />
+                            <span>Buy Again</span>
+                          </span>
+                        )}
+                      </Button>
                     </div>
 
                     {/* Payment Recovery Action for Unpaid Orders */}
@@ -523,7 +643,10 @@ function AccountContent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsAddingAddress(true)}
+                  onClick={() => {
+                    setEditingAddressId(null);
+                    setIsAddingAddress(true);
+                  }}
                   className="flex items-center gap-1.5"
                 >
                   <Plus size={14} />
@@ -532,17 +655,22 @@ function AccountContent() {
               )}
             </div>
 
-            {/* Add Address Form */}
+            {/* Add / Edit Address Form */}
             {isAddingAddress && (
               <form
                 onSubmit={handleSaveAddress}
                 className="rounded-3xl border border-brand-yellow/30 bg-bg-surface p-6 sm:p-8 space-y-4 shadow-xl"
               >
                 <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
-                  <h3 className="font-bold text-sm text-white">New Shipping Address</h3>
+                  <h3 className="font-bold text-sm text-white">
+                    {editingAddressId ? "Edit Delivery Address" : "New Shipping Address"}
+                  </h3>
                   <button
                     type="button"
-                    onClick={() => setIsAddingAddress(false)}
+                    onClick={() => {
+                      setIsAddingAddress(false);
+                      setEditingAddressId(null);
+                    }}
                     className="text-xs text-text-muted hover:text-white"
                   >
                     Cancel
@@ -551,62 +679,89 @@ function AccountContent() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div className="space-y-1">
-                    <label className="text-text-secondary uppercase tracking-wider font-semibold">Label</label>
+                    <label className="text-text-secondary uppercase tracking-wider font-semibold">Address Label *</label>
                     <input
                       type="text"
                       required
                       value={addressForm.label}
                       onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })}
-                      placeholder="e.g. Head Office, Warehouse"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white"
+                      placeholder="e.g. Head Office, Warehouse, Home"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-text-secondary uppercase tracking-wider font-semibold">Contact Phone</label>
+                    <label className="text-text-secondary uppercase tracking-wider font-semibold">Contact Phone *</label>
                     <input
                       type="tel"
                       required
                       value={addressForm.phone}
                       onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
                       placeholder="9876543210"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
 
                   <div className="sm:col-span-2 space-y-1">
-                    <label className="text-text-secondary uppercase tracking-wider font-semibold">Address Line 1</label>
+                    <label className="text-text-secondary uppercase tracking-wider font-semibold">Address Line 1 (Flat/Building) *</label>
                     <input
                       type="text"
                       required
                       value={addressForm.line1}
                       onChange={(e) => setAddressForm({ ...addressForm, line1: e.target.value })}
                       placeholder="Building name, street, locality"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="text-text-secondary uppercase tracking-wider font-semibold">Address Line 2 (Area/Sector)</label>
+                    <input
+                      type="text"
+                      value={addressForm.line2}
+                      onChange={(e) => setAddressForm({ ...addressForm, line2: e.target.value })}
+                      placeholder="Near Landmark, Area"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-text-secondary uppercase tracking-wider font-semibold">City</label>
+                    <label className="text-text-secondary uppercase tracking-wider font-semibold">City *</label>
                     <input
                       type="text"
                       required
                       value={addressForm.city}
                       onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white"
+                      placeholder="New Delhi, Mumbai, etc."
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-text-secondary uppercase tracking-wider font-semibold">PIN Code</label>
+                    <label className="text-text-secondary uppercase tracking-wider font-semibold">State *</label>
+                    <select
+                      value={addressForm.state}
+                      onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
+                    >
+                      {INDIAN_STATES.map((st) => (
+                        <option key={st} value={st} className="bg-bg-surface text-white">
+                          {st}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-text-secondary uppercase tracking-wider font-semibold">PIN Code (6 Digits) *</label>
                     <input
                       type="text"
                       required
                       maxLength={6}
                       value={addressForm.pincode}
-                      onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value.replace(/\D/g, "") })}
+                      onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })}
                       placeholder="110001"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white font-mono focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
                 </div>
@@ -622,9 +777,21 @@ function AccountContent() {
                     <span>Set as primary default shipping address</span>
                   </label>
 
-                  <Button type="submit" variant="primary" size="sm">
-                    Save Address
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingAddress(false);
+                        setEditingAddressId(null);
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                    <Button type="submit" variant="primary" size="sm">
+                      {editingAddressId ? "Save Changes" : "Save Address"}
+                    </Button>
+                  </div>
                 </div>
               </form>
             )}
@@ -650,9 +817,28 @@ function AccountContent() {
                     {addr.line1}
                     {addr.line2 && `, ${addr.line2}`}
                     <br />
-                    {addr.city}, {addr.state} — {addr.pincode}
+                    {addr.city}, {addr.state} — <strong className="text-white font-mono">{addr.pincode}</strong>
                   </p>
                   <div className="text-xs text-text-muted font-mono">Phone: {addr.phone}</div>
+
+                  <div className="flex items-center gap-3 pt-2 border-t border-border-subtle text-xs">
+                    <button
+                      type="button"
+                      onClick={() => handleStartEdit(addr)}
+                      className="text-text-secondary hover:text-brand-yellow flex items-center gap-1 font-medium transition-colors"
+                    >
+                      <Edit2 size={12} />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAddress(addr.id)}
+                      className="text-text-muted hover:text-rose-400 flex items-center gap-1 font-medium transition-colors"
+                    >
+                      <Trash2 size={12} />
+                      <span>Delete</span>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

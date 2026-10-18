@@ -2,29 +2,66 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+export interface CartItemCustomizations {
+  name?: string;
+  initials?: string;
+  personalizedText?: string;
+  engraving?: string;
+  notes?: string;
+  [key: string]: any;
+}
+
 export interface CartItem {
   id: string;
+  productId?: string;
+  productSlug?: string;
   name: string;
   price: number;
   imageSrc: string;
   quantity: number;
   href: string;
+  sizeId?: string;
+  sizeLabel?: string;
+  materialId?: string;
+  materialLabel?: string;
+  customText?: string;
+  customizations?: CartItemCustomizations;
+  specs?: Record<string, any>;
+  artworkUrl?: string;
+}
+
+export interface AddItemInput {
+  id: string;
+  productId?: string;
+  productSlug?: string;
+  name: string;
+  price: number;
+  imageSrc: string;
+  href?: string;
+  quantity?: number;
+  sizeId?: string;
+  sizeLabel?: string;
+  materialId?: string;
+  materialLabel?: string;
+  customText?: string;
+  customizations?: CartItemCustomizations;
+  specs?: Record<string, any>;
+  artworkUrl?: string;
 }
 
 export interface CartContextType {
   items: CartItem[];
-  addItem: (
-    product: {
-      id: string;
-      name: string;
-      price: number;
-      imageSrc: string;
-      href?: string;
-    },
-    quantity?: number
-  ) => void;
+  addItem: (product: AddItemInput, quantity?: number) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  updateCustomization: (
+    id: string,
+    updates: {
+      customText?: string;
+      notes?: string;
+      customizations?: CartItemCustomizations;
+    }
+  ) => void;
   clearCart: () => void;
   totalCount: number;
   subtotal: number;
@@ -33,20 +70,30 @@ export interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const STORAGE_KEY = "starpress_cart_v1";
+const STORAGE_KEY = "starpress_cart_v2";
+const LEGACY_STORAGE_KEY = "starpress_cart_v1";
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from localStorage on client mount
+  // Load from localStorage on client mount with backward compatibility
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         setItems(JSON.parse(stored));
       } else {
-        setItems([]);
+        // Fallback to legacy key if exists
+        const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacy) {
+          const parsedLegacy = JSON.parse(legacy);
+          if (Array.isArray(parsedLegacy)) {
+            setItems(parsedLegacy);
+          }
+        } else {
+          setItems([]);
+        }
       }
     } catch {
       // Ignore localStorage read errors
@@ -66,36 +113,45 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items, isLoaded]);
 
-  const addItem = (
-    product: {
-      id: string;
-      name: string;
-      price: number;
-      imageSrc: string;
-      href?: string;
-    },
-    quantity = 1
-  ) => {
+  const addItem = (product: AddItemInput, explicitQuantity?: number) => {
+    const qty = explicitQuantity !== undefined ? explicitQuantity : product.quantity || 1;
+    if (qty <= 0) return;
+
     setItems((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+      const existingIndex = prev.findIndex((item) => item.id === product.id);
+      if (existingIndex > -1) {
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + qty,
+          // Preserve or update customization if provided
+          customText: product.customText !== undefined ? product.customText : updated[existingIndex].customText,
+          customizations: product.customizations || updated[existingIndex].customizations,
+          specs: product.specs || updated[existingIndex].specs,
+        };
+        return updated;
       }
-      return [
-        ...prev,
-        {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          imageSrc: product.imageSrc,
-          quantity,
-          href: product.href || `/shop/${product.id}`,
-        },
-      ];
+
+      const newItem: CartItem = {
+        id: product.id,
+        productId: product.productId,
+        productSlug: product.productSlug,
+        name: product.name,
+        price: product.price,
+        imageSrc: product.imageSrc,
+        quantity: qty,
+        href: product.href || `/shop/${product.productId || product.id}`,
+        sizeId: product.sizeId,
+        sizeLabel: product.sizeLabel,
+        materialId: product.materialId,
+        materialLabel: product.materialLabel,
+        customText: product.customText,
+        customizations: product.customizations,
+        specs: product.specs,
+        artworkUrl: product.artworkUrl,
+      };
+
+      return [...prev, newItem];
     });
   };
 
@@ -113,6 +169,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const updateCustomization = (
+    id: string,
+    updates: {
+      customText?: string;
+      notes?: string;
+      customizations?: CartItemCustomizations;
+    }
+  ) => {
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const mergedCustomizations = {
+          ...(item.customizations || {}),
+          ...(updates.customizations || {}),
+          ...(updates.notes !== undefined ? { notes: updates.notes } : {}),
+          ...(updates.customText !== undefined ? { personalizedText: updates.customText } : {}),
+        };
+        return {
+          ...item,
+          customText: updates.customText !== undefined ? updates.customText : item.customText,
+          customizations: mergedCustomizations,
+          specs: {
+            ...(item.specs || {}),
+            customText: updates.customText !== undefined ? updates.customText : item.customText,
+            notes: updates.notes !== undefined ? updates.notes : item.specs?.notes,
+          },
+        };
+      })
+    );
+  };
+
   const clearCart = () => {
     setItems([]);
   };
@@ -127,6 +214,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         addItem,
         removeItem,
         updateQuantity,
+        updateCustomization,
         clearCart,
         totalCount,
         subtotal,

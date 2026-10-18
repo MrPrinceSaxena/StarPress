@@ -16,18 +16,31 @@ import {
   Tag,
   CheckCircle2,
   AlertCircle,
+  Sliders,
+  Edit3,
+  Check,
+  X,
+  Lock,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
-import { useCart } from "@/context/CartContext";
+import { useCart, CartItem } from "@/context/CartContext";
 import { useAuthSession } from "@/hooks/useAuthSession";
 
 const FREE_SHIPPING_THRESHOLD = 999;
 const STANDARD_SHIPPING_FEE = 99;
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, clearCart, subtotal, isLoaded } = useCart();
+  const {
+    items,
+    updateQuantity,
+    updateCustomization,
+    removeItem,
+    clearCart,
+    subtotal,
+    isLoaded,
+  } = useCart();
   const { status, isHydrated } = useAuthSession();
 
   const [promoCode, setPromoCode] = useState("");
@@ -40,6 +53,29 @@ export default function CartPage() {
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState("");
+
+  // State for editing customization inline in cart
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+
+  const startEditing = (item: CartItem) => {
+    setEditingItemId(item.id);
+    setEditText(item.customText || item.customizations?.personalizedText || "");
+    setEditNotes(item.customizations?.notes || "");
+  };
+
+  const saveEditing = (id: string) => {
+    updateCustomization(id, {
+      customText: editText.trim() || undefined,
+      notes: editNotes.trim() || undefined,
+    });
+    setEditingItemId(null);
+  };
+
+  const cancelEditing = () => {
+    setEditingItemId(null);
+  };
 
   const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,10 +150,10 @@ export default function CartPage() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">
               <ShoppingBag size={13} className="text-brand-yellow" />
-              <span>Review Your Print Order</span>
+              <span>Review Your Custom Print Order</span>
             </div>
             <h1 className="font-display font-black text-3xl sm:text-4xl text-white uppercase tracking-tight">
-              Shopping Cart
+              Shopping Cart ({items.reduce((acc, it) => acc + it.quantity, 0)} units)
             </h1>
           </div>
 
@@ -182,7 +218,7 @@ export default function CartPage() {
                   <div className="flex items-center gap-2.5 text-xs sm:text-sm text-emerald-300">
                     <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
                     <span className="font-medium">
-                      Complimentary Pan-India Standard Delivery applied
+                      Complimentary Pan-India Standard Delivery applied!
                     </span>
                   </div>
                   <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded shrink-0">
@@ -220,93 +256,214 @@ export default function CartPage() {
               <div className="rounded-2xl border border-border-subtle bg-bg-surface divide-y divide-border-subtle overflow-hidden">
                 {items.map((item) => {
                   const itemTotal = item.price * item.quantity;
+                  const isEditing = editingItemId === item.id;
+                  const hasCustomization = Boolean(
+                    item.customText ||
+                    item.customizations?.personalizedText ||
+                    item.customizations?.notes
+                  );
 
                   return (
                     <div
                       key={item.id}
-                      className="p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 transition-colors hover:bg-white/[0.02]"
+                      className="p-5 sm:p-6 space-y-4 transition-colors hover:bg-white/[0.01]"
                     >
-                      {/* Product Thumbnail & Details */}
-                      <div className="flex items-center gap-4 min-w-0 flex-1">
-                        <Link
-                          href={item.href}
-                          className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-bg-surface-alt border border-border-subtle shrink-0 group"
-                        >
-                          <Image
-                            src={item.imageSrc}
-                            alt={item.name}
-                            fill
-                            sizes="96px"
-                            className="object-cover group-hover:scale-105 transition-transform duration-200"
-                          />
-                        </Link>
-
-                        <div className="min-w-0 space-y-1">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+                        {/* Product Thumbnail & Details */}
+                        <div className="flex items-start gap-4 min-w-0 flex-1">
                           <Link
                             href={item.href}
-                            className="font-display font-bold text-base sm:text-lg text-white hover:text-brand-yellow transition-colors line-clamp-1"
+                            className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-bg-surface-alt border border-border-subtle shrink-0 group mt-1"
                           >
-                            {item.name}
+                            <Image
+                              src={item.imageSrc}
+                              alt={item.name}
+                              fill
+                              sizes="96px"
+                              className="object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
                           </Link>
 
-                          <div className="text-xs text-text-secondary">
-                            Unit Price:{" "}
-                            <span className="text-white font-mono font-medium">
-                              ₹{item.price.toLocaleString("en-IN")}
+                          <div className="min-w-0 space-y-1.5 flex-1">
+                            <Link
+                              href={item.href}
+                              className="font-display font-bold text-base sm:text-lg text-white hover:text-brand-yellow transition-colors line-clamp-1"
+                            >
+                              {item.name}
+                            </Link>
+
+                            {/* Variant Chips */}
+                            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                              {item.sizeLabel && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-white/5 border border-white/10 px-2 py-0.5 rounded text-slate-300">
+                                  <span>Size:</span>
+                                  <strong className="text-white">{item.sizeLabel}</strong>
+                                </span>
+                              )}
+
+                              {item.materialLabel && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-white/5 border border-white/10 px-2 py-0.5 rounded text-slate-300">
+                                  <span>Material:</span>
+                                  <strong className="text-white">{item.materialLabel}</strong>
+                                </span>
+                              )}
+
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-medium uppercase tracking-wider">
+                                <Sparkles size={10} />
+                                <span>Digital Proof Included</span>
+                              </span>
+                            </div>
+
+                            {/* Inscription Display */}
+                            {(item.customText || item.customizations?.personalizedText) && (
+                              <div className="text-xs text-amber-300/90 bg-amber-500/[0.08] border border-amber-500/20 px-2.5 py-1 rounded-lg inline-flex items-center gap-2 max-w-full">
+                                <span className="font-semibold text-amber-400 shrink-0">Personalization:</span>
+                                <span className="truncate italic">
+                                  &ldquo;{item.customText || item.customizations?.personalizedText}&rdquo;
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Production Notes Display */}
+                            {item.customizations?.notes && (
+                              <div className="text-xs text-text-muted flex items-start gap-1.5">
+                                <span className="font-medium text-text-secondary shrink-0">Note:</span>
+                                <span className="truncate">{item.customizations.notes}</span>
+                              </div>
+                            )}
+
+                            {/* Unit Price info */}
+                            <div className="text-xs text-text-secondary pt-1">
+                              Unit Rate:{" "}
+                              <span className="text-white font-mono font-medium">
+                                ₹{item.price.toLocaleString("en-IN")}
+                              </span>{" "}
+                              / unit
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Quantity Stepper & Subtotal */}
+                        <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-border-subtle">
+                          {/* Quantity Counter */}
+                          <div className="flex items-center border border-border-subtle rounded-xl bg-bg-surface-alt">
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-white hover:bg-white/5 rounded-l-xl transition-colors active:scale-90"
+                              aria-label="Decrease quantity"
+                            >
+                              <Minus size={15} />
+                            </button>
+                            <span className="w-12 text-center font-mono font-bold text-sm text-white select-none">
+                              {item.quantity}
                             </span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-white hover:bg-white/5 rounded-r-xl transition-colors active:scale-90"
+                              aria-label="Increase quantity"
+                            >
+                              <Plus size={15} />
+                            </button>
                           </div>
 
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-medium uppercase tracking-wider">
-                            <Sparkles size={10} />
-                            <span>Print Ready</span>
+                          {/* Line Subtotal */}
+                          <div className="text-right min-w-[90px]">
+                            <div className="font-mono font-bold text-base sm:text-lg text-brand-yellow">
+                              ₹{itemTotal.toLocaleString("en-IN")}
+                            </div>
+                            <span className="text-[11px] text-text-muted">Subtotal</span>
                           </div>
+
+                          {/* Remove Button */}
+                          <button
+                            type="button"
+                            onClick={() => removeItem(item.id)}
+                            className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+                            aria-label={`Remove ${item.name}`}
+                            title="Remove item"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </div>
 
-                      {/* Quantity Stepper & Subtotal */}
-                      <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-border-subtle">
-                        {/* Quantity Counter */}
-                        <div className="flex items-center border border-border-subtle rounded-xl bg-bg-surface-alt">
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-white hover:bg-white/5 rounded-l-xl transition-colors active:scale-90"
-                            aria-label="Decrease quantity"
-                          >
-                            <Minus size={15} />
-                          </button>
-                          <span className="w-10 text-center font-mono font-bold text-sm text-white select-none">
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-white hover:bg-white/5 rounded-r-xl transition-colors active:scale-90"
-                            aria-label="Increase quantity"
-                          >
-                            <Plus size={15} />
-                          </button>
-                        </div>
-
-                        {/* Line Subtotal */}
-                        <div className="text-right min-w-[90px]">
-                          <div className="font-mono font-bold text-base sm:text-lg text-brand-yellow">
-                            ₹{itemTotal.toLocaleString("en-IN")}
+                      {/* Inline Customization Editor Accordion */}
+                      {isEditing ? (
+                        <div className="p-4 rounded-xl bg-bg-surface-alt border border-brand-yellow/30 space-y-3 mt-3 animate-fadeIn">
+                          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-brand-yellow">
+                            <span>Edit Custom Personalization & Notes</span>
+                            <button
+                              type="button"
+                              onClick={cancelEditing}
+                              className="text-text-muted hover:text-white"
+                            >
+                              <X size={14} />
+                            </button>
                           </div>
-                          <span className="text-[11px] text-text-muted">Subtotal</span>
-                        </div>
 
-                        {/* Remove Button */}
-                        <button
-                          type="button"
-                          onClick={() => removeItem(item.id)}
-                          className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
-                          aria-label={`Remove ${item.name}`}
-                          title="Remove item"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                          <div className="space-y-1">
+                            <label className="text-[11px] text-text-secondary uppercase font-semibold">
+                              Personalized Text / Engraving:
+                            </label>
+                            <input
+                              type="text"
+                              maxLength={120}
+                              value={editText}
+                              onChange={(e) => setEditText(e.target.value)}
+                              placeholder="e.g. Rahul Sharma, Slogan, etc."
+                              className="w-full bg-bg-surface border border-border-subtle rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-yellow"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] text-text-secondary uppercase font-semibold">
+                              Special Instructions / Notes:
+                            </label>
+                            <input
+                              type="text"
+                              value={editNotes}
+                              onChange={(e) => setEditNotes(e.target.value)}
+                              placeholder="e.g. Center-aligned, priority packaging"
+                              className="w-full bg-bg-surface border border-border-subtle rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-yellow"
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => saveEditing(item.id)}
+                              className="px-3 py-1.5 rounded-lg bg-brand-yellow text-black font-bold text-xs flex items-center gap-1.5 hover:bg-yellow-400 transition-colors"
+                            >
+                              <Check size={14} />
+                              <span>Update Specifications</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEditing}
+                              className="px-3 py-1.5 rounded-lg bg-white/5 text-text-secondary hover:text-white text-xs font-medium transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-4 text-xs text-text-muted pt-1">
+                          <button
+                            type="button"
+                            onClick={() => startEditing(item)}
+                            className="inline-flex items-center gap-1.5 text-text-secondary hover:text-brand-yellow transition-colors font-medium"
+                          >
+                            <Edit3 size={13} />
+                            <span>
+                              {hasCustomization
+                                ? "Edit Personalization / Notes"
+                                : "+ Add Personalization / Note"}
+                            </span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -319,7 +476,7 @@ export default function CartPage() {
                   className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-brand-yellow transition-colors"
                 >
                   <ArrowLeft size={16} />
-                  <span>Continue Shopping</span>
+                  <span>Continue Shopping Catalog</span>
                 </Link>
 
                 <button
@@ -364,96 +521,102 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={removePromo}
-                          className="text-xs underline hover:text-white"
+                          className="text-text-muted hover:text-white transition-colors"
                         >
-                          Remove
+                          <X size={14} />
                         </button>
                       </div>
                     ) : (
                       <div className="flex gap-2">
                         <div className="relative flex-1">
-                          <Tag
-                            size={14}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-                          />
                           <input
                             id="promo-input"
                             type="text"
                             placeholder="e.g. STAR10"
                             value={promoCode}
                             onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                            autoCapitalize="characters"
-                            autoCorrect="off"
-                            spellCheck="false"
-                            className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle pl-9 pr-3 py-2.5 text-xs text-white uppercase placeholder-text-muted focus:outline-none focus:border-brand-yellow font-mono"
+                            className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:outline-none focus:border-brand-yellow font-mono uppercase"
+                          />
+                          <Tag
+                            size={14}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
                           />
                         </div>
-                        <Button type="submit" variant="secondary" size="sm" disabled={isApplyingPromo}>
-                          {isApplyingPromo ? "Checking..." : "Apply"}
+                        <Button
+                          type="submit"
+                          variant="outline"
+                          size="sm"
+                          disabled={isApplyingPromo || !promoCode.trim()}
+                          className="shrink-0 text-xs"
+                        >
+                          {isApplyingPromo ? "Applying..." : "Apply"}
                         </Button>
                       </div>
                     )}
 
-                    {promoSuccess && !appliedPromo && (
-                      <p className="text-xs text-emerald-400">{promoSuccess}</p>
-                    )}
                     {promoError && (
-                      <p className="text-xs text-red-400 flex items-center gap-1">
-                        <AlertCircle size={13} />
+                      <p className="text-xs text-rose-400 flex items-center gap-1 mt-1">
+                        <AlertCircle size={12} />
                         <span>{promoError}</span>
+                      </p>
+                    )}
+
+                    {promoSuccess && !appliedPromo && (
+                      <p className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
+                        <CheckCircle2 size={12} />
+                        <span>{promoSuccess}</span>
                       </p>
                     )}
                   </form>
                 </div>
 
-                {/* Price Breakdown */}
-                <div className="space-y-3 pt-2 border-t border-border-subtle text-sm">
+                {/* Financial Summary */}
+                <div className="space-y-3 pt-4 border-t border-border-subtle text-xs">
                   <div className="flex items-center justify-between text-text-secondary">
-                    <span>Subtotal</span>
-                    <span className="font-mono text-white">
+                    <span>
+                      Items Subtotal ({items.reduce((acc, it) => acc + it.quantity, 0)} units)
+                    </span>
+                    <span className="font-mono font-medium text-white">
                       ₹{subtotal.toLocaleString("en-IN")}
                     </span>
                   </div>
 
-                  {appliedPromo && (
-                    <div className="flex items-center justify-between text-emerald-400">
-                      <span>Discount ({appliedPromo.code})</span>
+                  {appliedPromo && discountAmount > 0 && (
+                    <div className="flex items-center justify-between text-emerald-400 font-medium">
+                      <span>Promo Discount ({appliedPromo.code})</span>
                       <span className="font-mono">
-                        -₹{discountAmount.toLocaleString("en-IN")}
+                        −₹{discountAmount.toLocaleString("en-IN")}
                       </span>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between text-text-secondary">
-                    <span>Estimated Shipping</span>
-                    {shippingFee === 0 ? (
-                      <span className="text-emerald-400 font-bold uppercase text-xs">
+                    <span>Pan-India Delivery</span>
+                    {isFreeShipping ? (
+                      <span className="font-bold text-emerald-400 uppercase">
                         FREE
                       </span>
                     ) : (
-                      <span className="font-mono text-white">₹{shippingFee}</span>
+                      <span className="font-mono text-white">
+                        ₹{STANDARD_SHIPPING_FEE}
+                      </span>
                     )}
                   </div>
 
                   <div className="flex items-center justify-between text-text-secondary">
-                    <span className="flex items-center gap-1.5">
-                      <span>GST (18%)</span>
-                      <span className="text-[10px] text-text-muted">
-                        (Tax Invoice Included)
-                      </span>
-                    </span>
+                    <span>Estimated GST (18%)</span>
                     <span className="font-mono text-white">
                       ₹{gstAmount.toLocaleString("en-IN")}
                     </span>
                   </div>
 
-                  <div className="pt-4 border-t border-border-subtle flex items-baseline justify-between">
+                  <div className="pt-3 border-t border-border-subtle flex items-baseline justify-between">
                     <div>
-                      <div className="font-display font-black text-lg text-white uppercase">
-                        Grand Total
+                      <div className="font-display font-black text-base text-white uppercase">
+                        Estimated Total
                       </div>
-                      <span className="text-[11px] text-text-muted">
-                        Includes all taxes & packaging
+                      <span className="text-[10px] text-text-muted">
+                        All inclusive (Taxes & Shipping)
                       </span>
                     </div>
                     <div className="font-mono font-black text-2xl text-brand-yellow">
@@ -462,45 +625,37 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                {/* Checkout CTA Button */}
-                {(() => {
-                  const targetCheckoutUrl = appliedPromo
-                    ? `/checkout?coupon=${encodeURIComponent(appliedPromo.code)}`
-                    : "/checkout";
-                  const targetLoginUrl = appliedPromo
-                    ? `/login?callbackUrl=${encodeURIComponent(targetCheckoutUrl)}`
-                    : "/login?callbackUrl=/checkout";
+                {/* Proceed to Checkout CTA */}
+                <div className="space-y-3 pt-2">
+                  <Link
+                    href={`/checkout${appliedPromo ? `?coupon=${encodeURIComponent(appliedPromo.code)}` : ""}`}
+                    className="block w-full"
+                  >
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="w-full justify-center !py-4 font-black uppercase tracking-wider text-sm shadow-xl shadow-brand-yellow/15"
+                    >
+                      <span>Proceed to Checkout</span>
+                      <ArrowRight size={17} />
+                    </Button>
+                  </Link>
 
-                  return isHydrated && status === "authenticated" ? (
-                    <Link href={targetCheckoutUrl} className="block w-full">
-                      <Button variant="primary" size="lg" className="w-full justify-center">
-                        <span>Proceed to Checkout</span>
-                        <ArrowRight size={18} />
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Link href={targetLoginUrl} className="block w-full">
-                      <Button variant="secondary" size="lg" className="w-full justify-center text-brand-yellow border-brand-yellow">
-                        <span>Sign In to Checkout</span>
-                        <ArrowRight size={18} />
-                      </Button>
-                    </Link>
-                  );
-                })()}
+                  <div className="flex items-center justify-center gap-2 text-[11px] text-text-muted">
+                    <Lock size={12} className="text-emerald-400" />
+                    <span>256-Bit Encrypted Razorpay Checkout</span>
+                  </div>
+                </div>
 
-                {/* Trust Guarantees */}
-                <div className="pt-3 border-t border-border-subtle space-y-2.5 text-xs text-text-secondary">
-                  <div className="flex items-center gap-2.5">
-                    <ShieldCheck size={14} className="text-emerald-400/90 shrink-0" />
-                    <span>100% Quality & Pre-Press Proof Verification</span>
+                {/* Assurance Badges */}
+                <div className="pt-4 border-t border-border-subtle space-y-2 text-xs text-text-secondary">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck size={14} className="text-brand-yellow shrink-0" />
+                    <span>Free digital PDF proof before printing</span>
                   </div>
-                  <div className="flex items-center gap-2.5">
-                    <Truck size={14} className="text-emerald-400/90 shrink-0" />
-                    <span>Express Dispatch with Real-Time Tracking</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 size={14} className="text-emerald-400/90 shrink-0" />
-                    <span>Official GST Invoicing with Input Tax Credit</span>
+                  <div className="flex items-center gap-2">
+                    <Truck size={14} className="text-brand-yellow shrink-0" />
+                    <span>Moisture-proof secure cardboard packaging</span>
                   </div>
                 </div>
               </div>

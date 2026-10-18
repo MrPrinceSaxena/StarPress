@@ -86,7 +86,7 @@ export default async function ShopPage() {
           <div className="mt-12 p-6 rounded-xl border border-white/10 bg-white/5">
             <h2 className="text-lg font-bold text-white mb-4">Complete Product Directory</h2>
             <ul className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              {allProducts.map((p) => (
+              {allProducts.map((p: any) => (
                 <li key={p.id}>
                   <Link
                     href={`/shop/${p.slug}`}

@@ -11,9 +11,9 @@ export default async function BestSellers() {
   
   // Sort by rating and review count to get best sellers
   const bestSellers = allProducts
-    .sort((a, b) => (b.rating * b.reviewCount) - (a.rating * a.reviewCount))
+    .sort((a: CatalogProduct, b: CatalogProduct) => ((b.rating || 5) * (b.reviewCount || 1)) - ((a.rating || 5) * (a.reviewCount || 1)))
     .slice(0, 6)
-    .map(p => ({
+    .map((p: CatalogProduct) => ({
       id: p.id,
       name: p.name,
       href: `/shop/${p.slug}`,
@@ -58,7 +58,7 @@ export default async function BestSellers() {
 
         {/* Smart Compact 3×2 Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
-          {bestSellers.map((product) => (
+          {bestSellers.map((product: any) => (
             <ProductCard
               key={product.id}
               product={product}

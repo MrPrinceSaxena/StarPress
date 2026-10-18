@@ -1118,9 +1118,9 @@ export async function bulkUpdateProductStatus(ids: string[], status: string) {
  * Return live, dynamic catalog products merging baseline catalog with admin overrides and custom products.
  * Used by storefront (/shop, /shop/[slug], categories) so any price/image/name changes update everywhere in real-time.
  */
-import { cache } from "react";
+import * as React from "react";
 
-const safeCache = typeof cache === "function" ? cache : <T extends (...args: any[]) => any>(fn: T): T => fn;
+const safeCache = typeof (React as any).cache === "function" ? (React as any).cache : <T extends (...args: any[]) => any>(fn: T): T => fn;
 
 /**
  * Return live categories merging database categories with baseline catalog categories.
@@ -1362,7 +1362,7 @@ export async function getLiveProductBySlug(slug: string): Promise<CatalogProduct
   const normalized = slug.toLowerCase().trim();
   const targetSlug = PRODUCT_SLUG_ALIASES[normalized] || normalized;
   return products.find(
-    (p) =>
+    (p: CatalogProduct) =>
       p.slug.toLowerCase() === targetSlug ||
       p.id.toLowerCase() === targetSlug ||
       p.slug.toLowerCase() === normalized ||
@@ -1377,6 +1377,6 @@ export async function getLiveProductsByCategory(categorySlug: string): Promise<C
   const allLive = await getLiveCatalogProducts();
   if (!categorySlug || categorySlug === "all") return allLive;
   const normalized = categorySlug.toLowerCase().trim();
-  return allLive.filter((p) => p.categorySlug.toLowerCase() === normalized);
+  return allLive.filter((p: CatalogProduct) => p.categorySlug.toLowerCase() === normalized);
 }
 

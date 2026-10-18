@@ -26,7 +26,7 @@ export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const products = await getLiveCatalogProducts();
-  return products.map((product) => ({
+  return products.map((product: any) => ({
     slug: product.slug,
   }));
 }
