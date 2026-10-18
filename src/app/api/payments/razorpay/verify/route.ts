@@ -82,12 +82,13 @@ export async function POST(request: NextRequest) {
       "bHLfw4FddkBAH2YxT4aUofK4";
     const isProd = isProductionEnvironment();
 
-    // 2. Dev Mock verification (strictly prohibited in production)
+    // 2. Dev Mock verification (strictly prohibited when real live keys are active)
     const isMock = razorpay_order_id.startsWith("order_mock_");
     if (isMock) {
-      if (isProd) {
+      const isLive = isProd && keyId.startsWith("rzp_live_");
+      if (isLive) {
         return NextResponse.json(
-          { error: "Mock payments are prohibited in production." },
+          { error: "Mock payments are prohibited when live production keys are active." },
           { status: 403 }
         );
       }

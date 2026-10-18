@@ -24,6 +24,16 @@ export function isProductionEnvironment(): boolean {
   );
 }
 
+export function isLiveProductionPayment(keyId?: string): boolean {
+  const activeKey =
+    keyId ||
+    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    process.env.RAZORPAY_KEY_ID ||
+    env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    "";
+  return isProductionEnvironment() && activeKey.startsWith("rzp_live_");
+}
+
 /**
  * Creates or reuses a Razorpay order at the gateway.
  * Strictly derives the charged amount from DB totalAmount in integer paise.
@@ -100,17 +110,19 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
     };
   }
 
-  // 5. Fail closed in production if keys are completely missing
+  const isLive = isLiveProductionPayment(keyId);
+
+  // 5. Fail closed if live keys are completely missing
   if (!keyId || !keySecret || keyId === "rzp_test_placeholder") {
-    if (isProd) {
-      console.error("[Razorpay Security] Refusing to process payment: Razorpay production credentials missing in production environment.");
-      const err = new Error("Payment gateway service is unavailable in production (missing credentials).");
+    if (isLive) {
+      console.error("[Razorpay Security] Refusing to process payment: Razorpay live credentials missing in production environment.");
+      const err = new Error("Payment gateway service is unavailable in production (missing live credentials).");
       (err as any).statusCode = 503;
       throw err;
     }
 
-    // Dev-only mock fallback in non-production
-    console.warn("[Razorpay Dev] Missing or placeholder keys in non-production. Generating dev test order.");
+    // Test mode fallback
+    console.warn("[Razorpay Test] Missing or placeholder keys. Generating test simulated order.");
     const mockRazorpayId = `order_mock_${Date.now()}`;
 
     try {
@@ -169,11 +181,11 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
 
       if (isAuthFailure) {
         console.error(
-          "[Razorpay Security Alert] Razorpay rejected credentials with HTTP 401 Authentication failed. RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is invalid or expired."
+          "[Razorpay Alert] Razorpay credentials rejected with 401 Authentication failed. RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is invalid or expired."
         );
 
-        if (!isProd) {
-          console.warn("[Razorpay Dev] Non-production environment detected. Gracefully activating simulated test checkout order.");
+        if (!isLive) {
+          console.warn("[Razorpay Test] Test credentials rejected by Razorpay. Falling back to test simulated order.");
           const mockRazorpayId = `order_mock_${Date.now()}`;
           await db.order.update({
             where: { id: order.id },
@@ -192,10 +204,29 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
         }
 
         const err = new Error(
-          "Payment Gateway Configuration Error: The server's Razorpay credentials were rejected by Razorpay (Authentication Failed). Please contact store support, or choose 'Pay After Proof' to complete your order."
+          "Payment Gateway Configuration Error: The server's Razorpay credentials were rejected by Razorpay (Authentication Failed). Please check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET on the server, or choose 'Pay After Proof'."
         );
         (err as any).statusCode = 502;
         throw err;
+      }
+
+      if (!isLive) {
+        console.warn("[Razorpay Test] Gateway error in test mode. Falling back to test simulated order.");
+        const mockRazorpayId = `order_mock_${Date.now()}`;
+        await db.order.update({
+          where: { id: order.id },
+          data: { razorpayOrderId: mockRazorpayId },
+        });
+
+        return {
+          success: true,
+          razorpayOrderId: mockRazorpayId,
+          amount: amountInPaise,
+          currency: "INR",
+          keyId: "rzp_test_mock_key",
+          orderNumber: order.orderNumber,
+          isMock: true,
+        };
       }
 
       const err = new Error(
@@ -226,8 +257,8 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
     console.error("[Razorpay Gateway Error]:", error);
     if (error.statusCode) throw error;
 
-    if (!isProd) {
-      console.warn("[Razorpay Dev] Gateway unreachable in non-production. Falling back to test checkout mock.");
+    if (!isLive) {
+      console.warn("[Razorpay Test] Gateway unreachable in test mode. Falling back to test checkout mock.");
       const mockRazorpayId = `order_mock_${Date.now()}`;
       try {
         await db.order.update({
