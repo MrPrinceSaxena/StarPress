@@ -150,14 +150,13 @@ export async function createOrder(input: CreateOrderInput, client: typeof db = d
     }
   }
 
-  // 6. Check for products requiring artwork: if artworkUrl is missing, force PAY_AFTER_PROOF
+  // 6. Check for products requiring artwork: flag in notes if artwork is missing, but preserve customer's payment method
   const missingArtwork = quote.lineSnapshots.some(
     (snap) => snap.requiresArtwork && (!snap.artworkUrl || snap.artworkUrl.trim() === "")
   );
 
-  if (missingArtwork && normalizedPaymentMethod === "ONLINE") {
-    console.log("[Pre-Press Policy] Order requires artwork proofing. Switching paymentMethod to PAY_AFTER_PROOF.");
-    normalizedPaymentMethod = "PAY_AFTER_PROOF";
+  if (missingArtwork) {
+    console.log("[Pre-Press Policy] Order contains items requiring artwork; flagged for pre-flight proofing.");
   }
 
   // 7. Ensure synced DB User if userId provided
@@ -182,6 +181,7 @@ export async function createOrder(input: CreateOrderInput, client: typeof db = d
   if (input.notes?.trim()) metadataNotes.push(input.notes.trim());
   if (idempKey) metadataNotes.push(`[idempotency:${idempKey}]`);
   if (quote.couponApplied) metadataNotes.push(`[coupon:${quote.couponApplied.code}]`);
+  if (missingArtwork) metadataNotes.push("[PENDING_ARTWORK_UPLOAD]");
   const finalNotes = metadataNotes.length > 0 ? metadataNotes.join(" ") : null;
 
   const orderNumber = generateOrderNumber();

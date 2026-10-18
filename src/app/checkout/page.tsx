@@ -58,6 +58,16 @@ const loadRazorpayScript = (): Promise<boolean> => {
     if (typeof window === "undefined") return resolve(false);
     if ((window as any).Razorpay) return resolve(true);
 
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src*="checkout.razorpay.com"]'
+    );
+    if (existingScript) {
+      if ((window as any).Razorpay) return resolve(true);
+      existingScript.addEventListener("load", () => resolve(true), { once: true });
+      existingScript.addEventListener("error", () => resolve(false), { once: true });
+      return;
+    }
+
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
@@ -250,25 +260,45 @@ export default function CheckoutPage() {
     ? serverQuote.grandTotal
     : Math.max(0, subtotal - discountAmount) + gstAmount + shippingFee;
 
-  // Poll order status if online payment was made
+  // Preload Razorpay checkout SDK as soon as checkout component mounts
   useEffect(() => {
-    if (!confirmedOrder || confirmedOrder.paymentStatus === "PAID" || confirmedOrder.paymentMethod !== "ONLINE") {
-      return;
-    }
+    loadRazorpayScript().catch(() => {});
+  }, []);
+
+  // Poll order status if online payment was made or if payment recovery is active
+  useEffect(() => {
+    const targetOrderId = confirmedOrder?.id || recoveryOrderId;
+    if (!targetOrderId) return;
+    if (confirmedOrder && confirmedOrder.paymentStatus === "PAID") return;
 
     let attempts = 0;
     const maxAttempts = 20; // 20 * 3s = 60s
-    const orderIdToPoll = confirmedOrder.id;
 
     const interval = setInterval(async () => {
       attempts++;
       try {
-        const res = await fetch(`/api/orders/${orderIdToPoll}`);
+        const res = await fetch(`/api/orders/${targetOrderId}`);
         if (res.ok) {
           const data = await res.json();
           const pStatus = (data.order?.paymentStatus || "").toUpperCase();
           if (pStatus === "PAID") {
-            setConfirmedOrder((prev) => (prev ? { ...prev, paymentStatus: "PAID" } : null));
+            clearCart();
+            setConfirmedOrder({
+              id: data.order.id,
+              orderId: data.order.orderNumber,
+              date: new Date(data.order.createdAt || Date.now()).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              }),
+              total: Number(data.order.totalAmount),
+              itemsCount: data.order.items?.reduce((acc: number, it: any) => acc + (it.quantity || 1), 0) || items.length,
+              shippingMethod: data.order.shippingMethod || "standard",
+              paymentMethod: "ONLINE",
+              paymentStatus: "PAID",
+            });
+            setCheckoutError(null);
+            setRecoveryOrderId(null);
             clearInterval(interval);
             return;
           }
@@ -282,7 +312,7 @@ export default function CheckoutPage() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [confirmedOrder]);
+  }, [confirmedOrder, recoveryOrderId, items.length, clearCart]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -352,10 +382,21 @@ export default function CheckoutPage() {
         })),
       };
 
+      // Retrieve current Supabase session token for defense-in-depth API authentication
+      let authToken: string | undefined;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        authToken = sessionData?.session?.access_token;
+      } catch {}
+      const authHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      };
+
       const orderResponse = await fetch("/api/orders", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          ...authHeaders,
           "Idempotency-Key": idempotencyKeyRef.current,
         },
         body: JSON.stringify(payload),
@@ -371,9 +412,26 @@ export default function CheckoutPage() {
 
       const placedOrder = orderData.order;
 
-      // 2. Handle Payment Flow
-      if (placedOrder.paymentMethod === "PAY_AFTER_PROOF") {
-        // Proof flow: immediate confirmation with real DB orderNumber
+      // Handle Free Order Edge Case (e.g. 100% coupon or zero balance)
+      if (Number(placedOrder.totalAmount) <= 0) {
+        clearCart();
+        setConfirmedOrder({
+          id: placedOrder.id,
+          orderId: placedOrder.orderNumber,
+          date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+          total: 0,
+          itemsCount: items.reduce((acc, it) => acc + it.quantity, 0),
+          shippingMethod: formData.shippingMethod,
+          paymentMethod: "100%_DISCOUNT",
+          paymentStatus: "PAID",
+        });
+        setIsSubmitting(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      // Handle Pay After Proof flow strictly if user selected it
+      if (formData.paymentMethod !== "online" && placedOrder.paymentMethod === "PAY_AFTER_PROOF") {
         clearCart();
         setConfirmedOrder({
           id: placedOrder.id,
@@ -398,7 +456,7 @@ export default function CheckoutPage() {
       setStatusMessage("Initializing secure payment session with Razorpay...");
       const razorpayResponse = await fetch("/api/payments/razorpay/create-order", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders,
         body: JSON.stringify({ orderId: placedOrder.id }),
       });
 
@@ -413,6 +471,8 @@ export default function CheckoutPage() {
         throw new Error("Unable to load Razorpay payment SDK. Please check your network connection.");
       }
 
+      const cleanedPhone = formData.phone.replace(/[^\d+]/g, "").slice(0, 15);
+
       const options = {
         key: rzpData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_Toz86Nohgur7MU",
         amount: rzpData.amount,
@@ -421,9 +481,9 @@ export default function CheckoutPage() {
         description: `Print Order #${placedOrder.orderNumber}`,
         order_id: rzpData.razorpayOrderId,
         prefill: {
-          name: formData.fullName,
-          email: formData.email,
-          contact: formData.phone,
+          name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          contact: cleanedPhone,
         },
         theme: {
           color: "#FFCF1B",
@@ -437,6 +497,8 @@ export default function CheckoutPage() {
               "Payment window was closed before completion. Your order has been preserved — you may retry payment whenever you are ready."
             );
           },
+          escape: true,
+          backdropclose: false,
         },
         handler: async function (response: any) {
           setIsSubmitting(true);
@@ -445,7 +507,7 @@ export default function CheckoutPage() {
           try {
             const verifyRes = await fetch("/api/payments/razorpay/verify", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: authHeaders,
               body: JSON.stringify({
                 orderId: placedOrder.id,
                 razorpay_order_id: response.razorpay_order_id,

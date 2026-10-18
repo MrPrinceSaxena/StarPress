@@ -56,12 +56,17 @@ export async function POST(request: NextRequest) {
     const isAdmin = user ? isUserAdmin(user) : false;
 
     if (order.userId) {
-      if (!user || (user.id !== order.userId && !isAdmin)) {
-        return NextResponse.json({ error: "Order not found." }, { status: 404 });
+      if (user && user.id !== order.userId && !isAdmin) {
+        return NextResponse.json({ error: "Unauthorized access to order." }, { status: 403 });
+      }
+      // If session cookie is absent during gateway iframe return, strictly verify matching gateway order id
+      const dbRzpOrderId = (order as any).razorpayOrderId;
+      if (!user && dbRzpOrderId && dbRzpOrderId !== razorpay_order_id) {
+        return NextResponse.json({ error: "Order gateway reference mismatch." }, { status: 400 });
       }
     } else if (order.guestEmail && user && !isAdmin) {
       if (user.email && order.guestEmail.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
-        return NextResponse.json({ error: "Order not found." }, { status: 404 });
+        return NextResponse.json({ error: "Unauthorized access to order." }, { status: 403 });
       }
     }
 

@@ -20,6 +20,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { supabase } from "@/lib/supabase/client";
 
 interface OrderDetail {
   id: string;
@@ -50,6 +51,16 @@ const loadRazorpayScript = (): Promise<boolean> => {
   return new Promise((resolve) => {
     if (typeof window === "undefined") return resolve(false);
     if ((window as any).Razorpay) return resolve(true);
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src*="checkout.razorpay.com"]'
+    );
+    if (existingScript) {
+      if ((window as any).Razorpay) return resolve(true);
+      existingScript.addEventListener("load", () => resolve(true), { once: true });
+      existingScript.addEventListener("error", () => resolve(false), { once: true });
+      return;
+    }
 
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -131,10 +142,20 @@ export default function OrderPayRecoveryPage() {
     setIsProcessingPayment(true);
 
     try {
+      let authToken: string | undefined;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        authToken = sessionData?.session?.access_token;
+      } catch {}
+      const authHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      };
+
       // Call retry API
       const retryRes = await fetch("/api/payments/razorpay/retry", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders,
         body: JSON.stringify({ orderId: order.id }),
       });
 
@@ -152,6 +173,9 @@ export default function OrderPayRecoveryPage() {
       }
 
       const shipping = order.shippingAddress || {};
+      const rawPhone = shipping.phone || session?.user?.phone || "";
+      const cleanedPhone = String(rawPhone).replace(/[^\d+]/g, "").slice(0, 15);
+
       const options = {
         key: retryData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_Toz86Nohgur7MU",
         amount: retryData.amount,
@@ -160,9 +184,9 @@ export default function OrderPayRecoveryPage() {
         description: `Print Order #${order.orderNumber}`,
         order_id: retryData.razorpayOrderId,
         prefill: {
-          name: shipping.fullName || session?.user?.name || "",
-          email: shipping.email || session?.user?.email || "",
-          contact: shipping.phone || session?.user?.phone || "",
+          name: (shipping.fullName || session?.user?.name || "").trim(),
+          email: (shipping.email || session?.user?.email || "").trim(),
+          contact: cleanedPhone,
         },
         theme: {
           color: "#FFCF1B",
@@ -173,13 +197,15 @@ export default function OrderPayRecoveryPage() {
             setStatusNote(null);
             setErrorMessage("Payment window was closed. Your order is reserved — click below to retry.");
           },
+          escape: true,
+          backdropclose: false,
         },
         handler: async function (response: any) {
           setStatusNote("Verifying payment capture with server...");
           try {
             const verifyRes = await fetch("/api/payments/razorpay/verify", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: authHeaders,
               body: JSON.stringify({
                 orderId: order.id,
                 razorpay_order_id: response.razorpay_order_id,

@@ -1,6 +1,6 @@
 // src/lib/supabase/server.ts
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-project.supabase.co";
@@ -36,11 +36,29 @@ export async function createClient() {
 
 /**
  * Validates the current authenticated user on the server.
+ * Supports both Bearer Authorization header and standard cookie sessions.
  * Uses auth.getUser() which cryptographically verifies the session with Supabase Auth server.
  */
-export async function getAuthenticatedUser() {
+export async function getAuthenticatedUser(explicitToken?: string) {
   try {
     const supabase = await createClient();
+
+    // 1. Try reading authorization bearer token if supplied or in request headers
+    try {
+      const headerList = headers();
+      const authHeader = explicitToken || headerList.get("authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.slice(7).trim();
+        if (token) {
+          const { data, error } = await supabase.auth.getUser(token);
+          if (!error && data?.user) {
+            return data.user;
+          }
+        }
+      }
+    } catch {}
+
+    // 2. Fall back to cookie session
     const {
       data: { user },
       error,

@@ -15,15 +15,19 @@ const RAZORPAY_WEBHOOK_IPS = [
 
 export function isAllowedWebhookSource(ip: string): boolean {
   if (process.env.NODE_ENV !== "production") return true; // Skip in dev/test
-  if (!ip) return false;
+  if (!ip) return true; // Do not reject if proxy/edge omitted remote IP header
 
   const trimmedIp = ip.trim();
 
-  // Allow dynamic addition via RAZORPAY_WEBHOOK_IPS env var (comma-separated)
-  const envIps = process.env.RAZORPAY_WEBHOOK_IPS
-    ? process.env.RAZORPAY_WEBHOOK_IPS.split(",").map((s) => s.trim()).filter(Boolean)
-    : [];
+  // If explicit strict IP filtering is configured
+  if (process.env.RAZORPAY_STRICT_IP_CHECK === "true") {
+    const envIps = process.env.RAZORPAY_WEBHOOK_IPS
+      ? process.env.RAZORPAY_WEBHOOK_IPS.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+    const allAllowed = [...RAZORPAY_WEBHOOK_IPS, ...envIps];
+    return allAllowed.includes(trimmedIp);
+  }
 
-  const allAllowed = [...RAZORPAY_WEBHOOK_IPS, ...envIps];
-  return allAllowed.includes(trimmedIp);
+  // Razorpay standard: Cryptographic HMAC SHA-256 with RAZORPAY_WEBHOOK_SECRET is the authoritative boundary
+  return true;
 }
