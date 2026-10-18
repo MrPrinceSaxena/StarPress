@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Defense-in-depth: Verify order ownership
-    let user;
+    let user = null;
     try {
-      const { getSessionUser } = await import("@/lib/supabase/server");
-      user = await getSessionUser();
+      const { resolveUser } = await import("@/lib/auth-resolver");
+      user = await resolveUser(request);
     } catch {}
 
     const { isUserAdmin } = await import("@/lib/admin/is-admin");

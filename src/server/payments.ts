@@ -100,12 +100,35 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
     };
   }
 
-  // 5. Fail if keys are completely missing
-  if (!keyId || !keySecret) {
-    console.error("[Razorpay Security] Razorpay credentials missing.");
-    const err = new Error("Payment gateway service is unavailable (missing credentials).");
-    (err as any).statusCode = 503;
-    throw err;
+  // 5. Fail closed in production if keys are completely missing
+  if (!keyId || !keySecret || keyId === "rzp_test_placeholder") {
+    if (isProd) {
+      console.error("[Razorpay Security] Refusing to process payment: Razorpay production credentials missing in production environment.");
+      const err = new Error("Payment gateway service is unavailable in production (missing credentials).");
+      (err as any).statusCode = 503;
+      throw err;
+    }
+
+    // Dev-only mock fallback in non-production
+    console.warn("[Razorpay Dev] Missing or placeholder keys in non-production. Generating dev test order.");
+    const mockRazorpayId = `order_mock_${Date.now()}`;
+
+    try {
+      await db.order.update({
+        where: { id: order.id },
+        data: { razorpayOrderId: mockRazorpayId },
+      });
+    } catch {}
+
+    return {
+      success: true,
+      razorpayOrderId: mockRazorpayId,
+      amount: amountInPaise,
+      currency: "INR",
+      keyId: "rzp_test_mock_key",
+      orderNumber: order.orderNumber,
+      isMock: true,
+    };
   }
 
   // Log active key mode
@@ -139,7 +162,45 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
       const errorData = await response.json().catch(() => ({}));
       console.error("[Razorpay API] Order creation failed:", response.status, errorData);
       const description = errorData?.error?.description || "Failed to initialize Razorpay order.";
-      const err = new Error(description);
+
+      const isAuthFailure =
+        response.status === 401 ||
+        description.toLowerCase().includes("authentication failed");
+
+      if (isAuthFailure) {
+        console.error(
+          "[Razorpay Security Alert] Razorpay rejected credentials with HTTP 401 Authentication failed. RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is invalid or expired."
+        );
+
+        if (!isProd) {
+          console.warn("[Razorpay Dev] Non-production environment detected. Gracefully activating simulated test checkout order.");
+          const mockRazorpayId = `order_mock_${Date.now()}`;
+          await db.order.update({
+            where: { id: order.id },
+            data: { razorpayOrderId: mockRazorpayId },
+          });
+
+          return {
+            success: true,
+            razorpayOrderId: mockRazorpayId,
+            amount: amountInPaise,
+            currency: "INR",
+            keyId: "rzp_test_mock_key",
+            orderNumber: order.orderNumber,
+            isMock: true,
+          };
+        }
+
+        const err = new Error(
+          "Payment Gateway Configuration Error: The server's Razorpay credentials were rejected by Razorpay (Authentication Failed). Please contact store support, or choose 'Pay After Proof' to complete your order."
+        );
+        (err as any).statusCode = 502;
+        throw err;
+      }
+
+      const err = new Error(
+        `Payment Gateway Error: ${description}. Please select 'Pay After Proof' or retry shortly.`
+      );
       (err as any).statusCode = 502;
       throw err;
     }
@@ -164,7 +225,33 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
   } catch (error: any) {
     console.error("[Razorpay Gateway Error]:", error);
     if (error.statusCode) throw error;
-    const err = new Error(error.message || "Failed to communicate with Razorpay payment gateway.");
+
+    if (!isProd) {
+      console.warn("[Razorpay Dev] Gateway unreachable in non-production. Falling back to test checkout mock.");
+      const mockRazorpayId = `order_mock_${Date.now()}`;
+      try {
+        await db.order.update({
+          where: { id: order.id },
+          data: { razorpayOrderId: mockRazorpayId },
+        });
+      } catch {}
+
+      return {
+        success: true,
+        razorpayOrderId: mockRazorpayId,
+        amount: amountInPaise,
+        currency: "INR",
+        keyId: "rzp_test_mock_key",
+        orderNumber: order.orderNumber,
+        isMock: true,
+      };
+    }
+
+    const err = new Error(
+      error.message?.includes("Failed to fetch") || error.message?.includes("ENOTFOUND")
+        ? "Payment gateway network is temporarily unreachable. Please select 'Pay After Proof' to place your order immediately."
+        : error.message || "Failed to communicate with Razorpay payment gateway."
+    );
     (err as any).statusCode = 502;
     throw err;
   }

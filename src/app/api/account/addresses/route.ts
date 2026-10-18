@@ -7,35 +7,7 @@ import { ensureDbUser } from "@/lib/user-sync";
 
 export const dynamic = "force-dynamic";
 
-async function resolveUser(request: NextRequest) {
-  let user = (await getSessionUser()) || (await getServerSession(authOptions))?.user;
-
-  if (!user) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.split(" ")[1];
-      const { createServerClient } = await import("@supabase/ssr");
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-project.supabase.co",
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder.placeholder",
-        { cookies: { getAll: () => [], setAll: () => {} } }
-      );
-      const { data } = await supabase.auth.getUser(token);
-      if (data?.user) {
-        const email = data.user.email || "";
-        user = {
-          id: data.user.id,
-          email,
-          name: data.user.user_metadata?.name || data.user.user_metadata?.full_name || email.split("@")[0] || "Customer",
-          phone: data.user.phone || data.user.user_metadata?.phone || null,
-          role: data.user.app_metadata?.role || "CUSTOMER",
-        };
-      }
-    }
-  }
-
-  return user;
-}
+import { resolveUser } from "@/lib/auth-resolver";
 
 export async function GET(request: NextRequest) {
   try {

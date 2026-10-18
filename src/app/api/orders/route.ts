@@ -35,15 +35,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Enforce authentication for production orders
-    let user;
+    // Authenticate user across Supabase, NextAuth, and Bearer tokens
+    let user = null;
     try {
-      user = await getSessionUser();
-    } catch {}
+      const { resolveUser } = await import("@/lib/auth-resolver");
+      user = await resolveUser(request);
+    } catch (authErr) {
+      console.warn("[Orders API] User resolution notice:", authErr);
+    }
 
     const ip = getClientIp(request);
     const key = user ? `order:create:${user.id}` : `order:create:${ip}`;
-    const rl = await rateLimitDistributed(key, 3, 120);
+    const rl = await rateLimitDistributed(key, 5, 120);
     if (!rl.success) {
       return rateLimitExceededResponse(
         rl,
@@ -51,16 +54,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!user) {
+    // Require either authenticated user or valid contact email for guest checkout
+    const orderEmail = user?.email || body.guestEmail || body.shippingAddress?.email;
+    if (!user && !orderEmail) {
       return NextResponse.json(
-        { error: "Unauthorized. You must be signed in to place an order." },
-        { status: 401 }
+        { error: "A valid email address is required to place an order." },
+        { status: 400 }
       );
     }
 
-    body.userId = user.id;
-    body.guestEmail = body.guestEmail || user.email;
-    body.guestName = body.guestName || user.name;
+    if (user) {
+      body.userId = user.id;
+      body.guestEmail = body.guestEmail || user.email;
+      body.guestName = body.guestName || user.name || "Valued Customer";
+    } else {
+      body.guestEmail = orderEmail;
+      body.guestName = body.guestName || body.shippingAddress?.fullName || "Valued Customer";
+    }
 
     // Read Idempotency Key from standard headers
     const idempotencyKey =

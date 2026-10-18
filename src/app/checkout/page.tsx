@@ -708,6 +708,41 @@ export default function CheckoutPage() {
         throw new Error(rzpData.error || "Payment gateway unavailable. Please retry or choose Pay After Proof.");
       }
 
+      // Dev Mock Payment Handler (Non-production testing)
+      if (rzpData.isMock) {
+        setStatusMessage("Completing simulated test payment...");
+        const verifyRes = await fetch("/api/payments/razorpay/verify", {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            orderId: placedOrder.id,
+            razorpay_order_id: rzpData.razorpayOrderId,
+            razorpay_payment_id: `pay_mock_${Date.now()}`,
+            razorpay_signature: "mock_test_signature",
+          }),
+        });
+
+        const vData = await verifyRes.json();
+        if (verifyRes.ok && vData.success) {
+          clearCart();
+          setConfirmedOrder({
+            id: placedOrder.id,
+            orderId: placedOrder.orderNumber,
+            date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+            total: Number(placedOrder.totalAmount),
+            itemsCount: items.reduce((acc, it) => acc + it.quantity, 0),
+            shippingMethod: shippingMethod,
+            paymentMethod: "ONLINE (Test Simulated)",
+            paymentStatus: "PAID",
+          });
+          setIsSubmitting(false);
+          setStatusMessage(null);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+        throw new Error(vData.error || "Mock payment verification failed.");
+      }
+
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
         throw new Error("Unable to load Razorpay payment SDK. Please check your network connection.");
@@ -1041,14 +1076,29 @@ export default function CheckoutPage() {
                 <p>{checkoutError}</p>
               </div>
             </div>
-            {recoveryOrderId && (
-              <Link
-                href={`/account/orders/${recoveryOrderId}/pay`}
-                className="px-4 py-2 rounded-xl bg-brand-yellow hover:bg-yellow-400 text-black text-xs font-bold flex items-center gap-1.5 shadow-md shadow-brand-yellow/10 transition-colors shrink-0 self-start sm:self-auto"
-              >
-                <span>Retry Payment Securely →</span>
-              </Link>
-            )}
+            <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
+              {paymentMethod === "online" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPaymentMethod("cod_proof");
+                    setActiveStep(3);
+                    setCheckoutError(null);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <span>Select Pay After Proof</span>
+                </button>
+              )}
+              {recoveryOrderId && (
+                <Link
+                  href={`/account/orders/${recoveryOrderId}/pay`}
+                  className="px-4 py-2 rounded-xl bg-brand-yellow hover:bg-yellow-400 text-black text-xs font-bold flex items-center gap-1.5 shadow-md shadow-brand-yellow/10 transition-colors"
+                >
+                  <span>Retry Payment Securely →</span>
+                </Link>
+              )}
+            </div>
           </div>
         )}
 

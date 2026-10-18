@@ -17,40 +17,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Require authenticated user
-    let user;
+    // Authenticate user across Supabase, NextAuth, and Bearer tokens
+    let user = null;
     try {
-      user = await getSessionUser();
-    } catch {}
+      const { resolveUser } = await import("@/lib/auth-resolver");
+      user = await resolveUser(request);
+    } catch (authErr) {
+      console.warn("[Payments Create-Order] User resolution notice:", authErr);
+    }
 
     const ip = getClientIp(request);
     const key = user ? `payment:create:${user.id}` : `payment:create:${ip}`;
-    const rl = await rateLimitDistributed(key, 5, 60);
+    const rl = await rateLimitDistributed(key, 8, 60);
     if (!rl.success) {
       return rateLimitExceededResponse(rl, "Too many payment requests. Please wait before retrying.");
     }
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized. Please sign in to initiate payment." },
-        { status: 401 }
-      );
-    }
-
     const { isUserAdmin } = await import("@/lib/admin/is-admin");
-    const isAdmin = isUserAdmin(user);
+    const isAdmin = user ? isUserAdmin(user) : false;
 
     const razorpayOrder = await createRazorpayOrder({
       orderId,
-      sessionUserId: user.id,
-      sessionUserEmail: user.email,
+      sessionUserId: user?.id,
+      sessionUserEmail: user?.email,
       isAdmin,
     });
 
     await auditPaymentEvent({
       orderId,
       action: "RAZORPAY_ORDER_CREATED",
-      actor: user.id,
+      actor: user?.id || "GUEST",
       ipAddress: ip,
       userAgent: request.headers.get("user-agent") || undefined,
       details: {

@@ -19,17 +19,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await getSessionUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized. Please sign in to complete payment." },
-        { status: 401 }
-      );
+    let user = null;
+    try {
+      const { resolveUser } = await import("@/lib/auth-resolver");
+      user = await resolveUser(request);
+    } catch (authErr) {
+      console.warn("[Payments Retry] User resolution notice:", authErr);
     }
 
-    // Rate limiting: 3 attempts per minute per user
     const ip = getClientIp(request);
-    const rl = await rateLimitDistributed(`payment:retry:${user.id}`, 3, 60);
+    const key = user ? `payment:retry:${user.id}` : `payment:retry:${ip}`;
+    const rl = await rateLimitDistributed(key, 5, 60);
     if (!rl.success) {
       return rateLimitExceededResponse(
         rl,
@@ -53,11 +53,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Guard 1: Verify Ownership
-    const isAdmin = isUserAdmin(user);
+    const isAdmin = user ? isUserAdmin(user) : false;
 
     const isOwner =
-      order.userId === user.id ||
-      (order.guestEmail && user.email && order.guestEmail.toLowerCase().trim() === user.email.toLowerCase().trim());
+      (user && order.userId === user.id) ||
+      (order.guestEmail && user?.email && order.guestEmail.toLowerCase().trim() === user.email.toLowerCase().trim()) ||
+      (!order.userId && order.guestEmail); // allow guest buyer with direct order recovery
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json(
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
     await auditPaymentEvent({
       orderId: order.id,
       action: "PAYMENT_RETRY_INITIATED",
-      actor: user.id,
+      actor: user?.id || "GUEST",
       ipAddress: ip,
       userAgent: request.headers.get("user-agent") || undefined,
       details: {
@@ -117,8 +118,8 @@ export async function POST(request: NextRequest) {
     // Create or refresh Razorpay Order (derives amount strictly from DB order.totalAmount)
     const razorpayOrder = await createRazorpayOrder({
       orderId: order.id,
-      sessionUserId: user.id,
-      sessionUserEmail: user.email,
+      sessionUserId: user?.id,
+      sessionUserEmail: user?.email,
     });
 
     return NextResponse.json({

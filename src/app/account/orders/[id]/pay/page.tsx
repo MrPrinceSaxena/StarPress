@@ -165,6 +165,29 @@ export default function OrderPayRecoveryPage() {
         throw new Error(retryData.error || "Failed to prepare payment gateway.");
       }
 
+      // Handle Dev Test Mock
+      if (retryData.isMock) {
+        setStatusNote("Completing simulated test payment...");
+        const verifyRes = await fetch("/api/payments/razorpay/verify", {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            orderId: order.id,
+            razorpay_order_id: retryData.razorpayOrderId,
+            razorpay_payment_id: `pay_mock_${Date.now()}`,
+            razorpay_signature: "mock_signature",
+          }),
+        });
+        const vData = await verifyRes.json();
+        if (vData.success) {
+          setPaymentSuccess(true);
+          setStatusNote(null);
+          setIsProcessingPayment(false);
+          return;
+        }
+        throw new Error(vData.error || "Mock payment verification failed.");
+      }
+
       // Load Razorpay SDK
       setStatusNote("Connecting to Razorpay...");
       const sdkLoaded = await loadRazorpayScript();
