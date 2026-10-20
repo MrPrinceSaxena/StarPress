@@ -148,21 +148,21 @@ export default function CartPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-border-subtle">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider mb-2">
               <ShoppingBag size={13} className="text-brand-yellow" />
               <span>Review Your Custom Print Order</span>
             </div>
-            <h1 className="font-display font-black text-3xl sm:text-4xl text-white uppercase tracking-tight">
+            <h1 className="font-display font-black text-3xl sm:text-4xl text-text-primary uppercase tracking-tight">
               Shopping Cart ({items.reduce((acc, it) => acc + it.quantity, 0)} units)
             </h1>
           </div>
 
           <div className="text-xs text-text-muted flex items-center gap-2">
-            <Link href="/" className="hover:text-white transition-colors">
+            <Link href="/" className="hover:text-text-primary transition-colors">
               Home
             </Link>
             <span>/</span>
-            <Link href="/shop" className="hover:text-white transition-colors">
+            <Link href="/shop" className="hover:text-text-primary transition-colors">
               Shop
             </Link>
             <span>/</span>
@@ -183,7 +183,7 @@ export default function CartPage() {
                 <ShoppingBag size={38} />
               </div>
               <div>
-                <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase mb-2">
+                <h2 className="font-display font-black text-2xl sm:text-3xl text-text-primary uppercase mb-2">
                   Your Cart Is Empty
                 </h2>
                 <p className="text-sm text-text-secondary max-w-md mx-auto">
@@ -232,11 +232,11 @@ export default function CartPage() {
                       <Truck size={15} className="text-brand-yellow shrink-0" />
                       <span>
                         Add{" "}
-                        <strong className="text-white font-semibold">
+                        <strong className="text-text-primary font-semibold">
                           ₹{amountNeededForFreeShipping}
                         </strong>{" "}
                         more to qualify for{" "}
-                        <span className="text-white font-medium">Free Shipping</span>
+                        <span className="text-text-primary font-medium">Free Shipping</span>
                       </span>
                     </span>
                     <span className="text-xs font-mono text-text-muted">
@@ -287,7 +287,7 @@ export default function CartPage() {
                           <div className="min-w-0 space-y-1.5 flex-1">
                             <Link
                               href={item.href}
-                              className="font-display font-bold text-base sm:text-lg text-white hover:text-brand-yellow transition-colors line-clamp-1"
+                              className="font-display font-bold text-base sm:text-lg text-text-primary hover:text-brand-yellow transition-colors line-clamp-1"
                             >
                               {item.name}
                             </Link>
@@ -295,16 +295,16 @@ export default function CartPage() {
                             {/* Variant Chips */}
                             <div className="flex flex-wrap items-center gap-2 pt-0.5">
                               {item.sizeLabel && (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-white/5 border border-white/10 px-2 py-0.5 rounded text-slate-300">
+                                <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-bg-surface-alt border border-border-subtle px-2 py-0.5 rounded text-text-secondary">
                                   <span>Size:</span>
-                                  <strong className="text-white">{item.sizeLabel}</strong>
+                                  <strong className="text-text-primary">{item.sizeLabel}</strong>
                                 </span>
                               )}
 
                               {item.materialLabel && (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-white/5 border border-white/10 px-2 py-0.5 rounded text-slate-300">
+                                <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-bg-surface-alt border border-border-subtle px-2 py-0.5 rounded text-text-secondary">
                                   <span>Material:</span>
-                                  <strong className="text-white">{item.materialLabel}</strong>
+                                  <strong className="text-text-primary">{item.materialLabel}</strong>
                                 </span>
                               )}
 
@@ -335,7 +335,7 @@ export default function CartPage() {
                             {/* Unit Price info */}
                             <div className="text-xs text-text-secondary pt-1">
                               Unit Rate:{" "}
-                              <span className="text-white font-mono font-medium">
+                              <span className="text-text-primary font-mono font-medium">
                                 ₹{item.price.toLocaleString("en-IN")}
                               </span>{" "}
                               / unit
@@ -350,18 +350,18 @@ export default function CartPage() {
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-white hover:bg-white/5 rounded-l-xl transition-colors active:scale-90"
+                              className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5 rounded-l-xl transition-colors active:scale-90"
                               aria-label="Decrease quantity"
                             >
                               <Minus size={15} />
                             </button>
-                            <span className="w-12 text-center font-mono font-bold text-sm text-white select-none">
+                            <span className="w-12 text-center font-mono font-bold text-sm text-text-primary select-none">
                               {item.quantity}
                             </span>
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-white hover:bg-white/5 rounded-r-xl transition-colors active:scale-90"
+                              className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5 rounded-r-xl transition-colors active:scale-90"
                               aria-label="Increase quantity"
                             >
                               <Plus size={15} />
@@ -413,7 +413,7 @@ export default function CartPage() {
                               value={editText}
                               onChange={(e) => setEditText(e.target.value)}
                               placeholder="e.g. Rahul Sharma, Slogan, etc."
-                              className="w-full bg-bg-surface border border-border-subtle rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-yellow"
+                              className="w-full bg-bg-surface border border-border-subtle rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-brand-yellow"
                             />
                           </div>
 
@@ -426,7 +426,7 @@ export default function CartPage() {
                               value={editNotes}
                               onChange={(e) => setEditNotes(e.target.value)}
                               placeholder="e.g. Center-aligned, priority packaging"
-                              className="w-full bg-bg-surface border border-border-subtle rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-yellow"
+                              className="w-full bg-bg-surface border border-border-subtle rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-brand-yellow"
                             />
                           </div>
 
@@ -442,7 +442,7 @@ export default function CartPage() {
                             <button
                               type="button"
                               onClick={cancelEditing}
-                              className="px-3 py-1.5 rounded-lg bg-white/5 text-text-secondary hover:text-white text-xs font-medium transition-colors"
+                              className="px-3 py-1.5 rounded-lg bg-bg-surface-alt text-text-secondary hover:text-text-primary text-xs font-medium transition-colors"
                             >
                               Cancel
                             </button>
@@ -492,7 +492,7 @@ export default function CartPage() {
             {/* Right Column: Order Summary & Checkout */}
             <div className="lg:col-span-4 space-y-6">
               <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-7 space-y-6 shadow-xl sticky top-24">
-                <h2 className="font-display font-black text-xl text-white uppercase tracking-tight">
+                <h2 className="font-display font-black text-xl text-text-primary uppercase tracking-tight">
                   Order Summary
                 </h2>
 
@@ -521,7 +521,7 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={removePromo}
-                          className="text-text-muted hover:text-white transition-colors"
+                          className="text-text-muted hover:text-text-primary transition-colors"
                         >
                           <X size={14} />
                         </button>
@@ -535,7 +535,7 @@ export default function CartPage() {
                             placeholder="e.g. STAR10"
                             value={promoCode}
                             onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                            className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:outline-none focus:border-brand-yellow font-mono uppercase"
+                            className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3.5 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow font-mono uppercase"
                           />
                           <Tag
                             size={14}
@@ -576,7 +576,7 @@ export default function CartPage() {
                     <span>
                       Items Subtotal ({items.reduce((acc, it) => acc + it.quantity, 0)} units)
                     </span>
-                    <span className="font-mono font-medium text-white">
+                    <span className="font-mono font-medium text-text-primary">
                       ₹{subtotal.toLocaleString("en-IN")}
                     </span>
                   </div>
@@ -597,7 +597,7 @@ export default function CartPage() {
                         FREE
                       </span>
                     ) : (
-                      <span className="font-mono text-white">
+                      <span className="font-mono text-text-primary">
                         ₹{STANDARD_SHIPPING_FEE}
                       </span>
                     )}
@@ -605,14 +605,14 @@ export default function CartPage() {
 
                   <div className="flex items-center justify-between text-text-secondary">
                     <span>Estimated GST (18%)</span>
-                    <span className="font-mono text-white">
+                    <span className="font-mono text-text-primary">
                       ₹{gstAmount.toLocaleString("en-IN")}
                     </span>
                   </div>
 
                   <div className="pt-3 border-t border-border-subtle flex items-baseline justify-between">
                     <div>
-                      <div className="font-display font-black text-base text-white uppercase">
+                      <div className="font-display font-black text-base text-text-primary uppercase">
                         Estimated Total
                       </div>
                       <span className="text-[10px] text-text-muted">

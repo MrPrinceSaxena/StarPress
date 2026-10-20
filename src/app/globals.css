@@ -2,31 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+:root,
+html.dark {
+  color-scheme: dark;
+  --color-bg-base: 11 12 16;
+  --color-bg-surface: 19 21 29;
+  --color-bg-surface-alt: 26 29 39;
+  --color-border-subtle: 36 40 53;
+  --color-border-strong: 53 58 77;
+  --color-text-primary: 255 255 255;
+  --color-text-secondary: 148 163 184;
+  --color-text-muted: 100 116 139;
+}
+
+html.light {
+  color-scheme: light;
+  --color-bg-base: 248 249 253;
+  --color-bg-surface: 255 255 255;
+  --color-bg-surface-alt: 241 245 249;
+  --color-border-subtle: 226 232 240;
+  --color-border-strong: 203 213 225;
+  --color-text-primary: 15 23 42;
+  --color-text-secondary: 71 85 105;
+  --color-text-muted: 148 163 184;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
-    color-scheme: dark;
   }
 
   body {
-    background-color: #0B0C10;
-    color: #FFFFFF;
+    background-color: rgb(var(--color-bg-base));
+    color: rgb(var(--color-text-primary));
     overflow-x: hidden;
   }
 
-  /* Custom dark scrollbar */
+  /* Custom theme scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #0B0C10;
+    background: rgb(var(--color-bg-base));
   }
   ::-webkit-scrollbar-thumb {
-    background: #242835;
+    background: rgb(var(--color-border-subtle));
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #353A4D;
+    background: rgb(var(--color-border-strong));
   }
 
   /* Accessible focus indicators */
@@ -42,6 +66,10 @@
   }
   .card-glow-hover:hover {
     transform: translateY(-2px);
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.08);
+    border-color: rgb(var(--color-border-strong));
+  }
+  .dark .card-glow-hover:hover {
     box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
     border-color: rgba(255, 255, 255, 0.16);
   }

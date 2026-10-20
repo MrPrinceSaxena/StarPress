@@ -181,22 +181,22 @@ export default async function ProductDetailPage({ params }: PageProps) {
           aria-label="Breadcrumb"
           className="flex items-center gap-2 text-xs text-text-muted mb-8 overflow-x-auto whitespace-nowrap"
         >
-          <Link href="/" className="hover:text-white transition-colors">
+          <Link href="/" className="hover:text-text-primary transition-colors">
             Home
           </Link>
           <ChevronRight size={13} />
-          <Link href="/shop" className="hover:text-white transition-colors">
+          <Link href="/shop" className="hover:text-text-primary transition-colors">
             Shop
           </Link>
           <ChevronRight size={13} />
           <Link
             href={`/shop?category=${product.categorySlug}`}
-            className="hover:text-white transition-colors"
+            className="hover:text-text-primary transition-colors"
           >
             {product.categoryName}
           </Link>
           <ChevronRight size={13} />
-          <span className="text-white font-medium truncate">{product.name}</span>
+          <span className="text-text-primary font-medium truncate">{product.name}</span>
         </nav>
 
         {/* 2-Column Product Detail Layout */}
@@ -207,13 +207,13 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
               <div className="space-y-3 pt-2">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 uppercase tracking-wider">
+                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-bg-surface-alt border border-border-subtle text-text-secondary uppercase tracking-wider">
                   {product.categoryName}
                 </span>
                 <StarRating rating={product.rating} reviewCount={product.reviewCount} />
               </div>
 
-              <h1 className="font-display font-black text-3xl sm:text-4xl text-white uppercase tracking-tight leading-[1.1]">
+              <h1 className="font-display font-black text-3xl sm:text-4xl text-text-primary uppercase tracking-tight leading-[1.1]">
                 {product.name}
               </h1>
 
@@ -237,7 +237,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <div className="mt-20 pt-12 border-t border-border-subtle space-y-8">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-display font-bold text-2xl text-white tracking-tight">
+                <h3 className="font-display font-bold text-2xl text-text-primary tracking-tight">
                   Related in {product.categoryName}
                 </h3>
                 <p className="text-xs sm:text-sm text-text-secondary mt-1">
@@ -247,7 +247,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
               <Link
                 href={`/shop?category=${product.categorySlug}`}
-                className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors"
               >
                 <span>View all category items</span>
                 <ChevronRight size={14} />

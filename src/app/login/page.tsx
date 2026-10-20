@@ -267,10 +267,10 @@ function LoginForm() {
       />
 
       {/* Main Spatial Glassmorphism Window Panel */}
-      <div className="relative rounded-[28px] sm:rounded-[32px] border border-white/20 bg-[#090D1A]/55 backdrop-blur-2xl sm:backdrop-blur-3xl p-6 sm:p-7 shadow-[0_24px_80px_rgba(0,0,0,0.65),0_0_40px_rgba(245,186,19,0.08)] overflow-hidden">
+      <div className="relative rounded-[28px] sm:rounded-[32px] border border-border-subtle bg-bg-surface/90 dark:bg-[#090D1A]/70 backdrop-blur-2xl sm:backdrop-blur-3xl p-6 sm:p-7 shadow-2xl overflow-hidden">
         {/* Spatial light rims & glass specular highlights */}
-        <div className="pointer-events-none absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-        <div className="pointer-events-none absolute -left-px top-8 bottom-8 w-px bg-gradient-to-b from-white/30 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-white/40 dark:via-white/60 to-transparent" />
+        <div className="pointer-events-none absolute -left-px top-8 bottom-8 w-px bg-gradient-to-b from-white/20 via-transparent to-transparent" />
         <div className="pointer-events-none absolute -right-px top-8 bottom-8 w-px bg-gradient-to-b from-brand-yellow/30 via-transparent to-transparent" />
         <div className="pointer-events-none absolute top-0 right-0 w-36 h-36 bg-brand-yellow/[0.08] rounded-full blur-2xl" />
         <div className="pointer-events-none absolute bottom-0 left-0 w-36 h-36 bg-brand-cyan/[0.08] rounded-full blur-2xl" />
@@ -279,7 +279,7 @@ function LoginForm() {
         <div className="flex items-center justify-between mb-3.5 relative z-10">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-xs font-medium py-1 px-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.08] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
+            className="inline-flex items-center gap-1.5 text-text-secondary hover:text-text-primary text-xs font-medium py-1 px-2.5 rounded-lg bg-bg-surface-alt hover:bg-bg-surface border border-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
             aria-label="Back to homepage"
           >
             <ArrowLeft size={13} aria-hidden="true" />
@@ -299,10 +299,10 @@ function LoginForm() {
 
         {/* Heading */}
         <div className="mb-3 relative z-10">
-          <h1 className="font-display font-black text-2xl sm:text-3xl text-white tracking-tight leading-tight mb-0.5">
+          <h1 className="font-display font-black text-2xl sm:text-3xl text-text-primary tracking-tight leading-tight mb-0.5">
             Welcome <span className="text-brand-yellow">Back</span>
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-text-secondary">
             Don&apos;t have an account?{" "}
             <Link
               href={`/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
@@ -319,9 +319,9 @@ function LoginForm() {
         {registered && (
           <div
             role="status"
-            className="mb-2.5 flex items-start gap-2 p-2 sm:p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 text-xs backdrop-blur-md relative z-10"
+            className="mb-2.5 flex items-start gap-2 p-2 sm:p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 text-xs backdrop-blur-md relative z-10"
           >
-            <CheckCircle2 size={14} className="shrink-0 mt-0.5 text-emerald-400" aria-hidden="true" />
+            <CheckCircle2 size={14} className="shrink-0 mt-0.5 text-emerald-500" aria-hidden="true" />
             <span>Account created successfully! Please sign in with your credentials.</span>
           </div>
         )}
@@ -332,8 +332,8 @@ function LoginForm() {
           onClick={handleGoogleSignIn}
           disabled={isGoogleLoading || isLoading}
           className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-full
-            bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] hover:border-white/25
-            text-white text-xs sm:text-sm font-semibold transition-all duration-200
+            bg-bg-surface-alt hover:bg-bg-surface border border-border-subtle hover:border-border-strong
+            text-text-primary text-xs sm:text-sm font-semibold transition-all duration-200
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow
             disabled:opacity-60 disabled:cursor-not-allowed mb-2.5 shadow-sm group relative z-10 backdrop-blur-md"
         >
@@ -352,11 +352,11 @@ function LoginForm() {
 
         {/* Divider */}
         <div className="flex items-center gap-3 mb-2.5 relative z-10">
-          <div className="flex-1 h-px bg-white/10" />
-          <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold font-mono">
+          <div className="flex-1 h-px bg-border-subtle" />
+          <span className="text-[10px] uppercase tracking-wider text-text-muted font-bold font-mono">
             or continue with email
           </span>
-          <div className="flex-1 h-px bg-white/10" />
+          <div className="flex-1 h-px bg-border-subtle" />
         </div>
 
         {/* Direct Email & Password Form */}
@@ -365,7 +365,7 @@ function LoginForm() {
           <div>
             <label
               htmlFor={emailId}
-              className="block text-[11px] font-semibold text-slate-300 tracking-wide mb-1"
+              className="block text-[11px] font-semibold text-text-secondary tracking-wide mb-1"
             >
               Email Address
             </label>
@@ -380,12 +380,12 @@ function LoginForm() {
               placeholder="name@company.com"
               aria-describedby={emailError ? `${emailId}-error` : undefined}
               aria-invalid={!!emailError}
-              className={`w-full bg-white/[0.05] border rounded-full px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-white
-                placeholder-slate-500 transition-all duration-200 backdrop-blur-md
+              className={`w-full bg-bg-surface-alt border rounded-full px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-text-primary
+                placeholder:text-text-muted transition-all duration-200 backdrop-blur-md
                 focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow
                 focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:border-brand-yellow
-                hover:border-white/25
-                ${emailError ? "border-rose-500/60 bg-rose-500/[0.04]" : "border-white/[0.12]"}`}
+                hover:border-border-strong
+                ${emailError ? "border-rose-500/60 bg-rose-500/[0.04]" : "border-border-subtle"}`}
             />
             <div id={`${emailId}-error`}>
               <FieldError message={emailError} />
@@ -397,13 +397,13 @@ function LoginForm() {
             <div className="flex items-center justify-between mb-1">
               <label
                 htmlFor={passwordId}
-                className="block text-[11px] font-semibold text-slate-300 tracking-wide"
+                className="block text-[11px] font-semibold text-text-secondary tracking-wide"
               >
                 Password
               </label>
               <Link
                 href="/contact?topic=PasswordReset"
-                className="text-[10px] sm:text-[11px] font-medium text-brand-yellow/90 hover:text-brand-yellow hover:underline transition-colors
+                className="text-[10px] sm:text-[11px] font-medium text-brand-yellow hover:underline transition-colors
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-sm"
               >
                 Forgot Password?
@@ -421,19 +421,19 @@ function LoginForm() {
                 placeholder="••••••••••••"
                 aria-describedby={passwordError ? `${passwordId}-error` : undefined}
                 aria-invalid={!!passwordError}
-                className={`w-full bg-white/[0.05] border rounded-full px-4 pr-11 py-2 sm:py-2.5 text-xs sm:text-sm text-white
-                  placeholder-slate-500 transition-all duration-200 backdrop-blur-md
+                className={`w-full bg-bg-surface-alt border rounded-full px-4 pr-11 py-2 sm:py-2.5 text-xs sm:text-sm text-text-primary
+                  placeholder:text-text-muted transition-all duration-200 backdrop-blur-md
                   focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow
                   focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:border-brand-yellow
-                  hover:border-white/25
-                  ${passwordError ? "border-rose-500/60 bg-rose-500/[0.04]" : "border-white/[0.12]"}`}
+                  hover:border-border-strong
+                  ${passwordError ? "border-rose-500/60 bg-rose-500/[0.04]" : "border-border-subtle"}`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors p-1
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-full"
               >
                 {showPassword ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}

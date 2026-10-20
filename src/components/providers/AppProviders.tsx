@@ -4,6 +4,7 @@ import React from "react";
 import { SessionProvider } from "next-auth/react";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 export default function AppProviders({
   children,
@@ -11,10 +12,12 @@ export default function AppProviders({
   children: React.ReactNode;
 }) {
   return (
-    <SessionProvider>
-      <CartProvider>
-        <WishlistProvider>{children}</WishlistProvider>
-      </CartProvider>
-    </SessionProvider>
+    <ThemeProvider>
+      <SessionProvider>
+        <CartProvider>
+          <WishlistProvider>{children}</WishlistProvider>
+        </CartProvider>
+      </SessionProvider>
+    </ThemeProvider>
   );
 }

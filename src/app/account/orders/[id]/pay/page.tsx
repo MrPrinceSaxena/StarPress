@@ -277,7 +277,7 @@ export default function OrderPayRecoveryPage() {
         <div className="flex items-center justify-between">
           <Link
             href="/account?tab=orders"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-text-secondary hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors"
           >
             <ArrowLeft size={16} />
             <span>Back to Orders</span>
@@ -294,7 +294,7 @@ export default function OrderPayRecoveryPage() {
         ) : !order ? (
           <div className="rounded-3xl border border-border-subtle bg-bg-surface p-10 text-center space-y-4">
             <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto" />
-            <h2 className="font-display font-black text-xl text-white">Order Not Found</h2>
+            <h2 className="font-display font-black text-xl text-text-primary">Order Not Found</h2>
             <p className="text-xs text-text-secondary max-w-md mx-auto">
               We could not find this order. It may have been deleted or the link is incorrect.
             </p>
@@ -312,11 +312,11 @@ export default function OrderPayRecoveryPage() {
               <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                 Payment Confirmed
               </span>
-              <h1 className="font-display font-black text-2xl sm:text-3xl text-white mt-3">
+              <h1 className="font-display font-black text-2xl sm:text-3xl text-text-primary mt-3">
                 Payment Successful!
               </h1>
               <p className="text-xs text-text-secondary max-w-md mx-auto mt-2">
-                Order <strong className="text-white font-mono">#{order.orderNumber}</strong> has been marked as PAID and routed directly to print production.
+                Order <strong className="text-text-primary font-mono">#{order.orderNumber}</strong> has been marked as PAID and routed directly to print production.
               </p>
             </div>
 
@@ -327,7 +327,7 @@ export default function OrderPayRecoveryPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Payment Method:</span>
-                <span className="font-bold text-white">Razorpay Online</span>
+                <span className="font-bold text-text-primary">Razorpay Online</span>
               </div>
             </div>
 
@@ -350,11 +350,11 @@ export default function OrderPayRecoveryPage() {
               <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/30">
                 Payment Window Expired
               </span>
-              <h1 className="font-display font-black text-2xl text-white mt-3">
+              <h1 className="font-display font-black text-2xl text-text-primary mt-3">
                 Order Payment Expired
               </h1>
               <p className="text-xs text-text-secondary max-w-md mx-auto mt-2">
-                The 24-hour payment window for order <strong className="text-white font-mono">#{order.orderNumber}</strong> has expired. Unpaid orders are automatically cancelled to release production queue slots.
+                The 24-hour payment window for order <strong className="text-text-primary font-mono">#{order.orderNumber}</strong> has expired. Unpaid orders are automatically cancelled to release production queue slots.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -374,15 +374,15 @@ export default function OrderPayRecoveryPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border-subtle">
                 <div>
                   <div className="flex items-center gap-2.5">
-                    <h1 className="font-display font-black text-xl text-white">
+                    <h1 className="font-display font-black text-xl text-text-primary">
                       Complete Payment
                     </h1>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/30">
                       Payment Pending
                     </span>
                   </div>
                   <p className="text-xs text-text-secondary mt-1">
-                    Order <strong className="font-mono text-white">#{order.orderNumber}</strong> • Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    Order <strong className="font-mono text-text-primary">#{order.orderNumber}</strong> • Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
                 </div>
 
@@ -414,34 +414,34 @@ export default function OrderPayRecoveryPage() {
 
               {/* Order Items Summary */}
               <div className="space-y-3 pt-2">
-                <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                <span className="text-xs font-bold text-text-primary uppercase tracking-wider block">
                   Items in this order ({order.items.length})
                 </span>
                 <div className="space-y-2 rounded-2xl border border-border-subtle bg-bg-surface-alt p-4">
                   {order.items.map((item) => (
                     <div key={item.id} className="flex items-center justify-between text-xs">
                       <span className="text-text-secondary">
-                        {item.productName} × <strong className="text-white font-mono">{item.quantity}</strong>
+                        {item.productName} × <strong className="text-text-primary font-mono">{item.quantity}</strong>
                       </span>
-                      <span className="font-mono text-white">
+                      <span className="font-mono text-text-primary">
                         ₹{Number(item.lineTotal).toLocaleString("en-IN")}
                       </span>
                     </div>
                   ))}
                   <div className="pt-3 border-t border-border-subtle/80 flex justify-between text-xs text-text-muted">
                     <span>Subtotal:</span>
-                    <span className="font-mono text-white">₹{Number(order.subtotal).toLocaleString("en-IN")}</span>
+                    <span className="font-mono text-text-primary">₹{Number(order.subtotal).toLocaleString("en-IN")}</span>
                   </div>
                   {order.gstAmount && (
                     <div className="flex justify-between text-xs text-text-muted">
                       <span>GST (18%):</span>
-                      <span className="font-mono text-white">₹{Number(order.gstAmount).toLocaleString("en-IN")}</span>
+                      <span className="font-mono text-text-primary">₹{Number(order.gstAmount).toLocaleString("en-IN")}</span>
                     </div>
                   )}
                   {Number(order.shippingFee) > 0 && (
                     <div className="flex justify-between text-xs text-text-muted">
                       <span>Shipping Fee:</span>
-                      <span className="font-mono text-white">₹{Number(order.shippingFee).toLocaleString("en-IN")}</span>
+                      <span className="font-mono text-text-primary">₹{Number(order.shippingFee).toLocaleString("en-IN")}</span>
                     </div>
                   )}
                   {Number(order.discountAmount) > 0 && (
@@ -475,11 +475,11 @@ export default function OrderPayRecoveryPage() {
                 </button>
 
                 <div className="flex items-center justify-center gap-6 text-[11px] text-text-muted pt-2">
-                  <span className="flex items-center gap-1.5 text-slate-400">
+                  <span className="flex items-center gap-1.5 text-text-secondary">
                     <ShieldCheck size={14} className="text-emerald-400" />
                     256-bit SSL Bank Encryption
                   </span>
-                  <span className="flex items-center gap-1.5 text-slate-400">
+                  <span className="flex items-center gap-1.5 text-text-secondary">
                     <Lock size={12} className="text-brand-yellow" />
                     UPI, Cards, Netbanking, Wallets
                   </span>
@@ -490,7 +490,7 @@ export default function OrderPayRecoveryPage() {
             {/* Assistance & Fallback */}
             <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-1">
-                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span className="text-xs font-bold text-text-primary flex items-center gap-1.5">
                   <HelpCircle size={14} className="text-brand-yellow" />
                   Having trouble paying?
                 </span>

@@ -40,12 +40,12 @@ export default function CategoryGrid({ categories, products }: CategoryGridProps
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8 md:mb-10">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider">
               <Sparkles size={13} className="text-brand-yellow" />
               <span>Interactive Collection Rail</span>
             </div>
 
-            <h2 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-white uppercase tracking-tight">
+            <h2 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-text-primary uppercase tracking-tight">
               Shop by Category
             </h2>
 
@@ -57,7 +57,7 @@ export default function CategoryGrid({ categories, products }: CategoryGridProps
 
           <Link
             href="/categories"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all group shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-text-secondary hover:text-text-primary bg-bg-surface-alt hover:bg-border-subtle border border-border-subtle hover:border-brand-yellow transition-all group shrink-0"
           >
             <span>View All Categories</span>
             <ArrowRight
@@ -69,7 +69,7 @@ export default function CategoryGrid({ categories, products }: CategoryGridProps
 
         {/* 1. DESKTOP ACCORDION COLLECTION RAIL (Hidden on mobile/tablet) */}
         <div
-          className="hidden lg:flex gap-3 h-[480px] w-full rounded-[28px] border border-border-subtle bg-bg-surface/50 p-3.5 backdrop-blur-xl shadow-2xl relative overflow-hidden"
+          className="hidden lg:flex gap-3 h-[480px] w-full rounded-[28px] border border-border-subtle bg-bg-surface p-3.5 backdrop-blur-xl shadow-2xl relative overflow-hidden"
           onMouseLeave={() => setActiveId(enrichedCategories[0]?.id || "cat-1")}
         >
           {enrichedCategories.map((cat) => {
@@ -84,7 +84,7 @@ export default function CategoryGrid({ categories, products }: CategoryGridProps
                 className={`relative rounded-2xl overflow-hidden cursor-pointer select-none transition-[flex,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col justify-between border ${
                   isExpanded
                     ? "flex-[3.8] border-brand-yellow/80 shadow-[0_16px_40px_rgba(0,0,0,0.8)] ring-1 ring-brand-yellow/40"
-                    : "flex-1 border-white/5 bg-bg-surface-alt hover:border-white/20"
+                    : "flex-1 border-border-subtle bg-bg-surface-alt hover:border-brand-yellow/40"
                 }`}
                 style={{
                   willChange: "flex",
@@ -123,7 +123,7 @@ export default function CategoryGrid({ categories, products }: CategoryGridProps
                     className={`font-mono font-bold text-xs px-2.5 py-1 rounded-lg border transition-colors ${
                       isExpanded
                         ? "bg-brand-yellow/15 border-brand-yellow/40 text-brand-yellow"
-                        : "bg-white/5 border-white/10 text-text-muted"
+                        : "bg-bg-surface/80 border-border-subtle text-text-muted"
                     }`}
                   >
                     {cat.indexNumber}

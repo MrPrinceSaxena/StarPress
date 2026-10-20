@@ -2,6 +2,7 @@ import type { Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,14 +11,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        "bg-base": "#0B0C10",
-        "bg-surface": "#13151D",
-        "bg-surface-alt": "#1A1D27",
-        "border-subtle": "#242835",
-        "border-strong": "#353A4D",
-        "text-primary": "#FFFFFF",
-        "text-secondary": "#94A3B8",
-        "text-muted": "#64748B",
+        "bg-base": "rgb(var(--color-bg-base) / <alpha-value>)",
+        "bg-surface": "rgb(var(--color-bg-surface) / <alpha-value>)",
+        "bg-surface-alt": "rgb(var(--color-bg-surface-alt) / <alpha-value>)",
+        "border-subtle": "rgb(var(--color-border-subtle) / <alpha-value>)",
+        "border-strong": "rgb(var(--color-border-strong) / <alpha-value>)",
+        "text-primary": "rgb(var(--color-text-primary) / <alpha-value>)",
+        "text-secondary": "rgb(var(--color-text-secondary) / <alpha-value>)",
+        "text-muted": "rgb(var(--color-text-muted) / <alpha-value>)",
         "brand-yellow": "#F5BA13",
         "brand-magenta": "#E11D48",
         "brand-cyan": "#0EA5E9",

@@ -8,12 +8,12 @@ export default function CTASection() {
       <div className="max-w-[1280px] mx-auto px-4 xs:px-6 lg:px-10 relative z-10">
         <div className="relative rounded-2xl sm:rounded-[28px] border border-border-subtle bg-bg-surface p-5 xs:p-7 sm:p-12 lg:p-16 text-center shadow-2xl overflow-hidden">
           <div className="max-w-3xl mx-auto space-y-5 sm:space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold tracking-wider uppercase">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold tracking-wider uppercase">
               <Sparkles size={14} className="text-brand-yellow" />
               <span>Bring Your Vision to Life</span>
             </div>
 
-            <h2 className="font-display font-black text-2xl xs:text-3xl sm:text-4xl lg:text-5xl uppercase text-white tracking-tight leading-[1.1]">
+            <h2 className="font-display font-black text-2xl xs:text-3xl sm:text-4xl lg:text-5xl uppercase text-text-primary tracking-tight leading-[1.1]">
               Ready to Turn Your Ideas Into <span className="text-brand-yellow">High-Impact</span> Prints?
             </h2>
 
@@ -47,19 +47,19 @@ export default function CTASection() {
             {/* Reassurance Micro-Badges */}
             <div className="pt-8 sm:pt-10 border-t border-border-subtle/70 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs text-text-secondary">
               <div className="flex items-center justify-center gap-2">
-                <Zap size={16} className="text-slate-400 shrink-0" />
+                <Zap size={16} className="text-text-muted shrink-0" />
                 <span>Fast Turnaround</span>
               </div>
               <div className="flex items-center justify-center gap-2">
-                <Award size={16} className="text-slate-400 shrink-0" />
+                <Award size={16} className="text-text-muted shrink-0" />
                 <span>Commercial 2400 DPI</span>
               </div>
               <div className="flex items-center justify-center gap-2">
-                <ShieldCheck size={16} className="text-slate-400 shrink-0" />
+                <ShieldCheck size={16} className="text-text-muted shrink-0" />
                 <span>100% Quality Checked</span>
               </div>
               <div className="flex items-center justify-center gap-2">
-                <Truck size={16} className="text-slate-400 shrink-0" />
+                <Truck size={16} className="text-text-muted shrink-0" />
                 <span>Insured Pan-India Transit</span>
               </div>
             </div>

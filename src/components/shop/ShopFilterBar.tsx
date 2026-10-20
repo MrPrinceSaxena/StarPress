@@ -46,7 +46,7 @@ export default function ShopFilterBar({
             <button
               type="button"
               onClick={() => onSearchChange("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white p-1"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-1"
               aria-label="Clear search query"
             >
               <X size={16} />
@@ -57,7 +57,7 @@ export default function ShopFilterBar({
         {/* Sort & Count */}
         <div className="flex items-center justify-between sm:justify-end gap-3">
           <div className="text-xs text-text-secondary">
-            Showing <span className="text-white font-bold">{totalResults}</span> products
+            Showing <span className="text-text-primary font-bold">{totalResults}</span> products
           </div>
 
           <div className="relative inline-flex items-center">
@@ -91,7 +91,7 @@ export default function ShopFilterBar({
             className={`shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all select-none min-h-[38px] flex items-center justify-center ${
               selectedCategory === "all"
                 ? "bg-brand-yellow text-black shadow-sm shadow-black/40 font-bold scale-[1.02]"
-                : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:border-white/30 active:scale-95"
+                : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border-strong active:scale-95"
             }`}
           >
             All Categories
@@ -109,7 +109,7 @@ export default function ShopFilterBar({
                 className={`shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all select-none min-h-[38px] flex items-center justify-center ${
                   isSelected
                     ? "bg-brand-yellow text-black shadow-sm shadow-black/40 font-bold scale-[1.02]"
-                    : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:border-white/30 active:scale-95"
+                    : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border-strong active:scale-95"
                 }`}
               >
                 {category.name}

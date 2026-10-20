@@ -34,7 +34,7 @@ export default async function BestSellers() {
               <span>Customer Favorites</span>
             </div>
 
-            <h2 className="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-white uppercase tracking-tight">
+            <h2 className="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-text-primary uppercase tracking-tight">
               Best Selling Products
             </h2>
 
@@ -46,7 +46,7 @@ export default async function BestSellers() {
 
           <Link
             href="/shop"
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-300 hover:text-white transition-colors group shrink-0"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-text-secondary hover:text-text-primary transition-colors group shrink-0"
           >
             <span>View Full Shop Catalog</span>
             <ArrowRight

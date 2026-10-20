@@ -86,7 +86,7 @@ export default function ShopClientView({
     <div>
       {/* Dynamic Category Description (client-synced) */}
       {activeCategoryObject && (
-        <div className="mb-6 px-4 py-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs text-slate-300">
+        <div className="mb-6 px-4 py-3 rounded-xl bg-bg-surface-alt border border-border-subtle flex items-center justify-between text-xs text-text-secondary">
           <span>
             Filtering by <strong>{activeCategoryObject.name}</strong> ({filteredProducts.length} items)
           </span>
@@ -126,7 +126,7 @@ export default function ShopClientView({
             <Layers size={28} />
           </div>
           <div className="space-y-2">
-            <h3 className="font-display font-bold text-xl text-white">No products found</h3>
+            <h3 className="font-display font-bold text-xl text-text-primary">No products found</h3>
             <p className="text-sm text-text-secondary">
               We couldn&apos;t find any products matching &quot;{searchQuery}&quot; in the selected category.
             </p>

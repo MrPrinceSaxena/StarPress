@@ -23,7 +23,7 @@ export default function HowItWorks() {
       <div className="max-w-[1280px] mx-auto px-6 lg:px-10 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16 space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold tracking-wider uppercase">
             <span>Seamless Ordering</span>
           </div>
           <h2 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-text-primary tracking-tight uppercase">
@@ -43,7 +43,7 @@ export default function HowItWorks() {
             return (
               <div
                 key={stepItem.step}
-                className="relative flex flex-col justify-between p-6 rounded-2xl bg-bg-surface border border-border-subtle hover:border-white/20 transition-all duration-300 group hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50"
+                className="relative flex flex-col justify-between p-6 rounded-2xl bg-bg-surface border border-border-subtle hover:border-brand-yellow/50 transition-all duration-300 group hover:-translate-y-1 hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/50"
               >
                 {/* Step indicator header */}
                 <div>
@@ -61,7 +61,7 @@ export default function HowItWorks() {
                     </div>
                   </div>
 
-                  <h3 className="font-display font-bold text-lg text-text-primary tracking-tight mb-2 group-hover:text-white transition-colors">
+                  <h3 className="font-display font-bold text-lg text-text-primary tracking-tight mb-2 group-hover:text-brand-yellow transition-colors">
                     {stepItem.title}
                   </h3>
 

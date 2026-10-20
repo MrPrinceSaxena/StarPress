@@ -18,12 +18,15 @@ import {
   CheckCircle2,
   ArrowRight,
   Sparkles,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { NAV_LINKS } from "@/lib/data";
 import Button from "@/components/ui/Button";
 import MobileNavDrawer from "./MobileNavDrawer";
 import { useCart } from "@/context/CartContext";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useTheme } from "@/context/ThemeContext";
 
 export interface HeaderProps {
   cartCount?: number;
@@ -41,6 +44,7 @@ interface MenuItem {
 export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { theme, toggleTheme, isMounted } = useTheme();
   const { session, status, isHydrated, signOut: authSignOut } = useAuthSession();
   const { totalCount: dynamicCartCount } = useCart();
   const cartCount = propCartCount !== undefined ? propCartCount : dynamicCartCount;
@@ -219,7 +223,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
           isHome
             ? `fixed top-0 inset-x-0 ${
                 isScrolled
-                  ? "bg-[#0A0A0F]/85 backdrop-blur-xl border-b border-border-subtle shadow-lg"
+                  ? "bg-white/90 dark:bg-[#0A0A0F]/85 backdrop-blur-xl border-b border-border-subtle shadow-md dark:shadow-lg"
                   : "bg-transparent border-b border-transparent"
               }`
             : "sticky top-0 bg-bg-base/90 backdrop-blur-md border-b border-border-subtle"
@@ -260,7 +264,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
 
           {/* Center: Sleek Minimal Floating Nav Pill */}
           <nav
-            className="hidden lg:flex items-center gap-0.5 xl:gap-1 px-2.5 py-1 rounded-full bg-[#12131A]/85 backdrop-blur-xl border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.35)]"
+            className="hidden lg:flex items-center gap-0.5 xl:gap-1 px-2.5 py-1 rounded-full bg-white/85 dark:bg-[#12131A]/85 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.35)]"
             aria-label="Main navigation"
           >
             {NAV_LINKS.map((link) => {
@@ -278,15 +282,15 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                       href={link.href}
                       className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs xl:text-[13px] font-medium whitespace-nowrap shrink-0 transition-all duration-200 ${
                         active
-                          ? "bg-white/10 text-white font-semibold border border-white/10 shadow-sm"
-                          : "text-text-secondary hover:text-white hover:bg-white/5"
+                          ? "bg-slate-900 text-white dark:bg-white/10 dark:text-white font-semibold border border-slate-800 dark:border-white/10 shadow-sm"
+                          : "text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5"
                       }`}
                     >
                       <span>{link.label}</span>
                       <ChevronDown
                         size={12}
                         className={`text-text-muted transition-transform duration-200 ${
-                          isShopHovered ? "rotate-180 text-white" : ""
+                          isShopHovered ? "rotate-180 text-brand-yellow" : ""
                         }`}
                       />
                     </Link>
@@ -294,7 +298,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                     {/* Shop Megamenu Popover */}
                     {isShopHovered && (
                       <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2.5 w-[420px] z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                        <div className="bg-[#13151D]/95 backdrop-blur-2xl border border-border-subtle rounded-2xl p-4 shadow-2xl space-y-3">
+                        <div className="bg-bg-surface border border-border-subtle rounded-2xl p-4 shadow-2xl space-y-3">
                           <div className="flex items-center justify-between px-2 pb-2 border-b border-border-subtle">
                             <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
                               Popular Categories
@@ -314,9 +318,9 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                                 key={cat.slug}
                                 href={`/shop?category=${cat.slug}`}
                                 onClick={() => setIsShopHovered(false)}
-                                className="p-2.5 rounded-xl hover:bg-white/5 border border-transparent hover:border-border-subtle transition-all group/item"
+                                className="p-2.5 rounded-xl hover:bg-bg-surface-alt border border-transparent hover:border-border-subtle transition-all group/item"
                               >
-                                <div className="text-xs font-bold text-white group-hover/item:text-brand-yellow transition-colors line-clamp-1">
+                                <div className="text-xs font-bold text-text-primary group-hover/item:text-brand-yellow transition-colors line-clamp-1">
                                   {cat.name}
                                 </div>
                                 <div className="text-[10px] text-text-muted line-clamp-1 mt-0.5">
@@ -337,7 +341,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                             <Link
                               href="/bulk-orders"
                               onClick={() => setIsShopHovered(false)}
-                              className="text-text-secondary hover:text-white"
+                              className="text-text-secondary hover:text-text-primary"
                             >
                               Bulk B2B Rates
                             </Link>
@@ -355,8 +359,8 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   href={link.href}
                   className={`flex items-center px-3 py-1.5 rounded-full text-xs xl:text-[13px] font-medium whitespace-nowrap shrink-0 transition-all duration-200 ${
                     active
-                      ? "bg-white/10 text-white font-semibold border border-white/10 shadow-sm"
-                      : "text-text-secondary hover:text-white hover:bg-white/5"
+                      ? "bg-slate-900 text-white dark:bg-white/10 dark:text-white font-semibold border border-slate-800 dark:border-white/10 shadow-sm"
+                      : "text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
                   <span>{link.label}</span>
@@ -365,15 +369,15 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             })}
           </nav>
 
-          {/* Far Right: Search, Cart, Profile/Auth, Get a Quote (Outside Pill) */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Far Right: Search, Theme Toggle, Cart, Profile/Auth, Get a Quote (Outside Pill) */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Search Icon Button */}
             <div className="relative" ref={searchContainerRef}>
               <button
                 type="button"
                 onClick={() => setIsSearchOpen((prev) => !prev)}
                 aria-label="Search products"
-                className="p-2 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
+                className="p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
               >
                 <Search size={19} />
               </button>
@@ -400,7 +404,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       autoFocus
                       autoComplete="off"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-lg px-3 py-2 text-xs text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
                     />
                     <Button variant="primary" size="sm" type="submit">
                       Go
@@ -410,11 +414,30 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               )}
             </div>
 
+            {/* Light/Dark Mode Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              className="p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center relative group"
+            >
+              {isMounted ? (
+                theme === "dark" ? (
+                  <Sun size={19} className="text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
+                ) : (
+                  <Moon size={19} className="text-slate-700 group-hover:-rotate-12 transition-transform duration-300" />
+                )
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-border-subtle animate-pulse" />
+              )}
+            </button>
+
             {/* Cart Icon Button with Badge */}
             <Link
               href="/cart"
               aria-label={`Cart with ${cartCount} items`}
-              className="relative p-2 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
+              className="relative p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
             >
               <ShoppingBag size={20} />
               {cartCount > 0 && (
@@ -439,7 +462,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   aria-label={`User menu for ${session.user.name || session.user.email}`}
                   aria-haspopup="menu"
                   aria-expanded={isProfileOpen}
-                  className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-full hover:bg-white/5 border border-transparent hover:border-border-subtle transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
+                  className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-border-subtle transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
                 >
                   <div className="relative">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all shadow-sm bg-brand-yellow text-black">
@@ -448,7 +471,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-bg-base bg-emerald-400" />
                   </div>
 
-                  <span className="hidden xl:inline-block text-xs font-semibold text-white max-w-[85px] truncate">
+                  <span className="hidden xl:inline-block text-xs font-semibold text-text-primary max-w-[85px] truncate">
                     {session.user.name?.split(" ")[0] || "Account"}
                   </span>
 
@@ -467,7 +490,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   aria-label="Sign In or Register"
                   aria-haspopup="menu"
                   aria-expanded={isProfileOpen}
-                  className="flex items-center gap-1 p-2 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] justify-center"
+                  className="flex items-center gap-1 p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] justify-center"
                 >
                   <User size={20} />
                   <ChevronDown
@@ -490,13 +513,13 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   {status === "authenticated" && session?.user ? (
                     <div>
                       {/* Identity Header */}
-                      <div className="p-4 bg-gradient-to-r from-white/[0.04] to-white/[0.01] border-b border-border-subtle">
+                      <div className="p-4 bg-gradient-to-r from-brand-yellow/10 to-transparent border-b border-border-subtle">
                         <div className="flex items-start gap-3">
                           <div className="w-10 h-10 rounded-2xl flex items-center justify-center font-display font-black text-sm shrink-0 shadow-md bg-brand-yellow text-black border border-yellow-300">
                             {getUserInitial()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-bold text-white truncate">
+                            <h3 className="text-sm font-bold text-text-primary truncate">
                               {session.user.name || "Valued Customer"}
                             </h3>
                             <p className="text-xs text-text-muted truncate mt-0.5">
@@ -526,14 +549,14 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                               className={`w-full px-3 py-2.5 rounded-xl text-left flex items-start gap-3 transition-colors group ${
                                 item.highlight
                                   ? "hover:bg-brand-cyan/10 border border-transparent hover:border-brand-cyan/20"
-                                  : "hover:bg-white/5"
+                                  : "hover:bg-bg-surface-alt"
                               }`}
                             >
                               <div className="mt-0.5">{item.icon}</div>
                               <div className="flex-1 min-w-0">
                                 <p
-                                  className={`text-xs font-semibold group-hover:text-white transition-colors ${
-                                    item.highlight ? "text-brand-cyan" : "text-slate-200"
+                                  className={`text-xs font-semibold group-hover:text-brand-yellow transition-colors ${
+                                    item.highlight ? "text-brand-cyan" : "text-text-primary"
                                   }`}
                                 >
                                   {item.label}
@@ -556,7 +579,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                           onClick={handleSignOut}
                           disabled={isSigningOut}
                           role="menuitem"
-                          className="w-full px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                          className="w-full px-3 py-2 rounded-xl text-xs font-semibold text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                           {isSigningOut ? (
                             <>
@@ -579,7 +602,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                         <div className="w-9 h-9 rounded-full bg-brand-yellow/15 border border-brand-yellow/30 flex items-center justify-center mx-auto mb-2 text-brand-yellow">
                           <Sparkles size={16} />
                         </div>
-                        <h3 className="font-display font-bold text-sm text-white mb-1">
+                        <h3 className="font-display font-bold text-sm text-text-primary mb-1">
                           Welcome to Star Press
                         </h3>
                         <p className="text-xs text-text-muted leading-relaxed">
@@ -603,19 +626,19 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                           href="/register"
                           onClick={() => setIsProfileOpen(false)}
                           role="menuitem"
-                          className="w-full py-2 px-4 bg-white/5 hover:bg-white/10 border border-border-subtle text-white font-semibold text-xs rounded-full flex items-center justify-center transition-colors text-center"
+                          className="w-full py-2 px-4 bg-bg-surface-alt hover:bg-border-subtle border border-border-subtle text-text-primary font-semibold text-xs rounded-full flex items-center justify-center transition-colors text-center"
                         >
                           Create New Account
                         </Link>
                       </div>
 
                       {/* Guest Order Tracking Helper */}
-                      <div className="p-2.5 bg-white/[0.02] border-t border-border-subtle">
+                      <div className="p-2.5 bg-bg-surface-alt/50 border-t border-border-subtle">
                         <Link
                           href="/account?tab=orders"
                           onClick={() => setIsProfileOpen(false)}
                           role="menuitem"
-                          className="flex items-center gap-2 text-xs text-text-secondary hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
+                          className="flex items-center gap-2 text-xs text-text-secondary hover:text-text-primary transition-colors px-2 py-1 rounded-lg hover:bg-bg-surface-alt"
                         >
                           <Package size={14} className="text-brand-yellow" />
                           <span>Track an Existing Order</span>
@@ -644,7 +667,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               onClick={() => setIsMobileOpen(true)}
               aria-label="Open navigation menu"
               aria-expanded={isMobileOpen}
-              className="lg:hidden p-2 text-text-secondary hover:text-white rounded-lg hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
+              className="lg:hidden p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
             >
               <Menu size={22} />
             </button>

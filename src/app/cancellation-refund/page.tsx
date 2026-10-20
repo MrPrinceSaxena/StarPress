@@ -35,7 +35,7 @@ export default function CancellationRefundPolicyPage() {
             <span>Customer Protection • Updated January 2025</span>
           </div>
 
-          <h1 className="font-display font-black text-3xl sm:text-5xl text-white uppercase tracking-tight">
+          <h1 className="font-display font-black text-3xl sm:text-5xl text-text-primary uppercase tracking-tight">
             Cancellation & Refund Policy
           </h1>
 
@@ -50,7 +50,7 @@ export default function CancellationRefundPolicyPage() {
         <div className="space-y-10 text-sm text-text-secondary leading-relaxed">
           {/* Section 1: Order Cancellation Policy */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               1. Order Cancellation Guidelines
             </h2>
             <p>
@@ -58,16 +58,16 @@ export default function CancellationRefundPolicyPage() {
             </p>
             <div className="space-y-3 pl-2">
               <div className="p-4 rounded-xl border border-border-subtle bg-bg-surface space-y-1">
-                <span className="text-white font-bold block text-sm">
+                <span className="text-text-primary font-bold block text-sm">
                   A. Prior to Proof Approval or Press Setup (Eligible for 100% Refund)
                 </span>
                 <p className="text-xs text-text-secondary">
-                  If you wish to cancel your order before you have approved the digital prepress proof (soft proof) or before physical manufacturing has commenced, you are eligible for an immediate <strong className="text-white">100% full refund</strong> with zero cancellation penalties.
+                  If you wish to cancel your order before you have approved the digital prepress proof (soft proof) or before physical manufacturing has commenced, you are eligible for an immediate <strong className="text-text-primary">100% full refund</strong> with zero cancellation penalties.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl border border-border-subtle bg-bg-surface space-y-1">
-                <span className="text-white font-bold block text-sm">
+                <span className="text-text-primary font-bold block text-sm">
                   B. After Digital Proof Approval & Plate Imposition
                 </span>
                 <p className="text-xs text-text-secondary">
@@ -76,7 +76,7 @@ export default function CancellationRefundPolicyPage() {
               </div>
 
               <div className="p-4 rounded-xl border border-border-subtle bg-bg-surface space-y-1">
-                <span className="text-white font-bold block text-sm">
+                <span className="text-text-primary font-bold block text-sm">
                   C. Standard Non-Custom Goods (Stock Supplies)
                 </span>
                 <p className="text-xs text-text-secondary">
@@ -92,13 +92,13 @@ export default function CancellationRefundPolicyPage() {
               <ShieldCheck size={16} />
               <span>100% Quality Assurance Guarantee</span>
             </div>
-            <h2 className="font-display font-black text-lg text-white uppercase">
+            <h2 className="font-display font-black text-lg text-text-primary uppercase">
               2. Defective, Damaged, or Incorrect Prints
             </h2>
             <p className="text-text-secondary">
               While bespoke custom prints cannot be returned for buyer&apos;s change of mind once manufactured, Star Press provides a complete guarantee against manufacturing flaws and shipping damages.
             </p>
-            <p className="text-white font-medium">
+            <p className="text-text-primary font-medium">
               You are entitled to an immediate resolution if:
             </p>
             <ul className="list-disc pl-6 space-y-1 text-xs text-text-secondary">
@@ -111,7 +111,7 @@ export default function CancellationRefundPolicyPage() {
 
           {/* Section 3: Return & Claim Process */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               3. How to File a Claim (Within 48–72 Hours)
             </h2>
             <p>
@@ -119,16 +119,16 @@ export default function CancellationRefundPolicyPage() {
             </p>
             <ol className="list-decimal pl-6 space-y-2 text-text-secondary">
               <li>
-                <strong className="text-white">Notify Us Promptly:</strong> Contact our support desk within <strong className="text-white">48 to 72 hours of delivery</strong> via email (<a href="mailto:starpress.print@gmail.com" className="text-brand-yellow hover:underline">starpress.print@gmail.com</a>) or phone / WhatsApp (<a href="tel:+917456849955" className="text-brand-yellow hover:underline">+91 74568 49955</a>).
+                <strong className="text-text-primary">Notify Us Promptly:</strong> Contact our support desk within <strong className="text-text-primary">48 to 72 hours of delivery</strong> via email (<a href="mailto:starpress.print@gmail.com" className="text-brand-yellow hover:underline">starpress.print@gmail.com</a>) or phone / WhatsApp (<a href="tel:+917456849955" className="text-brand-yellow hover:underline">+91 74568 49955</a>).
               </li>
               <li>
-                <strong className="text-white">Provide Evidence:</strong> Include your Order Number along with clear photographs or a short video demonstrating the defect or package transit damage.
+                <strong className="text-text-primary">Provide Evidence:</strong> Include your Order Number along with clear photographs or a short video demonstrating the defect or package transit damage.
               </li>
               <li>
-                <strong className="text-white">Resolution Choice:</strong> Upon quick verification by our quality control engineers, you may choose:
+                <strong className="text-text-primary">Resolution Choice:</strong> Upon quick verification by our quality control engineers, you may choose:
                 <ul className="list-disc pl-6 mt-1 space-y-1">
-                  <li><strong className="text-white">Free Rush Reprint:</strong> We will reprint your order with priority press scheduling and express dispatch at zero cost to you; OR</li>
-                  <li><strong className="text-white">Full Monetary Refund:</strong> We will process a complete refund back to your source account.</li>
+                  <li><strong className="text-text-primary">Free Rush Reprint:</strong> We will reprint your order with priority press scheduling and express dispatch at zero cost to you; OR</li>
+                  <li><strong className="text-text-primary">Full Monetary Refund:</strong> We will process a complete refund back to your source account.</li>
                 </ul>
               </li>
             </ol>
@@ -140,7 +140,7 @@ export default function CancellationRefundPolicyPage() {
               <Clock size={16} />
               <span>Turnaround Guarantee</span>
             </div>
-            <h2 className="font-display font-black text-lg text-white uppercase">
+            <h2 className="font-display font-black text-lg text-text-primary uppercase">
               4. Refund Method & Processing Timelines
             </h2>
             <p className="text-text-secondary">
@@ -148,20 +148,20 @@ export default function CancellationRefundPolicyPage() {
             </p>
             <ul className="list-disc pl-6 space-y-2 text-text-secondary">
               <li>
-                <strong className="text-white">Original Payment Method:</strong> All refunds are automatically initiated back to the original payment source utilized during checkout (Credit Card, Debit Card, UPI, Net Banking, or Digital Wallet via Razorpay).
+                <strong className="text-text-primary">Original Payment Method:</strong> All refunds are automatically initiated back to the original payment source utilized during checkout (Credit Card, Debit Card, UPI, Net Banking, or Digital Wallet via Razorpay).
               </li>
               <li>
-                <strong className="text-white">Processing Timeline:</strong> Refunds are initiated within <strong className="text-white">24 hours</strong> of approval. Depending on your bank or card issuer, the credited funds will reflect in your account within <strong className="text-brand-yellow">5 to 7 working days</strong>.
+                <strong className="text-text-primary">Processing Timeline:</strong> Refunds are initiated within <strong className="text-text-primary">24 hours</strong> of approval. Depending on your bank or card issuer, the credited funds will reflect in your account within <strong className="text-brand-yellow">5 to 7 working days</strong>.
               </li>
               <li>
-                <strong className="text-white">Notification:</strong> You will receive an automated email confirmation and SMS containing your unique Razorpay Refund Reference ID as soon as the refund is dispatched.
+                <strong className="text-text-primary">Notification:</strong> You will receive an automated email confirmation and SMS containing your unique Razorpay Refund Reference ID as soon as the refund is dispatched.
               </li>
             </ul>
           </section>
 
           {/* Section 5: Non-Refundable Scenarios */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               5. Non-Refundable Scenarios
             </h2>
             <p>Refunds or free reprints cannot be issued for:</p>
@@ -174,7 +174,7 @@ export default function CancellationRefundPolicyPage() {
 
           {/* Section 6: Contact Information */}
           <section className="space-y-3 border-t border-border-subtle pt-8">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               6. Need Help or Have Questions?
             </h2>
             <p>
@@ -187,7 +187,7 @@ export default function CancellationRefundPolicyPage() {
                 </div>
                 <div>
                   <div className="text-xs text-text-muted">Email Support</div>
-                  <a href="mailto:starpress.print@gmail.com" className="text-sm font-bold text-white hover:text-brand-yellow">
+                  <a href="mailto:starpress.print@gmail.com" className="text-sm font-bold text-text-primary hover:text-brand-yellow">
                     starpress.print@gmail.com
                   </a>
                 </div>
@@ -199,7 +199,7 @@ export default function CancellationRefundPolicyPage() {
                 </div>
                 <div>
                   <div className="text-xs text-text-muted">Helpline (Mon–Sat, 9AM–8PM)</div>
-                  <a href="tel:+917456849955" className="text-sm font-bold text-white hover:text-brand-yellow">
+                  <a href="tel:+917456849955" className="text-sm font-bold text-text-primary hover:text-brand-yellow">
                     +91 74568 49955
                   </a>
                 </div>

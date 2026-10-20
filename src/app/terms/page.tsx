@@ -35,7 +35,7 @@ export default function TermsPage() {
             <span>Commercial Terms • Updated January 2025</span>
           </div>
 
-          <h1 className="font-display font-black text-3xl sm:text-5xl text-white uppercase tracking-tight">
+          <h1 className="font-display font-black text-3xl sm:text-5xl text-text-primary uppercase tracking-tight">
             Terms & Conditions of Service
           </h1>
 
@@ -50,7 +50,7 @@ export default function TermsPage() {
         <div className="space-y-10 text-sm text-text-secondary leading-relaxed">
           {/* Section 1 */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               1. Digital Proof Approval & Production Authorization
             </h2>
             <p>
@@ -58,7 +58,7 @@ export default function TermsPage() {
               pre-press proof (soft proof) for customer review. Production commences solely upon your
               affirmative written approval (via Email, Website confirmation, or WhatsApp).
             </p>
-            <p className="text-white font-medium">
+            <p className="text-text-primary font-medium">
               Your approval constitutes final verification of spelling, grammar, phone numbers,
               QR codes, visual layouts, and fold orientations. Star Press is not liable for errors
               present in the approved proof file.
@@ -67,7 +67,7 @@ export default function TermsPage() {
 
           {/* Section 2 */}
           <section className="space-y-3 rounded-2xl border border-border-subtle bg-bg-surface p-6">
-            <h2 className="font-display font-bold text-lg text-white uppercase">
+            <h2 className="font-display font-bold text-lg text-text-primary uppercase">
               2. Color Calibration & Screen RGB vs Print CMYK
             </h2>
             <p>
@@ -85,7 +85,7 @@ export default function TermsPage() {
 
           {/* Section 3 */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               3. Cutting, Folding & Mechanical Tolerances
             </h2>
             <p>
@@ -98,7 +98,7 @@ export default function TermsPage() {
 
           {/* Section 4 */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               4. Turnaround Times & Courier Transit
             </h2>
             <p>
@@ -122,7 +122,7 @@ export default function TermsPage() {
               Because custom-printed goods cannot be restocked or resold, orders cannot be cancelled
               or returned for buyer&apos;s remorse once printing has commenced.
             </p>
-            <p className="text-white">
+            <p className="text-text-primary">
               However, if your delivered order has a genuine manufacturing defect attributable to
               Star Press (such as streaking ink, incorrect paper stock, cutting misregistration
               exceeding tolerance, or transit packaging damage), notify our team within{" "}
@@ -133,7 +133,7 @@ export default function TermsPage() {
 
           {/* Section 6 */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               6. Intellectual Property & Customer Indemnity
             </h2>
             <p>
@@ -147,7 +147,7 @@ export default function TermsPage() {
 
           {/* Section 7 */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               7. Governing Law & Jurisdiction
             </h2>
             <p>

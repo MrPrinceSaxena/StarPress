@@ -164,8 +164,8 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
                   onClick={() => setSizeId(size.id)}
                   className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all ${
                     isSelected
-                      ? "bg-bg-surface-alt border-brand-yellow/90 ring-1 ring-brand-yellow/30 text-white font-semibold shadow-sm"
-                      : "bg-bg-surface border-border-subtle hover:border-white/20 text-text-secondary hover:text-white"
+                      ? "bg-bg-surface-alt border-brand-yellow/90 ring-1 ring-brand-yellow/30 text-text-primary font-semibold shadow-sm"
+                      : "bg-bg-surface border-border-subtle hover:border-brand-yellow/40 text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   <div>
@@ -208,12 +208,12 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
                   onClick={() => setMaterialId(mat.id)}
                   className={`w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-all ${
                     isSelected
-                      ? "bg-bg-surface-alt border-brand-yellow/90 ring-1 ring-brand-yellow/30 text-white font-semibold shadow-sm"
-                      : "bg-bg-surface border-border-subtle hover:border-white/20 text-text-secondary hover:text-white"
+                      ? "bg-bg-surface-alt border-brand-yellow/90 ring-1 ring-brand-yellow/30 text-text-primary font-semibold shadow-sm"
+                      : "bg-bg-surface border-border-subtle hover:border-brand-yellow/40 text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   <div>
-                    <div className="text-xs sm:text-sm font-medium text-white">
+                    <div className="text-xs sm:text-sm font-medium text-text-primary">
                       {mat.label}
                     </div>
                     {mat.description && (
@@ -260,8 +260,8 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
                   onClick={() => setQuantity(tier.quantity)}
                   className={`relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
                     isSelected
-                      ? "bg-bg-surface-alt border-brand-yellow/90 ring-1 ring-brand-yellow/30 text-white scale-[1.02] shadow-sm font-semibold"
-                      : "bg-bg-surface border-border-subtle hover:border-white/20 text-text-secondary hover:text-white"
+                      ? "bg-bg-surface-alt border-brand-yellow/90 ring-1 ring-brand-yellow/30 text-text-primary scale-[1.02] shadow-sm font-semibold"
+                      : "bg-bg-surface border-border-subtle hover:border-brand-yellow/40 text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   {tier.discountPercent > 0 && (
@@ -269,7 +269,7 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
                       -{tier.discountPercent}%
                     </span>
                   )}
-                  <span className="text-base font-display font-bold text-white mt-1">
+                  <span className="text-base font-display font-bold text-text-primary mt-1">
                     {tier.quantity.toLocaleString()}
                   </span>
                   <span className="text-[11px] text-text-muted">units</span>
@@ -360,7 +360,7 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
           <div className="flex items-center justify-between sm:justify-start sm:gap-2">
             <span className="text-text-muted">Size:</span>
-            <span className="text-white font-medium">
+            <span className="text-text-primary font-medium">
               {selectedSize?.label || "Standard"}
               {selectedSize?.dimensions && ` (${selectedSize.dimensions})`}
             </span>
@@ -368,7 +368,7 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
 
           <div className="flex items-center justify-between sm:justify-start sm:gap-2">
             <span className="text-text-muted">Paper / Finish:</span>
-            <span className="text-white font-medium">
+            <span className="text-text-primary font-medium">
               {selectedMaterial?.label || "Standard"}
             </span>
           </div>
@@ -382,7 +382,7 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
 
           <div className="flex items-center justify-between sm:justify-start sm:gap-2">
             <span className="text-text-muted">Personalization:</span>
-            <span className="text-white font-medium truncate max-w-[180px]">
+            <span className="text-text-primary font-medium truncate max-w-[180px]">
               {customText ? `"${customText}"` : "None (Standard Print)"}
             </span>
           </div>
@@ -400,7 +400,7 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
             </div>
             <div className="text-xs text-text-secondary mt-1">
               Effective unit rate:{" "}
-              <span className="font-mono text-white font-semibold">
+              <span className="font-mono text-text-primary font-semibold">
                 {pricing.formattedUnitPrice} / unit
               </span>
             </div>
@@ -448,7 +448,7 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
               </div>
               <Link
                 href="/cart"
-                className="font-bold underline text-white hover:text-brand-yellow flex items-center gap-1 shrink-0 ml-2"
+                className="font-bold underline text-text-primary hover:text-brand-yellow flex items-center gap-1 shrink-0 ml-2"
               >
                 <span>View Cart</span>
                 <ArrowRight size={13} />

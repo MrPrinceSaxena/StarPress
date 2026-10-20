@@ -43,7 +43,7 @@ export default function ProductCard({
   };
 
   return (
-    <div className="group relative flex flex-col justify-between bg-bg-surface rounded-2xl border border-border-subtle p-3 sm:p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-xl hover:shadow-black/50 select-none">
+    <div className="group relative flex flex-col justify-between bg-bg-surface rounded-2xl border border-border-subtle p-3 sm:p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-yellow/50 hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/50 select-none">
       {/* 1. Compact Product Image (4:3 Aspect Ratio for Space-Efficiency) */}
       <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-bg-surface-alt mb-3">
         <Link href={product.href} className="block w-full h-full relative">
@@ -102,7 +102,7 @@ export default function ProductCard({
         {/* Title */}
         <div>
           <Link href={product.href} className="block">
-            <h3 className="font-display font-bold text-sm sm:text-base text-white group-hover:text-brand-yellow transition-colors line-clamp-1">
+            <h3 className="font-display font-bold text-sm sm:text-base text-text-primary group-hover:text-brand-yellow transition-colors line-clamp-1">
               {product.name}
             </h3>
           </Link>
@@ -139,7 +139,7 @@ export default function ProductCard({
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 shadow-sm shrink-0 ${
               isAdded
                 ? "bg-brand-yellow text-black"
-                : "bg-white/10 hover:bg-brand-yellow hover:text-black text-white border border-white/15 hover:border-brand-yellow active:scale-95"
+                : "bg-bg-surface-alt hover:bg-brand-yellow hover:text-black text-text-primary border border-border-strong hover:border-brand-yellow active:scale-95"
             }`}
           >
             {isAdded ? (

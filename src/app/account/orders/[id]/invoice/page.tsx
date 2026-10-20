@@ -174,7 +174,7 @@ export default function OrderInvoicePage() {
           <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center mx-auto">
             <AlertCircle size={24} />
           </div>
-          <h2 className="text-xl font-display font-bold text-white">Invoice Unavailable</h2>
+          <h2 className="text-xl font-display font-bold text-text-primary">Invoice Unavailable</h2>
           <p className="text-xs text-text-secondary">{error || "Could not load invoice."}</p>
           <Button variant="secondary" size="sm" onClick={() => router.back()}>
             Go Back
@@ -210,12 +210,12 @@ export default function OrderInvoicePage() {
   const igstAmount = isUttarakhand ? 0 : Math.round(gstAmount);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 py-6 sm:py-10 px-3 sm:px-6 selection:bg-brand-yellow selection:text-black print:bg-white print:text-black print:p-0 print:m-0">
+    <div className="min-h-screen bg-bg-base text-text-primary py-6 sm:py-10 px-3 sm:px-6 selection:bg-brand-yellow selection:text-black print:bg-white print:text-black print:p-0 print:m-0">
       {/* Top Action Bar (Screen Only) */}
       <div className="max-w-[850px] mx-auto mb-6 flex items-center justify-between gap-4 print:hidden">
         <Link
           href="/account?tab=orders"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors"
         >
           <ArrowLeft size={14} />
           <span>Back to Orders</span>

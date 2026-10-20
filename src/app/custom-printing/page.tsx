@@ -209,12 +209,12 @@ export default function CustomPrintingPage() {
         {/* Page Hero Banner */}
         <div className="relative rounded-3xl border border-border-subtle bg-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-xl">
           <div className="relative z-10 max-w-2xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider">
               <Sparkles size={13} className="text-brand-yellow" />
               <span>Bespoke Pre-Press & Fabrication Studio</span>
             </div>
 
-            <h1 className="font-display font-black text-3xl sm:text-5xl uppercase text-white tracking-tight leading-[1.1]">
+            <h1 className="font-display font-black text-3xl sm:text-5xl uppercase text-text-primary tracking-tight leading-[1.1]">
               Custom Printing Studio
             </h1>
 
@@ -233,7 +233,7 @@ export default function CustomPrintingPage() {
             {/* 1. Choose Product Line */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-display font-bold text-lg text-white uppercase tracking-wider flex items-center gap-2">
+                <h2 className="font-display font-bold text-lg text-text-primary uppercase tracking-wider flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center shrink-0">
                     1
                   </span>
@@ -269,10 +269,10 @@ export default function CustomPrintingPage() {
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">
+                        <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider block mb-0.5">
                           {prod.category}
                         </span>
-                        <div className="text-xs sm:text-sm font-bold text-white line-clamp-1 group-hover:text-brand-yellow transition-colors">
+                        <div className="text-xs sm:text-sm font-bold text-text-primary line-clamp-1 group-hover:text-brand-yellow transition-colors">
                           {prod.name}
                         </div>
                         <div className="text-xs text-text-muted font-mono mt-1">
@@ -287,7 +287,7 @@ export default function CustomPrintingPage() {
 
             {/* 2. Configure Sizes & Materials */}
             <div className="space-y-6 rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8">
-              <h2 className="font-display font-bold text-lg text-white uppercase tracking-wider flex items-center gap-2">
+              <h2 className="font-display font-bold text-lg text-text-primary uppercase tracking-wider flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center shrink-0">
                   2
                 </span>
@@ -307,8 +307,8 @@ export default function CustomPrintingPage() {
                       onClick={() => setSelectedSize(sz)}
                       className={`px-3 py-2.5 rounded-xl border text-xs text-center transition-all ${
                         selectedSize === sz
-                          ? "border-brand-yellow/90 bg-brand-yellow/[0.08] text-white font-semibold ring-1 ring-brand-yellow/40 shadow-sm"
-                          : "border-border-subtle bg-bg-surface-alt text-text-secondary hover:border-white/20 hover:text-white font-medium"
+                          ? "border-brand-yellow/90 bg-brand-yellow/[0.08] text-text-primary font-semibold ring-1 ring-brand-yellow/40 shadow-sm"
+                          : "border-border-subtle bg-bg-surface-alt text-text-secondary hover:border-brand-yellow/40 hover:text-text-primary font-medium"
                       }`}
                     >
                       {sz}
@@ -330,8 +330,8 @@ export default function CustomPrintingPage() {
                       onClick={() => setSelectedFinish(fn)}
                       className={`px-3 py-2.5 rounded-xl border text-xs text-center transition-all ${
                         selectedFinish === fn
-                          ? "border-brand-yellow/90 bg-brand-yellow/[0.08] text-white font-semibold ring-1 ring-brand-yellow/40 shadow-sm"
-                          : "border-border-subtle bg-bg-surface-alt text-text-secondary hover:border-white/20 hover:text-white font-medium"
+                          ? "border-brand-yellow/90 bg-brand-yellow/[0.08] text-text-primary font-semibold ring-1 ring-brand-yellow/40 shadow-sm"
+                          : "border-border-subtle bg-bg-surface-alt text-text-secondary hover:border-brand-yellow/40 hover:text-text-primary font-medium"
                       }`}
                     >
                       {fn}
@@ -375,7 +375,7 @@ export default function CustomPrintingPage() {
 
             {/* 3. Drag & Drop Artwork Upload */}
             <div className="space-y-4 rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8">
-              <h2 className="font-display font-bold text-lg text-white uppercase tracking-wider flex items-center gap-2">
+              <h2 className="font-display font-bold text-lg text-text-primary uppercase tracking-wider flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-brand-yellow text-black font-black text-xs flex items-center justify-center">
                   3
                 </span>
@@ -402,7 +402,7 @@ export default function CustomPrintingPage() {
                     )}
 
                     <div className="min-w-0">
-                      <div className="text-xs sm:text-sm font-bold text-white truncate">
+                      <div className="text-xs sm:text-sm font-bold text-text-primary truncate">
                         {uploadedFile.name}
                       </div>
                       <div className="text-[11px] text-text-muted">
@@ -429,10 +429,10 @@ export default function CustomPrintingPage() {
                     onChange={handleFileUpload}
                     className="sr-only"
                   />
-                  <div className="w-14 h-14 rounded-2xl bg-white/5 border border-border-subtle flex items-center justify-center text-text-secondary group-hover:text-brand-yellow group-hover:scale-105 transition-all mb-3">
+                  <div className="w-14 h-14 rounded-2xl bg-bg-surface border border-border-subtle flex items-center justify-center text-text-secondary group-hover:text-brand-yellow group-hover:scale-105 transition-all mb-3">
                     <UploadCloud size={28} />
                   </div>
-                  <div className="font-bold text-white text-sm mb-1">
+                  <div className="font-bold text-text-primary text-sm mb-1">
                     {isUploading ? "Inspecting File..." : "Click or Drag & Drop Print File"}
                   </div>
                   <p className="text-xs text-text-secondary max-w-sm">
@@ -454,7 +454,7 @@ export default function CustomPrintingPage() {
                     className="mt-1 w-4 h-4 rounded border-border-subtle bg-bg-surface text-brand-yellow focus:ring-brand-yellow accent-brand-yellow"
                   />
                   <div>
-                    <div className="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
+                    <div className="font-bold text-text-primary text-xs sm:text-sm flex items-center gap-2">
                       <span>Add Pre-Press Design Proofing & File Fix (+₹299)</span>
                       <span className="text-[10px] px-2 py-0.5 rounded bg-brand-yellow/10 text-brand-yellow font-bold uppercase">
                         Recommended
@@ -475,10 +475,10 @@ export default function CustomPrintingPage() {
             <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-7 space-y-6 shadow-xl sticky top-24">
               <div className="flex items-center justify-between pb-4 border-b border-border-subtle">
                 <div>
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted">
                     Live Calculation
                   </span>
-                  <h3 className="font-display font-black text-xl text-white uppercase tracking-tight">
+                  <h3 className="font-display font-black text-xl text-text-primary uppercase tracking-tight">
                     Custom Quote
                   </h3>
                 </div>
@@ -491,31 +491,31 @@ export default function CustomPrintingPage() {
               <div className="space-y-3 text-xs">
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>Product</span>
-                  <span className="text-white font-bold text-right max-w-[180px] truncate">
+                  <span className="text-text-primary font-bold text-right max-w-[180px] truncate">
                     {selectedProduct.name}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>Size / Dimension</span>
-                  <span className="text-white font-mono">{selectedSize}</span>
+                  <span className="text-text-primary font-mono">{selectedSize}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>Print Finish</span>
-                  <span className="text-white font-medium text-right max-w-[180px] truncate">
+                  <span className="text-text-primary font-medium text-right max-w-[180px] truncate">
                     {selectedFinish}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>Quantity Units</span>
-                  <span className="text-white font-mono font-bold">{quantity}</span>
+                  <span className="text-text-primary font-mono font-bold">{quantity}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>Unit Effective Price</span>
-                  <span className="text-white font-mono">
+                  <span className="text-text-primary font-mono">
                     ₹{unitPrice.toLocaleString("en-IN")}
                   </span>
                 </div>
@@ -529,7 +529,7 @@ export default function CustomPrintingPage() {
 
                 <div className="pt-4 border-t border-border-subtle flex items-baseline justify-between">
                   <div>
-                    <div className="font-display font-black text-base text-white uppercase">
+                    <div className="font-display font-black text-base text-text-primary uppercase">
                       Total Estimate
                     </div>
                     <span className="text-[10px] text-text-muted">

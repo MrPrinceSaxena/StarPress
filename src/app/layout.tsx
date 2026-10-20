@@ -122,9 +122,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${poppins.variable} ${permanentMarker.variable}`}
     >
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("starpress-theme")||"dark";document.documentElement.classList.remove("light","dark");document.documentElement.classList.add(t)}catch(e){}})()`,
+          }}
+        />
         <JsonLd />
       </head>
       <body className="bg-bg-base text-text-primary font-sans antialiased selection:bg-brand-yellow selection:text-black min-h-screen">

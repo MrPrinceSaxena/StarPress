@@ -31,11 +31,11 @@ export default function Button({
     primary:
       "bg-brand-yellow text-black hover:bg-[#FFE04D] hover:scale-[1.03] shadow-md shadow-brand-yellow/10 font-bold",
     outline:
-      "border border-white/30 text-white bg-transparent hover:bg-white/10 hover:border-white/60 hover:scale-[1.03]",
+      "border border-border-strong text-text-primary bg-transparent hover:bg-black/5 dark:hover:bg-white/10 hover:border-brand-yellow hover:scale-[1.03]",
     ghost:
-      "text-text-secondary hover:text-white hover:bg-white/5 bg-transparent",
+      "text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5 bg-transparent",
     secondary:
-      "bg-bg-surface-alt text-white border border-border-subtle hover:bg-white/10 hover:border-white/30",
+      "bg-bg-surface-alt text-text-primary border border-border-subtle hover:bg-border-subtle hover:border-border-strong",
   }[variant];
 
   const combinedStyles = `${baseStyles} ${sizeStyles} ${variantStyles} ${className}`;

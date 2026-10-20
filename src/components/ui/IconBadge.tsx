@@ -29,7 +29,7 @@ export interface IconBadgeProps {
 export default function IconBadge({
   iconName,
   variant = "outline",
-  outlineColor = "border-border-subtle text-slate-300",
+  outlineColor = "border-border-subtle text-text-secondary",
   fillColor = "bg-bg-surface-alt text-brand-yellow border border-border-subtle",
   size = "md",
   className = "",
@@ -60,9 +60,9 @@ export default function IconBadge({
   if (variant === "filled") {
     return (
       <div
-        className={`inline-flex items-center justify-center rounded-full text-white shadow-lg shrink-0 ${sizeClasses} ${fillColor} ${className}`}
+        className={`inline-flex items-center justify-center rounded-full shadow-lg shrink-0 ${sizeClasses} ${fillColor} ${className}`}
       >
-        <IconComponent size={iconSizes} className="text-white" />
+        <IconComponent size={iconSizes} />
       </div>
     );
   }
@@ -70,9 +70,9 @@ export default function IconBadge({
   // Outline variant (Trust badges)
   return (
     <div
-      className={`inline-flex items-center justify-center rounded-full border-2 text-white bg-bg-surface shrink-0 shadow-sm ${sizeClasses} ${outlineColor} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full border-2 bg-bg-surface shrink-0 shadow-sm ${sizeClasses} ${outlineColor} ${className}`}
     >
-      <IconComponent size={iconSizes} className="text-white" />
+      <IconComponent size={iconSizes} />
     </div>
   );
 }

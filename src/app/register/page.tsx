@@ -321,12 +321,12 @@ function RegisterForm() {
 
   // ── Shared input className factory ────────────────────────────────────────
   const inputCls = (hasError: boolean) =>
-    `w-full bg-white/[0.05] border rounded-full px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs text-white
-     placeholder-slate-500 transition-all duration-200 backdrop-blur-md
+    `w-full bg-bg-surface-alt border rounded-full px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs text-text-primary
+     placeholder:text-text-muted transition-all duration-200 backdrop-blur-md
      focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow
      focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:border-brand-yellow
-     hover:border-white/25
-     ${hasError ? "border-rose-500/60 bg-rose-500/[0.04]" : "border-white/[0.12]"}`;
+     hover:border-border-strong
+     ${hasError ? "border-rose-500/60 bg-rose-500/[0.04]" : "border-border-subtle"}`;
 
   if (!isHydrated) {
     return <RegisterSkeleton />;
@@ -358,10 +358,10 @@ function RegisterForm() {
       />
 
       {/* Main Spatial Glassmorphism Window Panel */}
-      <div className="relative rounded-[28px] sm:rounded-[32px] border border-white/20 bg-[#090D1A]/55 backdrop-blur-2xl sm:backdrop-blur-3xl p-5 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.65),0_0_40px_rgba(245,186,19,0.08)] overflow-hidden">
+      <div className="relative rounded-[28px] sm:rounded-[32px] border border-border-subtle bg-bg-surface/90 dark:bg-[#090D1A]/70 backdrop-blur-2xl sm:backdrop-blur-3xl p-5 sm:p-6 shadow-2xl overflow-hidden">
         {/* Spatial light rims & glass specular highlights */}
-        <div className="pointer-events-none absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-        <div className="pointer-events-none absolute -left-px top-8 bottom-8 w-px bg-gradient-to-b from-white/30 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-white/40 dark:via-white/60 to-transparent" />
+        <div className="pointer-events-none absolute -left-px top-8 bottom-8 w-px bg-gradient-to-b from-white/20 via-transparent to-transparent" />
         <div className="pointer-events-none absolute -right-px top-8 bottom-8 w-px bg-gradient-to-b from-brand-yellow/30 via-transparent to-transparent" />
         <div className="pointer-events-none absolute top-0 right-0 w-36 h-36 bg-brand-yellow/[0.08] rounded-full blur-2xl" />
         <div className="pointer-events-none absolute bottom-0 left-0 w-36 h-36 bg-brand-cyan/[0.08] rounded-full blur-2xl" />
@@ -370,7 +370,7 @@ function RegisterForm() {
         <div className="flex items-center justify-between mb-2 relative z-10">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-xs font-medium py-1 px-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.08] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
+            className="inline-flex items-center gap-1.5 text-text-secondary hover:text-text-primary text-xs font-medium py-1 px-2.5 rounded-lg bg-bg-surface-alt hover:bg-bg-surface border border-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
             aria-label="Back to homepage"
           >
             <ArrowLeft size={13} aria-hidden="true" />
@@ -390,10 +390,10 @@ function RegisterForm() {
 
         {/* Heading */}
         <div className="mb-2 relative z-10">
-          <h1 className="font-display font-black text-xl sm:text-2xl text-white tracking-tight leading-tight mb-0.5">
+          <h1 className="font-display font-black text-xl sm:text-2xl text-text-primary tracking-tight leading-tight mb-0.5">
             Create <span className="text-brand-yellow">Account</span>
           </h1>
-          <p className="text-[11px] sm:text-xs text-slate-400">
+          <p className="text-[11px] sm:text-xs text-text-secondary">
             Already have an account?{" "}
             <Link
               href={`/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
@@ -412,12 +412,12 @@ function RegisterForm() {
             <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 mx-auto flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.35)]">
               <CheckCircle2 size={28} />
             </div>
-            <h2 className="font-display font-black text-xl text-white">Check Your Inbox</h2>
-            <p className="text-xs text-slate-300 leading-relaxed max-w-xs mx-auto">
+            <h2 className="font-display font-black text-xl text-text-primary">Check Your Inbox</h2>
+            <p className="text-xs text-text-secondary leading-relaxed max-w-xs mx-auto">
               We&apos;ve sent a verification link to <span className="text-brand-yellow font-semibold">{formData.email}</span>. Click the link in your email to confirm your account and start ordering.
             </p>
             {resendSuccess && (
-              <div className="p-2 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 text-xs">
+              <div className="p-2 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 text-xs">
                 Verification link resent! Please check your spam or inbox.
               </div>
             )}
@@ -426,7 +426,7 @@ function RegisterForm() {
                 type="button"
                 onClick={handleResend}
                 disabled={isResending || resendSuccess}
-                className="py-2.5 px-4 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/20 text-white text-xs font-semibold transition-all disabled:opacity-50"
+                className="py-2.5 px-4 rounded-full bg-bg-surface-alt hover:bg-bg-surface border border-border-subtle text-text-primary text-xs font-semibold transition-all disabled:opacity-50"
               >
                 {isResending ? "Resending…" : resendSuccess ? "Link Resent" : "Resend Link"}
               </button>
@@ -443,7 +443,7 @@ function RegisterForm() {
           <form onSubmit={handleSubmit} noValidate className="space-y-1 relative z-10">
             {/* Full Name */}
             <div>
-              <label htmlFor={nameId} className="block text-[10px] sm:text-[11px] font-semibold text-slate-300 tracking-wide mb-0.5">
+              <label htmlFor={nameId} className="block text-[10px] sm:text-[11px] font-semibold text-text-secondary tracking-wide mb-0.5">
                 Full Name
               </label>
             <input
@@ -465,7 +465,7 @@ function RegisterForm() {
 
           {/* Email */}
           <div>
-            <label htmlFor={emailId} className="block text-[10px] sm:text-[11px] font-semibold text-slate-300 tracking-wide mb-0.5">
+            <label htmlFor={emailId} className="block text-[10px] sm:text-[11px] font-semibold text-text-secondary tracking-wide mb-0.5">
               Email Address
             </label>
             <input
@@ -487,9 +487,9 @@ function RegisterForm() {
 
           {/* Mobile */}
           <div>
-            <label htmlFor={phoneId} className="block text-[10px] sm:text-[11px] font-semibold text-slate-300 tracking-wide mb-0.5">
+            <label htmlFor={phoneId} className="block text-[10px] sm:text-[11px] font-semibold text-text-secondary tracking-wide mb-0.5">
               Mobile Number{" "}
-              <span className="text-slate-500 font-normal text-[9px]">(WhatsApp proofs &amp; AWB)</span>
+              <span className="text-text-muted font-normal text-[9px]">(WhatsApp proofs &amp; AWB)</span>
             </label>
             <input
               id={phoneId}
@@ -510,7 +510,7 @@ function RegisterForm() {
 
           {/* Password */}
           <div>
-            <label htmlFor={passwordId} className="block text-[10px] sm:text-[11px] font-semibold text-slate-300 tracking-wide mb-0.5">
+            <label htmlFor={passwordId} className="block text-[10px] sm:text-[11px] font-semibold text-text-secondary tracking-wide mb-0.5">
               Password
             </label>
             <div className="relative">
@@ -533,7 +533,7 @@ function RegisterForm() {
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors p-1
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow rounded-full"
               >
                 {showPassword ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
@@ -544,8 +544,8 @@ function RegisterForm() {
             {formData.password && (
               <div id={`${passwordId}-hint`} className="pt-1 space-y-1">
                 <div className="flex items-center justify-between text-[9px]">
-                  <span className="text-slate-500">Strength:</span>
-                  <span className={`font-semibold capitalize ${strengthTextColors[passwordEvaluation.strength] ?? "text-slate-400"}`}>
+                  <span className="text-text-muted">Strength:</span>
+                  <span className={`font-semibold capitalize ${strengthTextColors[passwordEvaluation.strength] ?? "text-text-muted"}`}>
                     {passwordEvaluation.strength}
                   </span>
                 </div>
@@ -557,7 +557,7 @@ function RegisterForm() {
                       className={`rounded-full transition-all duration-300 ${
                         passwordEvaluation.score >= step
                           ? (strengthColors[passwordEvaluation.strength] ?? "bg-slate-500")
-                          : "bg-white/10"
+                          : "bg-border-subtle"
                       }`}
                     />
                   ))}
@@ -569,7 +569,7 @@ function RegisterForm() {
 
           {/* Confirm Password */}
           <div>
-            <label htmlFor={confirmPasswordId} className="block text-[10px] sm:text-[11px] font-semibold text-slate-300 tracking-wide mb-0.5">
+            <label htmlFor={confirmPasswordId} className="block text-[10px] sm:text-[11px] font-semibold text-text-secondary tracking-wide mb-0.5">
               Confirm Password
             </label>
             <input

@@ -151,7 +151,7 @@ export default function AccountOrdersPage() {
       <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 lg:px-10 py-10 md:py-14 space-y-8">
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-xs text-text-muted">
-          <Link href="/account" className="hover:text-white transition-colors">
+          <Link href="/account" className="hover:text-text-primary transition-colors">
             Account
           </Link>
           <span>/</span>
@@ -161,7 +161,7 @@ export default function AccountOrdersPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border-subtle">
           <div>
-            <h1 className="font-display font-black text-3xl text-white uppercase tracking-tight">
+            <h1 className="font-display font-black text-3xl text-text-primary uppercase tracking-tight">
               Your Orders
             </h1>
             <p className="text-xs text-text-secondary mt-1">
@@ -184,7 +184,7 @@ export default function AccountOrdersPage() {
               placeholder="Search orders by item or reference..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-bg-surface border border-border-subtle rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
+              className="w-full bg-bg-surface border border-border-subtle rounded-xl pl-9 pr-4 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
             />
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
           </div>
@@ -204,7 +204,7 @@ export default function AccountOrdersPage() {
                 className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
                   statusFilter === tab.id
                     ? "bg-brand-yellow text-black font-bold"
-                    : "bg-white/5 border border-white/10 text-text-secondary hover:text-white"
+                    : "bg-bg-surface-alt border border-border-subtle text-text-secondary hover:text-text-primary"
                 }`}
               >
                 {tab.label}
@@ -224,7 +224,7 @@ export default function AccountOrdersPage() {
             <div className="w-14 h-14 rounded-full bg-bg-surface-alt border border-border-subtle flex items-center justify-center mx-auto text-text-muted">
               <Package size={28} />
             </div>
-            <h2 className="font-display font-black text-xl text-white uppercase">
+            <h2 className="font-display font-black text-xl text-text-primary uppercase">
               No Orders Found
             </h2>
             <p className="text-xs text-text-secondary">
@@ -247,14 +247,14 @@ export default function AccountOrdersPage() {
               return (
                 <div
                   key={order.id}
-                  className="rounded-2xl border border-border-subtle bg-bg-surface overflow-hidden shadow-lg transition-colors hover:border-white/20"
+                  className="rounded-2xl border border-border-subtle bg-bg-surface overflow-hidden shadow-lg transition-colors hover:border-border-strong"
                 >
                   {/* Card Header */}
                   <div className="p-4 sm:p-5 bg-bg-surface-alt/70 border-b border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                     <div className="flex flex-wrap items-center gap-6 text-text-secondary">
                       <div>
                         <span className="text-text-muted block text-[10px] uppercase font-semibold">Order Placed</span>
-                        <span className="text-white font-medium">
+                        <span className="text-text-primary font-medium">
                           {new Date(order.createdAt).toLocaleDateString("en-IN", {
                             day: "numeric",
                             month: "short",
@@ -265,14 +265,14 @@ export default function AccountOrdersPage() {
 
                       <div>
                         <span className="text-text-muted block text-[10px] uppercase font-semibold">Total Amount</span>
-                        <span className="font-mono text-white font-bold">
+                        <span className="font-mono text-text-primary font-bold">
                           ₹{Number(order.totalAmount).toLocaleString("en-IN")}
                         </span>
                       </div>
 
                       <div>
                         <span className="text-text-muted block text-[10px] uppercase font-semibold">Payment</span>
-                        <span className={`font-bold uppercase ${isPaid ? "text-emerald-400" : "text-amber-400"}`}>
+                        <span className={`font-bold uppercase ${isPaid ? "text-emerald-400" : "text-amber-500 dark:text-amber-400"}`}>
                           {isPaid ? "PAID" : "UNPAID"}
                         </span>
                       </div>
@@ -310,10 +310,10 @@ export default function AccountOrdersPage() {
                         {order.items?.map((it, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-xs">
                             <Package size={13} className="text-text-muted shrink-0" />
-                            <span className="font-semibold text-white">{it.productName}</span>
+                            <span className="font-semibold text-text-primary">{it.productName}</span>
                             <span className="text-text-muted font-mono">({it.quantity} units)</span>
                             {it.customText && (
-                              <span className="text-[11px] text-amber-300 italic truncate max-w-xs">
+                              <span className="text-[11px] text-amber-500 dark:text-amber-300 italic truncate max-w-xs">
                                 &ldquo;{it.customText}&rdquo;
                               </span>
                             )}
@@ -326,7 +326,7 @@ export default function AccountOrdersPage() {
                     <div className="flex flex-wrap sm:flex-col items-center sm:items-end gap-2.5 w-full sm:w-auto shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-border-subtle">
                       <Link
                         href={`/orders/track?order=${encodeURIComponent(order.orderNumber)}`}
-                        className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition-colors flex items-center justify-center gap-1.5"
+                        className="w-full sm:w-auto px-4 py-2 rounded-xl bg-bg-surface-alt hover:bg-bg-surface border border-border-subtle text-xs font-bold text-text-primary transition-colors flex items-center justify-center gap-1.5"
                       >
                         <Truck size={13} className="text-brand-yellow" />
                         <span>Track Package</span>

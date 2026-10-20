@@ -90,7 +90,7 @@ export default function Footer() {
           {/* 2, 3, 4. Link Columns */}
           {FOOTER_COLUMNS.map((col) => (
             <div key={col.title}>
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 font-display">
+              <h4 className="text-sm font-bold text-text-primary uppercase tracking-wider mb-4 font-display">
                 {col.title}
               </h4>
               <ul className="space-y-2.5">
@@ -98,7 +98,7 @@ export default function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-text-secondary hover:text-white transition-colors"
+                      className="text-sm text-text-secondary hover:text-brand-yellow dark:hover:text-white transition-colors"
                     >
                       {link.label}
                     </Link>

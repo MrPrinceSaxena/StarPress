@@ -183,12 +183,12 @@ export default function FAQPage() {
         {/* Page Hero */}
         <div className="relative rounded-[28px] border border-border-subtle bg-bg-surface p-8 sm:p-14 mb-10 overflow-hidden shadow-xl text-center">
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider">
               <HelpCircle size={13} className="text-brand-yellow" />
               <span>Knowledge Base & Pre-Press Help</span>
             </div>
 
-            <h1 className="font-display font-black text-3xl sm:text-5xl uppercase text-white tracking-tight leading-[1.1]">
+            <h1 className="font-display font-black text-3xl sm:text-5xl uppercase text-text-primary tracking-tight leading-[1.1]">
               Frequently Asked Questions
             </h1>
 
@@ -208,7 +208,7 @@ export default function FAQPage() {
                 placeholder="Search bleed, CMYK, GST, courier, rush..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-2xl bg-bg-surface-alt border border-border-subtle pl-11 pr-4 py-3.5 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow shadow-inner"
+                className="w-full rounded-2xl bg-bg-surface-alt border border-border-subtle pl-11 pr-4 py-3.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow shadow-inner"
               />
             </div>
           </div>
@@ -232,7 +232,7 @@ export default function FAQPage() {
                 className={`scroll-mt-28 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                   selectedCategory === cat
                     ? "bg-brand-yellow text-black font-bold shadow-md"
-                    : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-white hover:bg-bg-surface-alt"
+                    : "bg-bg-surface border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-surface-alt"
                 }`}
               >
                 {cat}
@@ -245,7 +245,7 @@ export default function FAQPage() {
         {filteredFAQs.length === 0 ? (
           <div className="rounded-2xl border border-border-subtle bg-bg-surface p-12 text-center space-y-3 my-8">
             <HelpCircle size={36} className="text-text-muted mx-auto" />
-            <h3 className="font-display font-bold text-lg text-white">
+            <h3 className="font-display font-bold text-lg text-text-primary">
               No matching answers found
             </h3>
             <p className="text-xs text-text-secondary max-w-md mx-auto">
@@ -273,10 +273,10 @@ export default function FAQPage() {
               >
                 <summary className="p-6 cursor-pointer list-none flex items-center justify-between gap-4 select-none">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
                       {faq.category}
                     </span>
-                    <h2 className="font-display font-bold text-base sm:text-lg text-white group-hover:text-brand-yellow transition-colors">
+                    <h2 className="font-display font-bold text-base sm:text-lg text-text-primary group-hover:text-brand-yellow transition-colors">
                       {faq.question}
                     </h2>
                   </div>
@@ -295,7 +295,7 @@ export default function FAQPage() {
         {/* Still Have Questions? Banner */}
         <div className="rounded-3xl border border-border-subtle bg-bg-surface p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-1 text-center sm:text-left">
-            <h3 className="font-display font-black text-xl sm:text-2xl text-white uppercase">
+            <h3 className="font-display font-black text-xl sm:text-2xl text-text-primary uppercase">
               Still Have Questions on Your Print Job?
             </h3>
             <p className="text-xs sm:text-sm text-text-secondary">

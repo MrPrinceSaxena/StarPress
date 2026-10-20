@@ -30,12 +30,12 @@ export default function PrivacyPolicyPage() {
 
         {/* Header Title */}
         <div className="space-y-4 mb-12 pb-8 border-b border-border-subtle">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider">
             <Shield size={13} className="text-brand-yellow" />
             <span>Effective Date: 1 January 2025</span>
           </div>
 
-          <h1 className="font-display font-black text-3xl sm:text-5xl text-white uppercase tracking-tight">
+          <h1 className="font-display font-black text-3xl sm:text-5xl text-text-primary uppercase tracking-tight">
             Privacy Policy & Artwork Confidentiality
           </h1>
 
@@ -50,7 +50,7 @@ export default function PrivacyPolicyPage() {
         <div className="space-y-10 text-sm text-text-secondary leading-relaxed">
           {/* Section 1 */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               1. Information We Collect
             </h2>
             <p>
@@ -59,19 +59,19 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc pl-6 space-y-1.5 text-text-secondary">
               <li>
-                <strong className="text-white">Contact & Identity:</strong> Full Name, Email
+                <strong className="text-text-primary">Contact & Identity:</strong> Full Name, Email
                 Address, Mobile & WhatsApp Number, Company / Entity Name.
               </li>
               <li>
-                <strong className="text-white">Billing & Taxation:</strong> 15-character Indian
+                <strong className="text-text-primary">Billing & Taxation:</strong> 15-character Indian
                 GSTIN and billing address for issuing official tax-compliant B2B invoices.
               </li>
               <li>
-                <strong className="text-white">Fulfillment Details:</strong> Physical shipping
+                <strong className="text-text-primary">Fulfillment Details:</strong> Physical shipping
                 address, PIN code, and recipient contact for courier logistics.
               </li>
               <li>
-                <strong className="text-white">Artwork & Creative Files:</strong> Digital graphic
+                <strong className="text-text-primary">Artwork & Creative Files:</strong> Digital graphic
                 files (PDF, AI, PSD, CDR, SVG, PNG) uploaded for prepress inspection and
                 printing.
               </li>
@@ -84,7 +84,7 @@ export default function PrivacyPolicyPage() {
               <Lock size={15} />
               <span>Strict Non-Disclosure Guarantee</span>
             </div>
-            <h2 className="font-display font-black text-lg text-white uppercase">
+            <h2 className="font-display font-black text-lg text-text-primary uppercase">
               2. Confidentiality of Client Artwork & Intellectual Property
             </h2>
             <p>
@@ -98,7 +98,7 @@ export default function PrivacyPolicyPage() {
                 calibrators, and machine press operators assigned to your order.
               </li>
               <li>
-                We will <strong className="text-white">NEVER</strong> sell, license, share,
+                We will <strong className="text-text-primary">NEVER</strong> sell, license, share,
                 distribute, or display your design files to third parties or use them in public
                 portfolios without explicit prior written consent.
               </li>
@@ -111,7 +111,7 @@ export default function PrivacyPolicyPage() {
 
           {/* Section 3 */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               3. How We Utilize Your Information
             </h2>
             <p>Your information is used strictly to:</p>
@@ -128,7 +128,7 @@ export default function PrivacyPolicyPage() {
 
           {/* Section 4 */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               4. Payment Processing Security
             </h2>
             <p>
@@ -141,7 +141,7 @@ export default function PrivacyPolicyPage() {
 
           {/* Section 5 */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               5. Third-Party Logistics & Courier Partners
             </h2>
             <p>
@@ -154,7 +154,7 @@ export default function PrivacyPolicyPage() {
 
           {/* Section 6 */}
           <section className="space-y-3">
-            <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider">
+            <h2 className="font-display font-bold text-xl text-text-primary uppercase tracking-wider">
               6. Data Officer Contact
             </h2>
             <p>
@@ -164,13 +164,13 @@ export default function PrivacyPolicyPage() {
             </p>
             <div className="rounded-xl border border-border-subtle bg-bg-surface p-4 font-mono text-xs space-y-1 text-text-secondary">
               <div>
-                <strong className="text-white">Grievance & Privacy Officer:</strong> Star Press Media Pvt Ltd
+                <strong className="text-text-primary">Grievance & Privacy Officer:</strong> Star Press Media Pvt Ltd
               </div>
               <div>
-                <strong className="text-white">Email:</strong> starpress.print@gmail.com
+                <strong className="text-text-primary">Email:</strong> starpress.print@gmail.com
               </div>
               <div>
-                <strong className="text-white">Address:</strong> Amoun, Khatima (Uttarakhand)
+                <strong className="text-text-primary">Address:</strong> Amoun, Khatima (Uttarakhand)
               </div>
             </div>
           </section>

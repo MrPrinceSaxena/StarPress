@@ -110,12 +110,12 @@ export default function ContactPage() {
         {/* Page Hero */}
         <div className="relative rounded-[28px] border border-border-subtle bg-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-xl">
           <div className="relative z-10 max-w-2xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider">
               <MessageSquare size={13} className="text-brand-yellow" />
               <span>We Are Here To Assist</span>
             </div>
 
-            <h1 className="font-display font-black text-3xl sm:text-5xl uppercase text-white tracking-tight leading-[1.1]">
+            <h1 className="font-display font-black text-3xl sm:text-5xl uppercase text-text-primary tracking-tight leading-[1.1]">
               Contact Star Press
             </h1>
 
@@ -134,7 +134,7 @@ export default function ContactPage() {
             return (
               <div
                 key={item.title}
-                className="rounded-2xl border border-border-subtle bg-bg-surface p-6 space-y-3 flex flex-col justify-between hover:border-white/20 transition-colors"
+                className="rounded-2xl border border-border-subtle bg-bg-surface p-6 space-y-3 flex flex-col justify-between hover:border-border-strong transition-colors"
               >
                 <div className="space-y-3">
                   <div className="w-10 h-10 rounded-xl bg-bg-surface-alt border border-border-subtle text-brand-yellow flex items-center justify-center">
@@ -144,7 +144,7 @@ export default function ContactPage() {
                     <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
                       {item.title}
                     </span>
-                    <div className="font-display font-bold text-base text-white mt-0.5">
+                    <div className="font-display font-bold text-base text-text-primary mt-0.5">
                       {item.value}
                     </div>
                   </div>
@@ -172,7 +172,7 @@ export default function ContactPage() {
           <div className="lg:col-span-8">
             <div className="rounded-3xl border border-border-subtle bg-bg-surface p-6 sm:p-10 space-y-6 shadow-2xl">
               <div className="space-y-1">
-                <h2 className="font-display font-black text-2xl text-white uppercase tracking-tight">
+                <h2 className="font-display font-black text-2xl text-text-primary uppercase tracking-tight">
                   Send a Message to Pre-Press & Support
                 </h2>
                 <p className="text-xs text-text-secondary">
@@ -185,7 +185,7 @@ export default function ContactPage() {
                   <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
                     <CheckCircle2 size={36} />
                   </div>
-                  <h3 className="font-display font-black text-2xl text-white uppercase">
+                  <h3 className="font-display font-black text-2xl text-text-primary uppercase">
                     Message Dispatched!
                   </h3>
                   <p className="text-xs sm:text-sm text-text-secondary max-w-md mx-auto">
@@ -221,7 +221,7 @@ export default function ContactPage() {
                         placeholder="e.g. Vikram Batra"
                         value={formData.name}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
                       />
                     </div>
 
@@ -240,7 +240,7 @@ export default function ContactPage() {
                         placeholder="vikram@example.com"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
                       />
                     </div>
 
@@ -259,7 +259,7 @@ export default function ContactPage() {
                         placeholder="+91 98765 43210"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
                       />
                     </div>
 
@@ -275,7 +275,7 @@ export default function ContactPage() {
                         name="subject"
                         value={formData.subject}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-yellow"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-brand-yellow"
                       >
                         <option>Order Status & Tracking</option>
                         <option>Pre-Press & Artwork File Help</option>
@@ -300,7 +300,7 @@ export default function ContactPage() {
                         placeholder="e.g. SP-49281"
                         value={formData.orderId}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow uppercase font-mono"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow uppercase font-mono"
                       />
                     </div>
 
@@ -319,7 +319,7 @@ export default function ContactPage() {
                         placeholder="Detail your inquiry, questions on bleeds, delivery address updates, or specifications..."
                         value={formData.message}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow resize-none"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow resize-none"
                       />
                     </div>
                   </div>
@@ -355,7 +355,7 @@ export default function ContactPage() {
                 <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">
                   Instant Messaging
                 </span>
-                <h3 className="font-display font-black text-xl text-white uppercase tracking-tight">
+                <h3 className="font-display font-black text-xl text-text-primary uppercase tracking-tight">
                   Chat on WhatsApp
                 </h3>
                 <p className="text-xs text-text-secondary leading-relaxed">
@@ -378,7 +378,7 @@ export default function ContactPage() {
                 <div className="flex items-start gap-2.5">
                   <Building size={16} className="text-brand-yellow shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-white block">Corporate Head Office</strong>
+                    <strong className="text-text-primary block">Corporate Head Office</strong>
                     <span className="text-text-secondary">
                       Star Press, Amoun, Khatima (Uttarakhand)
                     </span>
@@ -388,7 +388,7 @@ export default function ContactPage() {
                 <div className="flex items-start gap-2.5">
                   <ShieldCheck size={16} className="text-emerald-400/90 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-white block">GSTIN & Compliance</strong>
+                    <strong className="text-text-primary block">GSTIN & Compliance</strong>
                     <span className="text-text-secondary font-mono">
                       07AAAAA0000A1Z5 (Delhi, India)
                     </span>

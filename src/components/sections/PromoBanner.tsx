@@ -12,10 +12,10 @@ export default function PromoBanner() {
             {/* Left Text Block */}
             <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
               <h2 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl uppercase leading-[1.1] tracking-tight">
-                <span className="text-white block">CUSTOM PRINTING</span>
-                <span className="text-white">FOR A </span>
+                <span className="text-text-primary block">CUSTOM PRINTING</span>
+                <span className="text-text-primary">FOR A </span>
                 <span className="text-brand-yellow">BOLDER </span>
-                <span className="text-white">TOMORROW</span>
+                <span className="text-text-primary">TOMORROW</span>
               </h2>
 
               <p className="text-base sm:text-lg text-text-secondary leading-relaxed max-w-xl mx-auto lg:mx-0">

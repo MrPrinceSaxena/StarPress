@@ -106,7 +106,7 @@ export default function Newsletter() {
 
                 {/* Rotated Handwritten Text Doodle */}
                 <div className="relative transform -rotate-8 select-none">
-                  <div className="relative font-script text-2xl sm:text-3xl lg:text-4xl text-white tracking-wider leading-tight text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
+                  <div className="relative font-script text-2xl sm:text-3xl lg:text-4xl text-text-primary tracking-wider leading-tight text-center dark:drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
                     <div>GOOD</div>
                     <div>IDEAS</div>
                     <div className="text-brand-yellow">PRINT WELL</div>

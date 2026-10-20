@@ -29,12 +29,12 @@ export default async function CategoriesPage() {
         {/* Banner */}
         <div className="relative rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-10 mb-8 sm:mb-10 overflow-hidden shadow-xl">
           <div className="relative z-10 max-w-2xl space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider">
               <Sparkles size={13} className="text-brand-yellow" />
               <span>Full Print Catalog</span>
             </div>
 
-            <h1 className="font-display font-black text-2xl sm:text-3xl lg:text-4xl uppercase text-white tracking-tight leading-[1.1]">
+            <h1 className="font-display font-black text-2xl sm:text-3xl lg:text-4xl uppercase text-text-primary tracking-tight leading-[1.1]">
               Shop by Category
             </h1>
 
@@ -61,7 +61,7 @@ export default async function CategoriesPage() {
               <Link
                 key={category.id}
                 href={`/shop?category=${category.slug}`}
-                className="group relative flex flex-col rounded-2xl border border-white/10 bg-[#12131A] overflow-hidden transition-all duration-300 hover:border-brand-yellow/60 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-black/70 focus:outline-none focus:ring-2 focus:ring-brand-yellow/50"
+                className="group relative flex flex-col rounded-2xl border border-border-subtle bg-bg-surface overflow-hidden transition-all duration-300 hover:border-brand-yellow/60 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/70 focus:outline-none focus:ring-2 focus:ring-brand-yellow/50"
               >
                 {/* Hero Category Product Image (Aspect Square for Clean E-commerce Look) */}
                 <div className="relative aspect-square w-full overflow-hidden bg-bg-surface-alt">
@@ -74,7 +74,7 @@ export default async function CategoriesPage() {
                   />
 
                   {/* Subtle Gradient Scrim at Bottom of Image */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#12131A] via-transparent to-black/20 opacity-70 group-hover:opacity-40 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 opacity-70 group-hover:opacity-40 transition-opacity" />
 
                   {/* Top-Right Item Count Pill */}
                   <div className="absolute top-2.5 right-2.5 z-10">
@@ -87,7 +87,7 @@ export default async function CategoriesPage() {
                 {/* Compact Content Info (Less Text, High Legibility) */}
                 <div className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between space-y-2.5">
                   <div>
-                    <h2 className="font-display font-black text-sm sm:text-base text-white group-hover:text-brand-yellow transition-colors line-clamp-1">
+                    <h2 className="font-display font-black text-sm sm:text-base text-text-primary group-hover:text-brand-yellow transition-colors line-clamp-1">
                       {category.name}
                     </h2>
 
@@ -99,7 +99,7 @@ export default async function CategoriesPage() {
                   </div>
 
                   {/* Price & Action Row */}
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-1">
+                  <div className="pt-2 border-t border-border-subtle flex items-center justify-between gap-1">
                     <div>
                       <span className="text-[9px] uppercase font-bold tracking-wider text-text-muted block leading-none">
                         Starting from
@@ -109,7 +109,7 @@ export default async function CategoriesPage() {
                       </span>
                     </div>
 
-                    <div className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-300 group-hover:text-brand-yellow transition-colors shrink-0">
+                    <div className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-text-secondary group-hover:text-brand-yellow transition-colors shrink-0">
                       <span>Shop</span>
                       <ArrowRight
                         size={13}

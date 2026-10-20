@@ -11,12 +11,12 @@ export default function BulkOrderBanner() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center relative z-10">
             {/* Left Zone: Copy, Perks, and CTAs */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold tracking-wider uppercase">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold tracking-wider uppercase">
                 <Sparkles size={14} className="text-brand-yellow" />
                 <span>Corporate & Bulk Printing</span>
               </div>
 
-              <h2 className="font-display font-black text-2xl xs:text-3xl sm:text-4xl lg:text-5xl uppercase leading-[1.1] tracking-tight text-white">
+              <h2 className="font-display font-black text-2xl xs:text-3xl sm:text-4xl lg:text-5xl uppercase leading-[1.1] tracking-tight text-text-primary">
                 Bulk Printing Made <span className="text-brand-yellow">Effortless</span> & Affordable
               </h2>
 
@@ -36,7 +36,7 @@ export default function BulkOrderBanner() {
                       className="text-emerald-400/90 shrink-0 mt-0.5"
                     />
                     <div>
-                      <h4 className="text-xs font-bold text-white tracking-tight">
+                      <h4 className="text-xs font-bold text-text-primary tracking-tight">
                         {perk.title}
                       </h4>
                       <p className="text-[11px] text-text-secondary leading-normal">
@@ -76,14 +76,14 @@ export default function BulkOrderBanner() {
               <div className="p-6 sm:p-7 rounded-2xl bg-bg-surface-alt border border-border-subtle shadow-xl relative space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
                   <div>
-                    <h3 className="font-display font-bold text-base text-white">
+                    <h3 className="font-display font-bold text-base text-text-primary">
                       Volume Discount Slabs
                     </h3>
                     <p className="text-xs text-text-secondary">
                       Instant savings automatically applied
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-slate-300">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-bg-surface border border-border-subtle text-[11px] font-medium text-text-secondary">
                     <ShieldCheck size={13} className="text-emerald-400" />
                     <span>GST Invoiced</span>
                   </div>
@@ -101,14 +101,14 @@ export default function BulkOrderBanner() {
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-display font-bold text-sm text-white">
+                        <span className="font-display font-bold text-sm text-text-primary">
                           {tier.range}
                         </span>
                         <span
                           className={`font-display font-bold text-xs px-2.5 py-0.5 rounded-full ${
                             tier.featured
                               ? "bg-brand-yellow text-black"
-                              : "bg-white/10 text-slate-300 border border-white/10"
+                              : "bg-bg-surface-alt text-text-secondary border border-border-subtle"
                           }`}
                         >
                           {tier.discount}
@@ -126,7 +126,7 @@ export default function BulkOrderBanner() {
                     Custom specifications? Call our print desk directly at{" "}
                     <a
                       href="tel:+917456849955"
-                      className="text-white hover:text-brand-yellow font-semibold transition-colors"
+                      className="text-text-primary hover:text-brand-yellow font-semibold transition-colors"
                     >
                       +91 74568 49955
                     </a>

@@ -115,12 +115,12 @@ export default function BulkOrdersPage() {
         {/* Hero Section */}
         <div className="relative rounded-[28px] border border-border-subtle bg-bg-surface p-8 sm:p-14 mb-12 overflow-hidden shadow-xl">
           <div className="relative z-10 max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider">
               <BadgePercent size={14} className="text-brand-yellow" />
               <span>Enterprise & Corporate Solutions</span>
             </div>
 
-            <h1 className="font-display font-black text-3xl sm:text-5xl uppercase text-white tracking-tight leading-[1.1]">
+            <h1 className="font-display font-black text-3xl sm:text-5xl uppercase text-text-primary tracking-tight leading-[1.1]">
               Bulk Orders & Corporate Printing
             </h1>
 
@@ -135,7 +135,7 @@ export default function BulkOrdersPage() {
         {/* Volume Discount Slabs */}
         <div className="mb-14">
           <div className="text-center max-w-xl mx-auto mb-8 space-y-2">
-            <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-tight">
+            <h2 className="font-display font-black text-2xl sm:text-3xl text-text-primary uppercase tracking-tight">
               Tiered Volume Pricing Slabs
             </h2>
             <p className="text-xs sm:text-sm text-text-secondary">
@@ -163,7 +163,7 @@ export default function BulkOrdersPage() {
                   <span className="text-xs font-mono text-text-muted uppercase tracking-wider">
                     Order Volume
                   </span>
-                  <div className="font-display font-black text-2xl text-white mt-1 mb-2">
+                  <div className="font-display font-black text-2xl text-text-primary mt-1 mb-2">
                     {tier.range}
                   </div>
                   <div className="font-mono font-black text-3xl text-brand-yellow mb-4">
@@ -195,7 +195,7 @@ export default function BulkOrdersPage() {
                 <div className="w-11 h-11 rounded-xl bg-bg-surface-alt border border-border-subtle text-brand-yellow flex items-center justify-center">
                   <IconComponent size={22} />
                 </div>
-                <h3 className="font-display font-bold text-base text-white">
+                <h3 className="font-display font-bold text-base text-text-primary">
                   {feat.title}
                 </h3>
                 <p className="text-xs text-text-secondary leading-relaxed">
@@ -212,11 +212,11 @@ export default function BulkOrdersPage() {
           <div className="lg:col-span-8">
             <div className="rounded-3xl border border-border-subtle bg-bg-surface p-6 sm:p-10 space-y-8 shadow-2xl">
               <div>
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider mb-2">
                   <FileText size={13} className="text-brand-yellow" />
                   <span>Fast Response Under 2 Hours</span>
                 </div>
-                <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-tight">
+                <h2 className="font-display font-black text-2xl sm:text-3xl text-text-primary uppercase tracking-tight">
                   Request an Enterprise Quote
                 </h2>
                 <p className="text-xs sm:text-sm text-text-secondary mt-1">
@@ -231,7 +231,7 @@ export default function BulkOrdersPage() {
                   <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
                     <CheckCircle2 size={36} />
                   </div>
-                  <h3 className="font-display font-black text-2xl text-white uppercase">
+                  <h3 className="font-display font-black text-2xl text-text-primary uppercase">
                     Inquiry Received!
                   </h3>
                   <p className="text-xs sm:text-sm text-text-secondary max-w-md mx-auto">
@@ -269,7 +269,7 @@ export default function BulkOrdersPage() {
                         placeholder="e.g. Acme Technologies India Pvt Ltd"
                         value={formData.companyName}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-yellow"
                       />
                     </div>
 
@@ -288,7 +288,7 @@ export default function BulkOrdersPage() {
                         placeholder="e.g. Priya Sharma, Procurement Manager"
                         value={formData.contactPerson}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-yellow"
                       />
                     </div>
 
@@ -307,7 +307,7 @@ export default function BulkOrdersPage() {
                         placeholder="priya@company.com"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-yellow"
                       />
                     </div>
 
@@ -326,7 +326,7 @@ export default function BulkOrdersPage() {
                         placeholder="+91 98765 43210"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-yellow"
                       />
                     </div>
 
@@ -342,7 +342,7 @@ export default function BulkOrdersPage() {
                         name="category"
                         value={formData.category}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-yellow"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-brand-yellow"
                       >
                         <option>Marketing Materials (Flyers, Brochures)</option>
                         <option>Business Stationery & Business Cards</option>
@@ -366,7 +366,7 @@ export default function BulkOrdersPage() {
                         name="estimatedQuantity"
                         value={formData.estimatedQuantity}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-yellow"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-brand-yellow"
                       >
                         <option>250 – 500 units</option>
                         <option>500 – 2,500 units</option>
@@ -390,7 +390,7 @@ export default function BulkOrdersPage() {
                         maxLength={15}
                         value={formData.gstin}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow uppercase font-mono"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-yellow uppercase font-mono"
                       />
                     </div>
 
@@ -408,7 +408,7 @@ export default function BulkOrdersPage() {
                         placeholder="Tell us about paper weight preferences, special folding, multiple delivery addresses, or deadline constraints..."
                         value={formData.message}
                         onChange={handleInputChange}
-                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-yellow resize-none"
+                        className="w-full rounded-xl bg-bg-surface-alt border border-border-subtle px-4 py-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-yellow resize-none"
                       />
                     </div>
                   </div>
@@ -422,7 +422,7 @@ export default function BulkOrdersPage() {
                       className="w-4 h-4 rounded border-border-subtle bg-bg-surface text-brand-yellow focus:ring-brand-yellow accent-brand-yellow"
                     />
                     <div>
-                      <span className="font-bold text-xs sm:text-sm text-white">
+                      <span className="font-bold text-xs sm:text-sm text-text-primary">
                         Send our team a Free Physical Hardcopy Sample Swatch Kit
                       </span>
                       <p className="text-[11px] text-text-secondary">
@@ -459,10 +459,10 @@ export default function BulkOrdersPage() {
           <div className="lg:col-span-4 space-y-6">
             <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-7 space-y-6 shadow-xl sticky top-24">
               <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted">
                   Immediate Procurement Desk
                 </span>
-                <h3 className="font-display font-black text-xl text-white uppercase tracking-tight">
+                <h3 className="font-display font-black text-xl text-text-primary uppercase tracking-tight">
                   Need an Urgent Quote?
                 </h3>
                 <p className="text-xs text-text-secondary leading-relaxed">
@@ -485,11 +485,11 @@ export default function BulkOrdersPage() {
                 <div className="rounded-xl border border-border-subtle bg-bg-surface-alt p-4 space-y-2 text-xs">
                   <div className="flex items-center justify-between text-text-secondary">
                     <span>Hotline:</span>
-                    <span className="text-white font-mono font-bold">+91 74568 49955</span>
+                    <span className="text-text-primary font-mono font-bold">+91 74568 49955</span>
                   </div>
                   <div className="flex items-center justify-between text-text-secondary">
                     <span>Procurement Email:</span>
-                    <span className="text-white font-mono">starpress.print@gmail.com</span>
+                    <span className="text-text-primary font-mono">starpress.print@gmail.com</span>
                   </div>
                   <div className="flex items-center justify-between text-text-secondary">
                     <span>Working Hours:</span>

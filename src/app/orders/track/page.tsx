@@ -155,7 +155,7 @@ function TrackContent() {
           <Truck size={14} />
           <span>Real-Time Shipment & Press Tracker</span>
         </div>
-        <h1 className="font-display font-black text-3xl sm:text-4xl text-white uppercase tracking-tight">
+        <h1 className="font-display font-black text-3xl sm:text-4xl text-text-primary uppercase tracking-tight">
           Track Your Print Order
         </h1>
         <p className="text-sm text-text-secondary max-w-lg mx-auto">
@@ -178,7 +178,7 @@ function TrackContent() {
                 placeholder="e.g. SP-2026-A1B2"
                 value={orderNumber}
                 onChange={(e) => setOrderNumber(e.target.value.toUpperCase())}
-                className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3.5 py-2.5 text-xs text-white uppercase font-mono placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
+                className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3.5 py-2.5 text-xs text-text-primary uppercase font-mono placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
               />
             </div>
 
@@ -192,7 +192,7 @@ function TrackContent() {
                 placeholder="e.g. 9876543210 or name@example.com"
                 value={phoneOrEmail}
                 onChange={(e) => setPhoneOrEmail(e.target.value)}
-                className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
+                className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3.5 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow"
               />
             </div>
           </div>
@@ -240,7 +240,7 @@ function TrackContent() {
                 <button
                   type="button"
                   onClick={() => handleCopy(order.orderNumber)}
-                  className="text-text-muted hover:text-white p-1 rounded transition-colors"
+                  className="text-text-muted hover:text-text-primary p-1 rounded transition-colors"
                   title="Copy Order Number"
                 >
                   {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
@@ -303,7 +303,7 @@ function TrackContent() {
 
                         <div>
                           <div className={`text-xs font-bold uppercase tracking-wider ${
-                            isCurrent ? "text-brand-yellow" : isDone ? "text-white" : "text-text-muted"
+                            isCurrent ? "text-brand-yellow" : isDone ? "text-text-primary" : "text-text-muted"
                           }`}>
                             {stg.label}
                           </div>
@@ -331,12 +331,12 @@ function TrackContent() {
                   <Truck size={14} />
                   <span>Courier Partner Handover</span>
                 </span>
-                <p className="text-sm font-semibold text-white">
+                <p className="text-sm font-semibold text-text-primary">
                   Carrier: {order.courierPartner || "Bluedart / Delhivery / DTDC Express"}
                 </p>
                 <div className="text-xs text-text-secondary flex items-center gap-2 font-mono">
                   <span>AWB Number:</span>
-                  <strong className="text-white">{order.trackingNumber}</strong>
+                  <strong className="text-text-primary">{order.trackingNumber}</strong>
                 </div>
               </div>
 
@@ -344,7 +344,7 @@ function TrackContent() {
                 href={`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappInquiry}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors self-start sm:self-auto"
+                className="px-4 py-2.5 rounded-xl bg-bg-surface hover:bg-border-subtle border border-border-subtle text-text-primary text-xs font-bold inline-flex items-center gap-1.5 transition-colors self-start sm:self-auto"
               >
                 <span>Courier Updates on WhatsApp</span>
                 <ExternalLink size={13} />
@@ -354,7 +354,7 @@ function TrackContent() {
 
           {/* Itemized Packages Breakdown */}
           <div className="space-y-3 pt-2 border-t border-border-subtle">
-            <h3 className="font-display font-bold text-sm text-white uppercase tracking-wider">
+            <h3 className="font-display font-bold text-sm text-text-primary uppercase tracking-wider">
               Items in this Shipment ({order.items.length})
             </h3>
 
@@ -366,7 +366,7 @@ function TrackContent() {
                       <Package size={16} />
                     </div>
                     <div>
-                      <span className="font-semibold text-white block">{it.productName}</span>
+                      <span className="font-semibold text-text-primary block">{it.productName}</span>
                       {it.customText && (
                         <span className="text-[11px] text-amber-300 italic block">
                           &ldquo;{it.customText}&rdquo;
@@ -396,7 +396,7 @@ function TrackContent() {
             </a>
 
             <div className="flex items-center gap-4 text-xs">
-              <Link href="/shop" className="text-text-secondary hover:text-white transition-colors">
+              <Link href="/shop" className="text-text-secondary hover:text-text-primary transition-colors">
                 Return to Shop
               </Link>
               <span className="text-border-subtle">|</span>

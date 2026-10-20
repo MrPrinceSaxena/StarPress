@@ -30,7 +30,7 @@ export default function StarRating({
             className={`transition-colors ${
               i < Math.floor(rating)
                 ? "text-brand-yellow fill-brand-yellow"
-                : "text-zinc-600 fill-zinc-800"
+                : "text-slate-300 fill-slate-200 dark:text-zinc-600 dark:fill-zinc-800"
             }`}
           />
         ))}

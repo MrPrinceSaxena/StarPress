@@ -256,11 +256,11 @@ export default function OrderDetailPage() {
       <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 lg:px-10 py-10 md:py-14 space-y-8">
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-xs text-text-muted">
-          <Link href="/account" className="hover:text-white transition-colors">
+          <Link href="/account" className="hover:text-text-primary transition-colors">
             Account
           </Link>
           <span>/</span>
-          <Link href="/account?tab=orders" className="hover:text-white transition-colors">
+          <Link href="/account?tab=orders" className="hover:text-text-primary transition-colors">
             Your Orders
           </Link>
           <span>/</span>
@@ -279,7 +279,7 @@ export default function OrderDetailPage() {
             <div className="w-14 h-14 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto">
               <AlertCircle size={28} />
             </div>
-            <h1 className="font-display font-black text-xl text-white uppercase">
+            <h1 className="font-display font-black text-xl text-text-primary uppercase">
               Order Not Available
             </h1>
             <p className="text-xs text-text-secondary">{error || "Unable to find the requested order."}</p>
@@ -295,13 +295,13 @@ export default function OrderDetailPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border-subtle">
               <div>
                 <div className="flex items-center gap-3">
-                  <h1 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-tight">
+                  <h1 className="font-display font-black text-2xl sm:text-3xl text-text-primary uppercase tracking-tight">
                     Order #{order.orderNumber}
                   </h1>
                   <button
                     type="button"
                     onClick={() => handleCopy(order.orderNumber)}
-                    className="p-1 rounded text-text-muted hover:text-white transition-colors"
+                    className="p-1 rounded text-text-muted hover:text-text-primary transition-colors"
                     title="Copy Order Number"
                   >
                     {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
@@ -332,7 +332,7 @@ export default function OrderDetailPage() {
 
                 <Link
                   href={`/account/orders/${order.id}/invoice`}
-                  className="px-3.5 py-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold text-white transition-colors flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 rounded-xl border border-border-subtle bg-bg-surface-alt hover:bg-bg-surface text-xs font-semibold text-text-primary transition-colors flex items-center gap-1.5"
                 >
                   <FileCheck size={13} className="text-brand-yellow" />
                   <span>Tax Invoice</span>
@@ -415,7 +415,7 @@ export default function OrderDetailPage() {
 
                           <div>
                             <div className={`text-xs font-bold uppercase tracking-wider ${
-                              isCurrent ? "text-brand-yellow" : isDone ? "text-white" : "text-text-muted"
+                              isCurrent ? "text-brand-yellow" : isDone ? "text-text-primary" : "text-text-muted"
                             }`}>
                               {stg.label}
                             </div>
@@ -445,7 +445,7 @@ export default function OrderDetailPage() {
                   <span>Delivery Address</span>
                 </div>
                 <div className="text-xs text-text-secondary leading-relaxed space-y-1">
-                  <p className="font-bold text-white text-sm">
+                  <p className="font-bold text-text-primary text-sm">
                     {order.shippingAddress?.fullName || order.shippingAddress?.name || "Recipient"}
                   </p>
                   <p>{order.shippingAddress?.addressLine1 || order.shippingAddress?.line1}</p>
@@ -454,11 +454,11 @@ export default function OrderDetailPage() {
                   )}
                   <p>
                     {order.shippingAddress?.city}, {order.shippingAddress?.state} -{" "}
-                    <strong className="text-white font-mono">{order.shippingAddress?.pincode}</strong>
+                    <strong className="text-text-primary font-mono">{order.shippingAddress?.pincode}</strong>
                   </p>
                   {order.shippingAddress?.phone && (
                     <p className="pt-1 text-text-muted">
-                      Phone: <strong className="text-white font-mono">{order.shippingAddress.phone}</strong>
+                      Phone: <strong className="text-text-primary font-mono">{order.shippingAddress.phone}</strong>
                     </p>
                   )}
                 </div>
@@ -473,14 +473,14 @@ export default function OrderDetailPage() {
                 <div className="text-xs text-text-secondary space-y-2">
                   <div className="flex items-center justify-between">
                     <span>Payment Mode:</span>
-                    <strong className="text-white">
+                    <strong className="text-text-primary">
                       {order.paymentMethod === "ONLINE" ? "Online Razorpay" : "Pay After Proof"}
                     </strong>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <span>Payment Status:</span>
-                    <span className={`font-bold uppercase ${isPaid ? "text-emerald-400" : "text-amber-400"}`}>
+                    <span className={`font-bold uppercase ${isPaid ? "text-emerald-400" : "text-amber-500 dark:text-amber-400"}`}>
                       {order.paymentStatus}
                     </span>
                   </div>
@@ -508,7 +508,7 @@ export default function OrderDetailPage() {
 
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>Items Subtotal</span>
-                  <span className="font-mono text-white">₹{Number(order.subtotal).toLocaleString("en-IN")}</span>
+                  <span className="font-mono text-text-primary">₹{Number(order.subtotal).toLocaleString("en-IN")}</span>
                 </div>
 
                 {Number(order.discountAmount) > 0 && (
@@ -520,18 +520,18 @@ export default function OrderDetailPage() {
 
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>GST (18%)</span>
-                  <span className="font-mono text-white">₹{Number(order.gstAmount || 0).toLocaleString("en-IN")}</span>
+                  <span className="font-mono text-text-primary">₹{Number(order.gstAmount || 0).toLocaleString("en-IN")}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>Shipping Fee</span>
-                  <span className="font-mono text-white">
+                  <span className="font-mono text-text-primary">
                     {Number(order.shippingFee) === 0 ? "FREE" : `₹${Number(order.shippingFee)}`}
                   </span>
                 </div>
 
                 <div className="pt-2 border-t border-border-subtle flex items-baseline justify-between font-bold text-sm">
-                  <span className="text-white uppercase font-display">Grand Total</span>
+                  <span className="text-text-primary uppercase font-display">Grand Total</span>
                   <span className="font-mono text-brand-yellow text-base font-black">
                     ₹{Number(order.totalAmount).toLocaleString("en-IN")}
                   </span>
@@ -541,7 +541,7 @@ export default function OrderDetailPage() {
 
             {/* Itemized Order Package Details */}
             <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8 space-y-4 shadow-xl">
-              <h2 className="font-display font-black text-lg text-white uppercase tracking-tight pb-3 border-b border-border-subtle">
+              <h2 className="font-display font-black text-lg text-text-primary uppercase tracking-tight pb-3 border-b border-border-subtle">
                 Order Items ({order.items.length})
               </h2>
 
@@ -565,19 +565,19 @@ export default function OrderDetailPage() {
                       <div className="min-w-0 space-y-1.5 flex-1">
                         <Link
                           href={`/shop/${it.productSlug}`}
-                          className="font-display font-bold text-base text-white hover:text-brand-yellow transition-colors line-clamp-1"
+                          className="font-display font-bold text-base text-text-primary hover:text-brand-yellow transition-colors line-clamp-1"
                         >
                           {it.productName}
                         </Link>
 
                         <div className="flex flex-wrap items-center gap-2 text-xs text-text-secondary">
                           {it.specs?.sizeLabel && (
-                            <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white text-[11px]">
+                            <span className="bg-bg-surface-alt border border-border-subtle px-2 py-0.5 rounded text-text-primary text-[11px]">
                               Size: {it.specs.sizeLabel}
                             </span>
                           )}
                           {it.specs?.materialLabel && (
-                            <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white text-[11px]">
+                            <span className="bg-bg-surface-alt border border-border-subtle px-2 py-0.5 rounded text-text-primary text-[11px]">
                               Material: {it.specs.materialLabel}
                             </span>
                           )}
@@ -587,7 +587,7 @@ export default function OrderDetailPage() {
                         </div>
 
                         {(it.customText || it.specs?.customText) && (
-                          <p className="text-xs text-amber-300 italic pt-0.5">
+                          <p className="text-xs text-amber-500 dark:text-amber-300 italic pt-0.5">
                             Personalization: &ldquo;{it.customText || it.specs?.customText}&rdquo;
                           </p>
                         )}
@@ -607,7 +607,7 @@ export default function OrderDetailPage() {
                       <button
                         type="button"
                         onClick={() => handleReorder(it)}
-                        className="px-3 py-1.5 rounded-lg border border-border-subtle bg-bg-surface-alt hover:border-brand-yellow/60 text-xs font-semibold text-white transition-colors flex items-center gap-1.5"
+                        className="px-3 py-1.5 rounded-lg border border-border-subtle bg-bg-surface-alt hover:border-brand-yellow/60 text-xs font-semibold text-text-primary transition-colors flex items-center gap-1.5"
                       >
                         <RotateCcw size={12} className="text-brand-yellow" />
                         <span>Reorder Item</span>
@@ -647,7 +647,7 @@ export default function OrderDetailPage() {
         {showCancelModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
             <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-7 space-y-4 shadow-2xl relative">
-              <h3 className="font-display font-black text-xl text-white uppercase tracking-tight">
+              <h3 className="font-display font-black text-xl text-text-primary uppercase tracking-tight">
                 Cancel Order #{order?.orderNumber}
               </h3>
               <p className="text-xs text-text-secondary leading-relaxed">
@@ -670,7 +670,7 @@ export default function OrderDetailPage() {
                       placeholder="e.g. Changed my artwork specifications, ordered by mistake, etc."
                       value={cancelReason}
                       onChange={(e) => setCancelReason(e.target.value)}
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl p-3 text-xs text-white placeholder:text-text-muted focus:outline-none focus:border-brand-yellow resize-none"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl p-3 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-yellow resize-none"
                     />
                   </div>
 
@@ -686,7 +686,7 @@ export default function OrderDetailPage() {
                       type="button"
                       disabled={isCancelling}
                       onClick={() => setShowCancelModal(false)}
-                      className="px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-white"
+                      className="px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary"
                     >
                       Keep Order
                     </button>

@@ -403,7 +403,7 @@ function AccountContent() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-display font-black text-xl sm:text-2xl text-white">
+                <h1 className="font-display font-black text-xl sm:text-2xl text-text-primary">
                   {session.user.name}
                 </h1>
               </div>
@@ -426,7 +426,7 @@ function AccountContent() {
             <button
               type="button"
               onClick={() => authSignOut()}
-              className="px-4 py-2 rounded-xl border border-border-subtle bg-bg-surface-alt hover:border-white/20 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-2 transition-colors"
+              className="px-4 py-2 rounded-xl border border-border-subtle bg-bg-surface-alt hover:border-border-strong text-text-secondary hover:text-text-primary text-xs font-semibold flex items-center gap-2 transition-colors"
             >
               <LogOut size={14} />
               <span>Sign Out</span>
@@ -442,7 +442,7 @@ function AccountContent() {
             className={`pb-3.5 px-2 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === "orders"
                 ? "border-brand-yellow text-brand-yellow"
-                : "border-transparent text-text-secondary hover:text-white"
+                : "border-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
             <Package size={16} />
@@ -455,7 +455,7 @@ function AccountContent() {
             className={`pb-3.5 px-2 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === "addresses"
                 ? "border-brand-yellow text-brand-yellow"
-                : "border-transparent text-text-secondary hover:text-white"
+                : "border-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
             <MapPin size={16} />
@@ -468,7 +468,7 @@ function AccountContent() {
             className={`pb-3.5 px-2 text-xs sm:text-sm font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === "profile"
                 ? "border-brand-yellow text-brand-yellow"
-                : "border-transparent text-text-secondary hover:text-white"
+                : "border-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
             <User size={16} />
@@ -490,7 +490,7 @@ function AccountContent() {
                   <Package size={24} />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-lg text-white">No Orders Placed Yet</h3>
+                  <h3 className="font-display font-bold text-lg text-text-primary">No Orders Placed Yet</h3>
                   <p className="text-xs text-text-secondary max-w-sm mx-auto mt-1">
                     When you order business cards, flyers, banners, or packaging, your live production status and courier tracking will appear here.
                   </p>
@@ -504,7 +504,7 @@ function AccountContent() {
                 {orders.map((ord) => (
                   <div
                     key={ord.id}
-                    className="rounded-2xl border border-border-subtle bg-bg-surface p-6 space-y-4 hover:border-white/20 transition-all"
+                    className="rounded-2xl border border-border-subtle bg-bg-surface p-6 space-y-4 hover:border-border-strong transition-all"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border-subtle">
                       <div>
@@ -523,7 +523,7 @@ function AccountContent() {
                                 ? "bg-sky-500/10 text-sky-400 border border-sky-500/30"
                                 : ord.status === "IN_PRODUCTION"
                                 ? "bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/30"
-                                : "bg-white/5 text-slate-300 border border-white/10"
+                                : "bg-bg-surface-alt text-text-secondary border border-border-subtle"
                             }`}
                           >
                             {ord.status}
@@ -549,9 +549,9 @@ function AccountContent() {
                       {ord.items.map((it) => (
                         <div key={it.id} className="flex items-center justify-between text-xs text-text-secondary">
                           <span>
-                            {it.productName} × <span className="font-mono font-bold text-white">{it.quantity}</span>
+                            {it.productName} × <span className="font-mono font-bold text-text-primary">{it.quantity}</span>
                           </span>
-                          <span className="font-mono text-white">
+                          <span className="font-mono text-text-primary">
                             ₹{Number(it.lineTotal).toLocaleString("en-IN")}
                           </span>
                         </div>
@@ -563,7 +563,7 @@ function AccountContent() {
                       <div className="flex items-center gap-3">
                         <Link
                           href={`/account/orders/${ord.id}`}
-                          className="font-bold text-white hover:text-brand-yellow flex items-center gap-1 transition-colors"
+                          className="font-bold text-text-primary hover:text-brand-yellow flex items-center gap-1 transition-colors"
                         >
                           <span>Order Details</span>
                           <ChevronRight size={13} />
@@ -580,7 +580,7 @@ function AccountContent() {
                         {ord.paymentStatus === "PAID" && (
                           <Link
                             href={`/account/orders/${ord.id}/invoice`}
-                            className="text-text-muted hover:text-white flex items-center gap-1 transition-colors"
+                            className="text-text-muted hover:text-text-primary flex items-center gap-1 transition-colors"
                           >
                             <FileText size={13} />
                             <span>Tax Invoice</span>
@@ -611,7 +611,7 @@ function AccountContent() {
                     {/* Payment Recovery Action for Unpaid Orders */}
                     {ord.paymentStatus !== "PAID" && ord.status !== "CANCELLED" && (
                       <div className="pt-3 border-t border-border-subtle/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-500/5 -mx-6 -mb-6 p-4 rounded-b-2xl border-t border-amber-500/20">
-                        <div className="flex items-center gap-2 text-amber-400 text-xs font-medium">
+                        <div className="flex items-center gap-2 text-amber-500 dark:text-amber-400 text-xs font-medium">
                           <CreditCard size={15} />
                           <span>Payment incomplete — complete payment now to start production.</span>
                         </div>
@@ -636,7 +636,7 @@ function AccountContent() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-display font-bold text-lg text-white">Saved Delivery Destinations</h2>
+                <h2 className="font-display font-bold text-lg text-text-primary">Saved Delivery Destinations</h2>
                 <p className="text-xs text-text-secondary">Pre-fill these shipping details for 1-click checkout.</p>
               </div>
               {!isAddingAddress && (
@@ -662,7 +662,7 @@ function AccountContent() {
                 className="rounded-3xl border border-brand-yellow/30 bg-bg-surface p-6 sm:p-8 space-y-4 shadow-xl"
               >
                 <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
-                  <h3 className="font-bold text-sm text-white">
+                  <h3 className="font-bold text-sm text-text-primary">
                     {editingAddressId ? "Edit Delivery Address" : "New Shipping Address"}
                   </h3>
                   <button
@@ -671,7 +671,7 @@ function AccountContent() {
                       setIsAddingAddress(false);
                       setEditingAddressId(null);
                     }}
-                    className="text-xs text-text-muted hover:text-white"
+                    className="text-xs text-text-muted hover:text-text-primary"
                   >
                     Cancel
                   </button>
@@ -686,7 +686,7 @@ function AccountContent() {
                       value={addressForm.label}
                       onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })}
                       placeholder="e.g. Head Office, Warehouse, Home"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-text-primary focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
 
@@ -698,7 +698,7 @@ function AccountContent() {
                       value={addressForm.phone}
                       onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
                       placeholder="9876543210"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-text-primary focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
 
@@ -710,7 +710,7 @@ function AccountContent() {
                       value={addressForm.line1}
                       onChange={(e) => setAddressForm({ ...addressForm, line1: e.target.value })}
                       placeholder="Building name, street, locality"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-text-primary focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
 
@@ -721,7 +721,7 @@ function AccountContent() {
                       value={addressForm.line2}
                       onChange={(e) => setAddressForm({ ...addressForm, line2: e.target.value })}
                       placeholder="Near Landmark, Area"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-text-primary focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
 
@@ -733,7 +733,7 @@ function AccountContent() {
                       value={addressForm.city}
                       onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
                       placeholder="New Delhi, Mumbai, etc."
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-text-primary focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
 
@@ -742,10 +742,10 @@ function AccountContent() {
                     <select
                       value={addressForm.state}
                       onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-brand-yellow"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-text-primary focus:outline-none focus:border-brand-yellow"
                     >
                       {INDIAN_STATES.map((st) => (
-                        <option key={st} value={st} className="bg-bg-surface text-white">
+                        <option key={st} value={st} className="bg-bg-surface text-text-primary">
                           {st}
                         </option>
                       ))}
@@ -761,7 +761,7 @@ function AccountContent() {
                       value={addressForm.pincode}
                       onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })}
                       placeholder="110001"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-white font-mono focus:outline-none focus:border-brand-yellow"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-3 py-2.5 text-text-primary font-mono focus:outline-none focus:border-brand-yellow"
                     />
                   </div>
                 </div>
@@ -784,7 +784,7 @@ function AccountContent() {
                         setIsAddingAddress(false);
                         setEditingAddressId(null);
                       }}
-                      className="px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-white"
+                      className="px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-text-primary"
                     >
                       Cancel
                     </button>
@@ -806,7 +806,7 @@ function AccountContent() {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-white">{addr.label}</span>
+                    <span className="font-bold text-sm text-text-primary">{addr.label}</span>
                     {addr.isDefault && (
                       <span className="px-2 py-0.5 rounded bg-brand-yellow/10 text-brand-yellow text-[10px] font-bold uppercase">
                         Default
@@ -817,7 +817,7 @@ function AccountContent() {
                     {addr.line1}
                     {addr.line2 && `, ${addr.line2}`}
                     <br />
-                    {addr.city}, {addr.state} — <strong className="text-white font-mono">{addr.pincode}</strong>
+                    {addr.city}, {addr.state} — <strong className="text-text-primary font-mono">{addr.pincode}</strong>
                   </p>
                   <div className="text-xs text-text-muted font-mono">Phone: {addr.phone}</div>
 
@@ -849,7 +849,7 @@ function AccountContent() {
         {activeTab === "profile" && (
           <div className="max-w-xl space-y-6">
             <div className="rounded-3xl border border-border-subtle bg-bg-surface p-7 sm:p-9 space-y-6 shadow-xl">
-              <h2 className="font-display font-bold text-lg text-white">Account Details</h2>
+              <h2 className="font-display font-bold text-lg text-text-primary">Account Details</h2>
 
               {profileMessage && (
                 <div
@@ -874,7 +874,7 @@ function AccountContent() {
                     required
                     value={profileForm.name}
                     onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                    className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-4 py-3 text-sm text-white"
+                    className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-4 py-3 text-sm text-text-primary"
                   />
                 </div>
 
@@ -899,12 +899,12 @@ function AccountContent() {
                     value={profileForm.phone}
                     onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                     placeholder="9876543210"
-                    className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-4 py-3 text-sm text-white"
+                    className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-4 py-3 text-sm text-text-primary"
                   />
                 </div>
 
                 <div className="pt-4 border-t border-border-subtle space-y-4">
-                  <div className="flex items-center gap-2 text-xs font-bold text-white uppercase tracking-wider">
+                  <div className="flex items-center gap-2 text-xs font-bold text-text-primary uppercase tracking-wider">
                     <Lock size={14} className="text-brand-yellow" />
                     <span>Change Password (Optional)</span>
                   </div>
@@ -916,7 +916,7 @@ function AccountContent() {
                       value={profileForm.currentPassword}
                       onChange={(e) => setProfileForm({ ...profileForm, currentPassword: e.target.value })}
                       placeholder="••••••••"
-                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-4 py-2.5 text-xs text-white"
+                      className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-4 py-2.5 text-xs text-text-primary"
                     />
                   </div>
 
@@ -928,7 +928,7 @@ function AccountContent() {
                         value={profileForm.newPassword}
                         onChange={(e) => setProfileForm({ ...profileForm, newPassword: e.target.value })}
                         placeholder="Min 6 characters"
-                        className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-4 py-2.5 text-xs text-white"
+                        className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-4 py-2.5 text-xs text-text-primary"
                       />
                     </div>
 
@@ -939,7 +939,7 @@ function AccountContent() {
                         value={profileForm.confirmPassword}
                         onChange={(e) => setProfileForm({ ...profileForm, confirmPassword: e.target.value })}
                         placeholder="Repeat new password"
-                        className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-4 py-2.5 text-xs text-white"
+                        className="w-full bg-bg-surface-alt border border-border-subtle rounded-xl px-4 py-2.5 text-xs text-text-primary"
                       />
                     </div>
                   </div>

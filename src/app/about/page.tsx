@@ -93,12 +93,12 @@ export default function AboutPage() {
         {/* Hero Section */}
         <div className="relative rounded-[28px] border border-border-subtle bg-bg-surface p-8 sm:p-14 mb-16 overflow-hidden shadow-xl">
           <div className="relative z-10 max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider">
               <Sparkles size={14} className="text-brand-yellow" />
               <span>Craftsmanship Meets Modern Engineering</span>
             </div>
 
-            <h1 className="font-display font-black text-3xl sm:text-5xl uppercase text-white tracking-tight leading-[1.1]">
+            <h1 className="font-display font-black text-3xl sm:text-5xl uppercase text-text-primary tracking-tight leading-[1.1]">
               Turning Digital Ideas Into Tangible Perfection
             </h1>
 
@@ -130,12 +130,12 @@ export default function AboutPage() {
         {/* The Story & Infrastructure */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center mb-20">
           <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider">
               <Printer size={13} className="text-brand-yellow" />
               <span>Our Heritage</span>
             </div>
 
-            <h2 className="font-display font-black text-2xl sm:text-4xl uppercase text-white tracking-tight">
+            <h2 className="font-display font-black text-2xl sm:text-4xl uppercase text-text-primary tracking-tight">
               15+ Years of Dedicated Print Innovation
             </h2>
 
@@ -152,19 +152,19 @@ export default function AboutPage() {
             </p>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="flex items-center gap-2 text-xs text-white">
+              <div className="flex items-center gap-2 text-xs text-text-primary">
                 <CheckCircle2 size={16} className="text-emerald-400/90 shrink-0" />
                 <span>In-House Pre-Press Lab</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-white">
+              <div className="flex items-center gap-2 text-xs text-text-primary">
                 <CheckCircle2 size={16} className="text-emerald-400/90 shrink-0" />
                 <span>ISO 12647 Color Standard</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-white">
+              <div className="flex items-center gap-2 text-xs text-text-primary">
                 <CheckCircle2 size={16} className="text-emerald-400/90 shrink-0" />
                 <span>Pan-India Air Logistics</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-white">
+              <div className="flex items-center gap-2 text-xs text-text-primary">
                 <CheckCircle2 size={16} className="text-emerald-400/90 shrink-0" />
                 <span>100% Satisfaction Pledge</span>
               </div>
@@ -189,7 +189,7 @@ export default function AboutPage() {
         {/* Machinery & Technology Fleet */}
         <div id="equipment" className="mb-20 scroll-mt-24">
           <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
-            <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-tight">
+            <h2 className="font-display font-black text-2xl sm:text-3xl text-text-primary uppercase tracking-tight">
               Industrial Fleet & Print Capabilities
             </h2>
             <p className="text-xs sm:text-sm text-text-secondary">
@@ -203,10 +203,10 @@ export default function AboutPage() {
                 key={mach.name}
                 className="rounded-2xl border border-border-subtle bg-bg-surface p-6 sm:p-8 space-y-3 hover:border-brand-yellow/40 transition-colors"
               >
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
                   {mach.type}
                 </span>
-                <h3 className="font-display font-black text-xl text-white">
+                <h3 className="font-display font-black text-xl text-text-primary">
                   {mach.name}
                 </h3>
                 <div className="text-xs font-mono text-brand-yellow bg-brand-yellow/10 border border-brand-yellow/20 px-3 py-1.5 rounded-lg inline-block">
@@ -223,7 +223,7 @@ export default function AboutPage() {
         {/* Core Values 4-Grid */}
         <div className="mb-20">
           <div className="text-center max-w-xl mx-auto mb-10 space-y-2">
-            <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-tight">
+            <h2 className="font-display font-black text-2xl sm:text-3xl text-text-primary uppercase tracking-tight">
               The Star Press Promise
             </h2>
             <p className="text-xs sm:text-sm text-text-secondary">
@@ -242,7 +242,7 @@ export default function AboutPage() {
                   <div className="w-11 h-11 rounded-xl bg-bg-surface-alt border border-border-subtle text-brand-yellow flex items-center justify-center">
                     <Icon size={22} />
                   </div>
-                  <h3 className="font-display font-bold text-base text-white">
+                  <h3 className="font-display font-bold text-base text-text-primary">
                     {val.title}
                   </h3>
                   <p className="text-xs text-text-secondary leading-relaxed">
@@ -257,7 +257,7 @@ export default function AboutPage() {
         {/* Bottom CTA Banner */}
         <div className="rounded-3xl border border-border-subtle bg-bg-surface p-8 sm:p-12 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-2 text-center sm:text-left">
-            <h3 className="font-display font-black text-2xl sm:text-3xl text-white uppercase">
+            <h3 className="font-display font-black text-2xl sm:text-3xl text-text-primary uppercase">
               Ready to bring your print project to life?
             </h3>
             <p className="text-xs sm:text-sm text-text-secondary max-w-xl">
