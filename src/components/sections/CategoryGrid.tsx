@@ -40,16 +40,16 @@ export default function CategoryGrid({ categories, products }: CategoryGridProps
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8 md:mb-10">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-border-subtle bg-bg-surface-alt text-text-secondary text-xs font-semibold uppercase tracking-wider">
-              <Sparkles size={13} className="text-brand-yellow" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-slate-200/80 dark:border-border-subtle bg-white dark:bg-bg-surface-alt text-slate-700 dark:text-text-secondary text-xs font-semibold uppercase tracking-wider shadow-2xs">
+              <Sparkles size={13} className="text-[#F5BA13]" />
               <span>Interactive Collection Rail</span>
             </div>
 
-            <h2 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-text-primary uppercase tracking-tight">
+            <h2 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-slate-900 dark:text-white uppercase tracking-tight">
               Shop by Category
             </h2>
 
-            <p className="text-sm sm:text-base text-text-secondary max-w-xl leading-relaxed">
+            <p className="text-sm sm:text-base text-slate-500 dark:text-text-secondary max-w-xl leading-relaxed">
               Hover over any print collection to expand full specifications, sample items,
               and live volume tier pricing.
             </p>
@@ -57,7 +57,7 @@ export default function CategoryGrid({ categories, products }: CategoryGridProps
 
           <Link
             href="/categories"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-text-secondary hover:text-text-primary bg-bg-surface-alt hover:bg-border-subtle border border-border-subtle hover:border-brand-yellow transition-all group shrink-0"
+            className="inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-text-secondary hover:text-slate-950 dark:hover:text-white bg-white dark:bg-bg-surface-alt hover:bg-slate-50 dark:hover:bg-border-subtle border border-slate-200/80 dark:border-border-subtle hover:border-[#F5BA13] transition-all group shrink-0 shadow-2xs"
           >
             <span>View All Categories</span>
             <ArrowRight
@@ -69,134 +69,142 @@ export default function CategoryGrid({ categories, products }: CategoryGridProps
 
         {/* 1. DESKTOP ACCORDION COLLECTION RAIL (Hidden on mobile/tablet) */}
         <div
-          className="hidden lg:flex gap-3 h-[480px] w-full rounded-[28px] border border-border-subtle bg-bg-surface p-3.5 backdrop-blur-xl shadow-2xl relative overflow-hidden"
+          className="hidden lg:block w-full rounded-[32px] sm:rounded-[36px] border border-slate-200/80 dark:border-border-subtle bg-white dark:bg-bg-surface p-5 sm:p-6 lg:p-7 shadow-[0_12px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-2xl relative overflow-hidden"
           onMouseLeave={() => setActiveId(enrichedCategories[0]?.id || "cat-1")}
         >
-          {enrichedCategories.map((cat) => {
-            const isExpanded = activeId === cat.id;
+          <div className="flex gap-3 xl:gap-3.5 h-[500px] xl:h-[520px] w-full items-stretch">
+            {enrichedCategories.map((cat) => {
+              const isExpanded = activeId === cat.id;
+              const sampleText =
+                cat.sampleProducts && cat.sampleProducts.length > 0
+                  ? `• ${cat.sampleProducts.join(" • ")}`
+                  : `• ${cat.tagline}`;
 
-            return (
-              <Link
-                key={cat.id}
-                href={cat.href}
-                onMouseEnter={() => setActiveId(cat.id)}
-                onFocus={() => setActiveId(cat.id)}
-                className={`relative rounded-2xl overflow-hidden cursor-pointer select-none transition-[flex,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col justify-between border ${
-                  isExpanded
-                    ? "flex-[3.8] border-brand-yellow/80 shadow-[0_16px_40px_rgba(0,0,0,0.8)] ring-1 ring-brand-yellow/40"
-                    : "flex-1 border-border-subtle bg-bg-surface-alt hover:border-brand-yellow/40"
-                }`}
-                style={{
-                  willChange: "flex",
-                }}
-              >
-                {/* Background Image with Scale Animation */}
-                <div className="absolute inset-0 bg-bg-surface-alt">
-                  <Image
-                    src={cat.imageUrl}
-                    alt={cat.name}
-                    fill
-                    sizes="(max-width: 1280px) 380px, 450px"
-                    quality={70}
-                    className={`object-cover transition-all duration-700 ${
-                      isExpanded
-                        ? "scale-105 opacity-90 filter-none"
-                        : "scale-100 opacity-25 grayscale-[30%]"
-                    }`}
-                  />
-                </div>
-
-                {/* Scrim Overlays */}
-                <div
-                  className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${
+              return (
+                <Link
+                  key={cat.id}
+                  href={cat.href}
+                  onMouseEnter={() => setActiveId(cat.id)}
+                  onFocus={() => setActiveId(cat.id)}
+                  className={`group relative rounded-[24px] overflow-hidden cursor-pointer select-none transition-[flex,transform,border-color,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col justify-between ${
                     isExpanded
-                      ? "bg-gradient-to-t from-[#0B0C10] via-[#0B0C10]/70 to-black/60"
-                      : "bg-[#0B0C10]/80 group-hover:bg-[#0B0C10]/60"
+                      ? "flex-[3.6] min-w-[340px] border-2 border-[#F5BA13] bg-white dark:bg-[#1A1D27] p-3 sm:p-3.5 shadow-sm"
+                      : "flex-1 min-w-[65px] max-w-[100px] border border-slate-200/80 dark:border-border-subtle bg-white dark:bg-[#1A1D27] hover:border-slate-300 dark:hover:border-border-strong hover:shadow-2xs"
                   }`}
-                  aria-hidden="true"
-                />
-
-                {/* --- CARD TOP HEADER --- */}
-                <div className="relative z-10 p-5 flex items-center justify-between gap-2">
-                  {/* Category Index Number */}
-                  <span
-                    className={`font-mono font-bold text-xs px-2.5 py-1 rounded-lg border transition-colors ${
-                      isExpanded
-                        ? "bg-brand-yellow/15 border-brand-yellow/40 text-brand-yellow"
-                        : "bg-bg-surface/80 border-border-subtle text-text-muted"
-                    }`}
-                  >
-                    {cat.indexNumber}
-                  </span>
-
-                  {/* Expanded Only: Item count pill */}
-                  {isExpanded && (
-                    <span className="animate-fadeIn text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-text-secondary border border-white/10">
-                      {cat.productCount} {cat.productCount === 1 ? "Product" : "Products"}
-                    </span>
-                  )}
-                </div>
-
-                {/* --- CARD BOTTOM CONTENT --- */}
-                <div className="relative z-10 p-5 sm:p-6">
+                  style={{
+                    willChange: "flex",
+                  }}
+                >
                   {isExpanded ? (
-                    /* EXPANDED CONTENT VIEW */
-                    <div className="space-y-3 animate-fadeIn">
-                      {/* Top sample tags */}
-                      {cat.sampleProducts && cat.sampleProducts.length > 0 && (
-                        <div className="flex items-center gap-1.5 overflow-hidden">
-                          <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan shrink-0 animate-pulse" />
-                          <span className="text-[11px] font-medium text-brand-cyan tracking-wide truncate">
-                            {cat.sampleProducts.join(" • ")}
+                    /* EXPANDED ACTIVE CARD (Matching reference image) */
+                    <div className="h-full w-full flex flex-col justify-between animate-fadeIn">
+                      {/* Top Inset Image Box */}
+                      <div className="relative w-full h-[255px] xl:h-[265px] rounded-[18px] overflow-hidden shrink-0 bg-slate-100 dark:bg-slate-800">
+                        <Image
+                          src={cat.imageUrl}
+                          alt={cat.name}
+                          fill
+                          sizes="(max-width: 1280px) 420px, 480px"
+                          quality={85}
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+
+                        {/* Top-Left Category Index Badge */}
+                        <div className="absolute top-3 left-3 z-10">
+                          <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-md bg-[#F5BA13] text-slate-950 shadow-xs">
+                            {cat.indexNumber}
                           </span>
                         </div>
-                      )}
 
-                      {/* Main Title */}
-                      <h3 className="font-display font-black text-2xl xl:text-3xl text-white uppercase tracking-tight leading-[1.1]">
-                        {cat.name}
-                      </h3>
+                        {/* Top-Right Products Count Pill */}
+                        <div className="absolute top-3 right-3 z-10">
+                          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/95 dark:bg-slate-900/90 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-800 shadow-xs flex items-center gap-1">
+                            {cat.productCount} {cat.productCount === 1 ? "Product" : "Products"}
+                          </span>
+                        </div>
+                      </div>
 
-                      {/* Tagline */}
-                      <p className="text-xs xl:text-sm text-text-secondary line-clamp-2 leading-relaxed">
-                        {cat.tagline}
-                      </p>
-
-                      {/* Price & Action Row */}
-                      <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-3">
+                      {/* Bottom White/Ivory Content Box */}
+                      <div className="flex-1 flex flex-col justify-between pt-3.5 pb-1 px-1 sm:px-1.5">
                         <div>
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted block">
-                            Starting from
-                          </span>
-                          <div className="font-mono font-black text-xl text-brand-yellow">
-                            ₹{cat.startingPrice.toLocaleString("en-IN")}
+                          {/* Sample Products Tagline Row */}
+                          <div className="flex items-center gap-1.5 overflow-hidden">
+                            <span className="text-xs font-bold text-[#F5BA13] tracking-wide truncate">
+                              {sampleText}
+                            </span>
                           </div>
+
+                          {/* Main Title */}
+                          <h3 className="font-display font-black text-2xl xl:text-3xl text-slate-900 dark:text-white uppercase tracking-tight leading-tight mt-1">
+                            {cat.name}
+                          </h3>
+
+                          {/* Tagline / Description */}
+                          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium line-clamp-1 xl:line-clamp-2 mt-1 leading-relaxed">
+                            {cat.tagline || cat.description}
+                          </p>
                         </div>
 
-                        <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-black bg-brand-yellow hover:bg-yellow-400 transition-all shadow-md shadow-black/40">
-                          <span>Explore Line</span>
-                          <ArrowUpRight size={15} />
+                        {/* Starting Price & Explore CTA Row */}
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3 mt-3">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500 block">
+                              Starting from
+                            </span>
+                            <div className="font-display font-black text-2xl xl:text-3xl text-[#F5BA13] leading-none mt-0.5">
+                              ₹{cat.startingPrice.toLocaleString("en-IN")}
+                            </div>
+                          </div>
+
+                          <div className="inline-flex items-center gap-1 px-4.5 py-2.5 rounded-full text-xs sm:text-sm font-bold text-slate-950 bg-[#F5BA13] hover:bg-[#E5AC0E] active:scale-[0.98] transition-all shadow-xs shrink-0">
+                            <span>Explore Line</span>
+                            <ArrowUpRight size={15} />
+                          </div>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    /* COLLAPSED VERTICAL PREVIEW */
-                    <div className="flex flex-col items-center justify-end h-full pb-2">
-                      <span
-                        className="font-display font-bold text-xs xl:text-sm text-text-secondary tracking-widest uppercase whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-colors hover:text-white"
-                      >
-                        {cat.name}
-                      </span>
-                      <span
-                        className="w-1.5 h-1.5 rounded-full mt-3 transition-colors"
-                        style={{ background: cat.accentColor || "#FFCF1B" }}
-                      />
+                    /* COLLAPSED INACTIVE CARD (Matching reference image) */
+                    <div className="relative h-full w-full overflow-hidden flex flex-col justify-between p-3 select-none">
+                      {/* Background Image with Bottom Smooth Fade */}
+                      <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800">
+                        <Image
+                          src={cat.imageUrl}
+                          alt={cat.name}
+                          fill
+                          sizes="140px"
+                          quality={75}
+                          className="object-cover object-top opacity-90 transition-transform duration-700 group-hover:scale-105"
+                        />
+                        {/* Soft ivory/white gradient overlay from bottom */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/85 to-transparent dark:from-[#1A1D27] dark:via-[#1A1D27]/85 dark:to-transparent pointer-events-none" />
+                      </div>
+
+                      {/* Top Centered Category Number Badge */}
+                      <div className="relative z-10 flex justify-center pt-1">
+                        <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-lg bg-white/95 dark:bg-slate-900/90 backdrop-blur-md text-slate-700 dark:text-slate-300 border border-slate-200/70 dark:border-slate-800 shadow-xs">
+                          {cat.indexNumber}
+                        </span>
+                      </div>
+
+                      {/* Bottom Vertical Label & Vibrant Colored Dot */}
+                      <div className="relative z-10 pb-2 flex flex-col items-center justify-end gap-2.5 mt-auto">
+                        <span
+                          className="font-display font-bold text-[11px] sm:text-xs text-slate-800 dark:text-slate-200 tracking-wider uppercase whitespace-nowrap [writing-mode:vertical-rl] select-none transition-colors group-hover:text-slate-950 dark:group-hover:text-white"
+                        >
+                          {cat.name}
+                        </span>
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0 shadow-xs transition-transform group-hover:scale-125"
+                          style={{ backgroundColor: cat.accentColor || "#F5BA13" }}
+                        />
+                      </div>
                     </div>
                   )}
-                </div>
-              </Link>
-            );
-          })}
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
         {/* 2. MOBILE & TABLET HORIZONTAL SWIPE RAIL (< lg) */}
@@ -205,78 +213,83 @@ export default function CategoryGrid({ categories, products }: CategoryGridProps
             className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory py-4 px-2 no-scrollbar"
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            {enrichedCategories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={cat.href}
-                className="relative w-[280px] sm:w-[320px] h-[400px] shrink-0 snap-center rounded-2xl overflow-hidden border border-border-subtle bg-bg-surface flex flex-col justify-between p-5 select-none shadow-xl active:scale-[0.98] transition-transform"
-              >
-                {/* Background Image */}
-                <div className="absolute inset-0 bg-bg-surface-alt">
-                  <Image
-                    src={cat.imageUrl}
-                    alt={cat.name}
-                    fill
-                    sizes="320px"
-                    quality={70}
-                    className="object-cover"
-                  />
-                </div>
+            {enrichedCategories.map((cat) => {
+              const sampleText =
+                cat.sampleProducts && cat.sampleProducts.length > 0
+                  ? `• ${cat.sampleProducts.join(" • ")}`
+                  : `• ${cat.tagline}`;
 
-                {/* Dark Vignette */}
-                <div
-                  className="absolute inset-0 bg-gradient-to-t from-[#0B0C10] via-[#0B0C10]/70 to-black/50 pointer-events-none"
-                  aria-hidden="true"
-                />
+              return (
+                <Link
+                  key={cat.id}
+                  href={cat.href}
+                  className="relative w-[300px] sm:w-[330px] h-[460px] shrink-0 snap-center rounded-[24px] border border-slate-200/80 dark:border-border-subtle hover:border-[#F5BA13] bg-white dark:bg-[#1A1D27] p-3.5 flex flex-col justify-between select-none shadow-md active:scale-[0.98] transition-all"
+                >
+                  {/* Top Inset Image */}
+                  <div className="relative w-full h-[240px] rounded-[18px] overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
+                    <Image
+                      src={cat.imageUrl}
+                      alt={cat.name}
+                      fill
+                      sizes="330px"
+                      quality={75}
+                      className="object-cover"
+                    />
 
-                {/* Top Badge Row */}
-                <div className="relative z-10 flex items-center justify-between gap-2">
-                  <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-brand-yellow/40 text-brand-yellow">
-                    {cat.indexNumber}
-                  </span>
-                  <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-text-secondary border border-white/10">
-                    {cat.productCount} Items
-                  </span>
-                </div>
-
-                {/* Bottom Content */}
-                <div className="relative z-10 space-y-2">
-                  {cat.sampleProducts && cat.sampleProducts.length > 0 && (
-                    <p className="text-[10px] font-medium text-slate-400 tracking-wide truncate">
-                      {cat.sampleProducts.join(" • ")}
-                    </p>
-                  )}
-
-                  <h3 className="font-display font-black text-xl text-white uppercase tracking-tight">
-                    {cat.name}
-                  </h3>
-
-                  <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">
-                    {cat.tagline}
-                  </p>
-
-                  <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-                    <div>
-                      <span className="text-[9px] uppercase font-bold tracking-wider text-text-muted block">
-                        From
-                      </span>
-                      <span className="font-mono font-black text-base text-brand-yellow">
-                        ₹{cat.startingPrice.toLocaleString("en-IN")}
+                    {/* Top Badges */}
+                    <div className="absolute top-3 left-3 z-10">
+                      <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-md bg-[#F5BA13] text-slate-950 shadow-xs">
+                        {cat.indexNumber}
                       </span>
                     </div>
-
-                    <div className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-black bg-brand-yellow">
-                      <span>Explore</span>
-                      <ArrowUpRight size={13} />
+                    <div className="absolute top-3 right-3 z-10">
+                      <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/95 dark:bg-slate-900/90 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-800 shadow-xs">
+                        {cat.productCount} {cat.productCount === 1 ? "Product" : "Products"}
+                      </span>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+
+                  {/* Bottom Content */}
+                  <div className="flex-1 flex flex-col justify-between pt-3 pb-1 px-1">
+                    <div>
+                      <div className="flex items-center gap-1.5 overflow-hidden">
+                        <span className="text-xs font-bold text-[#F5BA13] tracking-wide truncate">
+                          {sampleText}
+                        </span>
+                      </div>
+
+                      <h3 className="font-display font-black text-xl text-slate-900 dark:text-white uppercase tracking-tight leading-tight mt-1">
+                        {cat.name}
+                      </h3>
+
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium line-clamp-2 mt-1 leading-relaxed">
+                        {cat.tagline || cat.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 mt-2">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500 block">
+                          Starting from
+                        </span>
+                        <div className="font-display font-black text-xl text-[#F5BA13]">
+                          ₹{cat.startingPrice.toLocaleString("en-IN")}
+                        </div>
+                      </div>
+
+                      <div className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-xs font-bold text-slate-950 bg-[#F5BA13]">
+                        <span>Explore Line</span>
+                        <ArrowUpRight size={14} />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
 
-          <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-text-muted">
-            <Compass size={13} className="text-brand-yellow animate-pulse" />
+          <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-slate-400">
+            <Compass size={13} className="text-[#F5BA13] animate-pulse" />
             <span>Swipe horizontally to explore all 8 print categories</span>
           </div>
         </div>
