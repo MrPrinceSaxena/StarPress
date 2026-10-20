@@ -545,7 +545,7 @@ export default function LoginPage() {
       {/* Full-bleed Star Press workspace background */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <Image
-          src="/images/auth-press-bg.png"
+          src="/images/auth-press-bg.jpg"
           alt="Star Press Studio"
           fill
           priority

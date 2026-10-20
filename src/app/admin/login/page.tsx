@@ -151,7 +151,7 @@ function AdminLoginForm() {
       {/* Background Graphic Asset */}
       <div className="absolute inset-0 z-0 opacity-20 pointer-events-none select-none">
         <Image
-          src="/images/auth-press-bg.png"
+          src="/images/auth-press-bg.jpg"
           alt="Star Press Operations"
           fill
           priority

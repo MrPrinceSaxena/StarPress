@@ -7,8 +7,7 @@ import Footer from "@/components/layout/Footer";
 import ShopClientView from "@/components/shop/ShopClientView";
 import { getLiveCatalogProducts, getLiveCategories } from "@/server/products";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Commercial & Custom Printing Catalog | Star Press Khatima",

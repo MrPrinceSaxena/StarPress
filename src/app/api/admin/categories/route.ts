@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminAccess } from "@/lib/admin/auth-check";
-import { listAdminCategories } from "@/server/products";
+import { listAdminCategories, invalidateCatalogCache } from "@/server/products";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
       });
     } catch {}
 
+    invalidateCatalogCache();
     return NextResponse.json({ success: true, category });
   } catch (error: any) {
     console.error("API /api/admin/categories POST error:", error);

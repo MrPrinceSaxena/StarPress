@@ -739,6 +739,7 @@ export async function createAdminProduct(
       })),
     };
 
+    invalidateCatalogCache();
     return { success: true, product: formatted };
   } catch (err: any) {
     console.error("[Create Product] Database error:", err);
@@ -999,6 +1000,7 @@ export async function updateAdminProduct(
 
   const catalogProd = getAllProducts().find((p) => p.id === id || p.slug === id);
 
+  invalidateCatalogCache();
   return {
     success: !!updatedProduct,
     product: updatedProduct || {
@@ -1071,6 +1073,7 @@ export async function deleteAdminProduct(id: string, adminEmail: string, ipAddre
 
   persistentStore.deleteCustomProduct(id);
   persistentStore.saveProductOverride(id, { status: "archived" });
+  invalidateCatalogCache();
 
   return { success: true };
 }
@@ -1108,6 +1111,7 @@ export async function bulkUpdateProductStatus(ids: string[], status: string) {
       where: { id: { in: ids } },
       data: { status, updatedAt: new Date() },
     });
+    invalidateCatalogCache();
     return res.count;
   } catch {
     return ids.length;
@@ -1122,236 +1126,297 @@ import * as React from "react";
 
 const safeCache = typeof (React as any).cache === "function" ? (React as any).cache : <T extends (...args: any[]) => any>(fn: T): T => fn;
 
+// In-memory TTL Cache (60 seconds) with single-flight promise dedup
+interface MemoryCacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+let cachedCategories: MemoryCacheEntry<CatalogCategory[]> | null = null;
+let cachedCatalogProducts: MemoryCacheEntry<CatalogProduct[]> | null = null;
+let inflightCategoriesPromise: Promise<CatalogCategory[]> | null = null;
+let inflightProductsPromise: Promise<CatalogProduct[]> | null = null;
+
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
+/**
+ * Invalidate the in-memory catalog cache when products or categories are modified
+ */
+export function invalidateCatalogCache(): void {
+  cachedCategories = null;
+  cachedCatalogProducts = null;
+  inflightCategoriesPromise = null;
+  inflightProductsPromise = null;
+}
+
 /**
  * Return live categories merging database categories with baseline catalog categories.
  * Used by storefront (/shop, /categories, home) so any new category created in admin appears immediately.
  */
 export async function getLiveCategories(): Promise<CatalogCategory[]> {
-  const base = getAllCategories();
-  let dbCategories: any[] = [];
-  try {
-    dbCategories = await db.category.findMany({
-      orderBy: { displayOrder: "asc" },
-      include: {
-        _count: { select: { products: true } },
-      },
-    });
-  } catch (err) {
-    console.warn("[Live Categories] DB fetch error:", err);
+  const now = Date.now();
+  if (cachedCategories && now - cachedCategories.timestamp < CACHE_TTL_MS) {
+    return cachedCategories.data;
+  }
+  if (inflightCategoriesPromise) {
+    return inflightCategoriesPromise;
   }
 
-  if (!dbCategories || dbCategories.length === 0) {
-    return base;
-  }
+  inflightCategoriesPromise = (async () => {
+    try {
+      const base = getAllCategories();
+      let dbCategories: any[] = [];
+      try {
+        dbCategories = await db.category.findMany({
+          orderBy: { displayOrder: "asc" },
+          include: {
+            _count: { select: { products: true } },
+          },
+        });
+      } catch (err) {
+        console.warn("[Live Categories] DB fetch error:", err);
+      }
 
-  const baseMap = new Map<string, CatalogCategory>();
-  base.forEach((c) => {
-    baseMap.set(c.slug, c);
-    baseMap.set(c.id, c);
-  });
+      if (!dbCategories || dbCategories.length === 0) {
+        cachedCategories = { data: base, timestamp: Date.now() };
+        return base;
+      }
 
-  const result: CatalogCategory[] = [];
-  const seenSlugs = new Set<string>();
+      const baseMap = new Map<string, CatalogCategory>();
+      base.forEach((c) => {
+        baseMap.set(c.slug, c);
+        baseMap.set(c.id, c);
+      });
 
-  for (const dbc of dbCategories) {
-    const matchedBase = baseMap.get(dbc.slug) || baseMap.get(dbc.id);
-    seenSlugs.add(dbc.slug);
-    result.push({
-      id: dbc.id,
-      slug: dbc.slug,
-      name: dbc.name,
-      tagline: matchedBase?.tagline || `Commercial ${dbc.name} Services`,
-      description: dbc.description || matchedBase?.description || `Explore our high quality ${dbc.name} printing solutions.`,
-      imageUrl: dbc.imageUrl || matchedBase?.imageUrl || "/images/cat-stationery.jpg",
-      badgeColorClass: matchedBase?.badgeColorClass || "bg-blue-500/20 text-blue-300 border-blue-500/30",
-      accentColor: matchedBase?.accentColor || "#3B82F6",
-    });
-  }
+      const result: CatalogCategory[] = [];
+      const seenSlugs = new Set<string>();
 
-  for (const bc of base) {
-    if (!seenSlugs.has(bc.slug)) {
-      result.push(bc);
-      seenSlugs.add(bc.slug);
+      for (const dbc of dbCategories) {
+        const matchedBase = baseMap.get(dbc.slug) || baseMap.get(dbc.id);
+        seenSlugs.add(dbc.slug);
+        result.push({
+          id: dbc.id,
+          slug: dbc.slug,
+          name: dbc.name,
+          tagline: matchedBase?.tagline || `Commercial ${dbc.name} Services`,
+          description: dbc.description || matchedBase?.description || `Explore our high quality ${dbc.name} printing solutions.`,
+          imageUrl: dbc.imageUrl || matchedBase?.imageUrl || "/images/cat-stationery.jpg",
+          badgeColorClass: matchedBase?.badgeColorClass || "bg-blue-500/20 text-blue-300 border-blue-500/30",
+          accentColor: matchedBase?.accentColor || "#3B82F6",
+        });
+      }
+
+      for (const bc of base) {
+        if (!seenSlugs.has(bc.slug)) {
+          result.push(bc);
+          seenSlugs.add(bc.slug);
+        }
+      }
+
+      cachedCategories = { data: result, timestamp: Date.now() };
+      return result;
+    } finally {
+      inflightCategoriesPromise = null;
     }
-  }
+  })();
 
-  return result;
+  return inflightCategoriesPromise;
 }
 
-export const getLiveCatalogProducts = safeCache(async function getLiveCatalogProducts(): Promise<CatalogProduct[]> {
-  const base = getAllProducts();
-  
-  let dbProducts: any[] = [];
-  try {
-    dbProducts = await db.product.findMany({
-      where: { status: { not: "archived" } },
-      include: {
-        category: true,
-        images: { orderBy: { position: 'asc' } }
-      }
-    });
-  } catch (err) {
-    console.warn("[Live Catalog] DB fetch error:", err);
+async function fetchLiveCatalogProducts(): Promise<CatalogProduct[]> {
+  const now = Date.now();
+  if (cachedCatalogProducts && now - cachedCatalogProducts.timestamp < CACHE_TTL_MS) {
+    return cachedCatalogProducts.data;
+  }
+  if (inflightProductsPromise) {
+    return inflightProductsPromise;
   }
 
-  const overrides = persistentStore.getProductOverrides();
-  const custom = persistentStore.getCustomProducts();
-
-  const dbProdMap = new Map<string, any>();
-  dbProducts.forEach(p => {
-    dbProdMap.set(p.slug, p);
-    dbProdMap.set(p.id, p);
-  });
-
-  const mergedBase: CatalogProduct[] = base
-    .map((prod) => {
-      const dbMatch = dbProdMap.get(prod.slug) || dbProdMap.get(prod.id);
+  inflightProductsPromise = (async () => {
+    try {
+      const base = getAllProducts();
       
-      let finalName = prod.name;
-      let finalPrice = prod.basePrice;
-      let finalDesc = prod.description;
-      let finalShort = prod.shortDescription;
-      let finalImages = prod.images;
-      let finalStatus = "published";
-
-      if (dbMatch) {
-         finalStatus = dbMatch.status;
-         finalName = dbMatch.name;
-         finalPrice = Number(dbMatch.basePrice);
-         finalDesc = dbMatch.description || prod.description;
-         finalShort = dbMatch.shortDescription || prod.shortDescription;
-         if (dbMatch.images && dbMatch.images.length > 0) {
-           finalImages = dbMatch.images.map((img: any) => img.url);
-         }
-      } else {
-         const override = overrides[prod.id] || overrides[prod.slug];
-         if (override) {
-           finalStatus = override.status || "published";
-           finalName = override.name ?? prod.name;
-           finalPrice = override.basePrice !== undefined ? Number(override.basePrice) : prod.basePrice;
-           finalDesc = override.description ?? prod.description;
-           finalShort = override.shortDescription ?? prod.shortDescription;
-           if (override.images && Array.isArray(override.images) && override.images.length > 0) {
-             finalImages = override.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)));
-           }
-         }
+      let dbProducts: any[] = [];
+      try {
+        dbProducts = await db.product.findMany({
+          where: { status: { not: "archived" } },
+          include: {
+            category: true,
+            images: { orderBy: { position: 'asc' } }
+          }
+        });
+      } catch (err) {
+        console.warn("[Live Catalog] DB fetch error:", err);
       }
 
-      if (finalStatus === "draft" || finalStatus === "archived") return null;
+      const overrides = persistentStore.getProductOverrides();
+      const custom = persistentStore.getCustomProducts();
 
-      return {
-        ...prod,
-        id: dbMatch ? dbMatch.id : prod.id,
-        name: finalName,
-        basePrice: finalPrice,
-        description: finalDesc,
-        shortDescription: finalShort,
-        images: finalImages,
-      };
-    })
-    .filter((p): p is CatalogProduct => p !== null);
+      const dbProdMap = new Map<string, any>();
+      dbProducts.forEach(p => {
+        dbProdMap.set(p.slug, p);
+        dbProdMap.set(p.id, p);
+      });
 
-  const baseIds = new Set([...base.map(p => p.id), ...base.map(p => p.slug)]);
-  
-  const customFromDb: CatalogProduct[] = dbProducts
-    .filter(p => !baseIds.has(p.id) && !baseIds.has(p.slug) && p.status !== "draft" && p.status !== "archived")
-    .map(c => {
-      const imgUrls = c.images && c.images.length > 0
-        ? c.images.map((img: any) => img.url)
-        : ["/images/hero-composition.jpg"];
+      const mergedBase: CatalogProduct[] = base
+        .map((prod) => {
+          const dbMatch = dbProdMap.get(prod.slug) || dbProdMap.get(prod.id);
+          
+          let finalName = prod.name;
+          let finalPrice = prod.basePrice;
+          let finalDesc = prod.description;
+          let finalShort = prod.shortDescription;
+          let finalImages = prod.images;
+          let finalStatus = "published";
+
+          if (dbMatch) {
+             finalStatus = dbMatch.status;
+             finalName = dbMatch.name;
+             finalPrice = Number(dbMatch.basePrice);
+             finalDesc = dbMatch.description || prod.description;
+             finalShort = dbMatch.shortDescription || prod.shortDescription;
+             if (dbMatch.images && dbMatch.images.length > 0) {
+               finalImages = dbMatch.images.map((img: any) => img.url);
+             }
+          } else {
+             const override = overrides[prod.id] || overrides[prod.slug];
+             if (override) {
+               finalStatus = override.status || "published";
+               finalName = override.name ?? prod.name;
+               finalPrice = override.basePrice !== undefined ? Number(override.basePrice) : prod.basePrice;
+               finalDesc = override.description ?? prod.description;
+               finalShort = override.shortDescription ?? prod.shortDescription;
+               if (override.images && Array.isArray(override.images) && override.images.length > 0) {
+                 finalImages = override.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)));
+               }
+             }
+          }
+
+          if (finalStatus === "draft" || finalStatus === "archived") return null;
+
+          return {
+            ...prod,
+            id: dbMatch ? dbMatch.id : prod.id,
+            name: finalName,
+            basePrice: finalPrice,
+            description: finalDesc,
+            shortDescription: finalShort,
+            images: finalImages,
+          };
+        })
+        .filter((p): p is CatalogProduct => p !== null);
+
+      const baseIds = new Set([...base.map(p => p.id), ...base.map(p => p.slug)]);
       
-      const catSlug = c.category?.slug || (c.categoryId && !c.categoryId.startsWith("cm") ? c.categoryId : "business-printing");
-      const catName = c.category?.name || "Business Printing";
-        
-      return {
-        id: c.id,
-        name: c.name,
-        slug: c.slug,
-        categorySlug: catSlug,
-        categoryName: catName,
-        basePrice: Number(c.basePrice || 0),
-        rating: 5.0,
-        reviewCount: Array.isArray(c.reviews) ? c.reviews.length : 0,
-        shortDescription: c.shortDescription || c.description || "",
-        description: c.description || "",
-        images: imgUrls,
-        isFeatured: c.isFeatured || false,
-        isBestSeller: false,
-        tags: [catSlug || "custom-print"],
-        sizeOptions: [
-          { id: "std", label: "Standard", multiplier: 1, default: true },
-        ],
-        materialOptions: [
-          { id: "mat-std", label: "Premium Standard", extraPricePerUnit: 0, default: true },
-        ],
-        quantityTiers: [
-          { quantity: 100, discountPercent: 0, default: true },
-          { quantity: 250, discountPercent: 10 },
-          { quantity: 500, discountPercent: 20 },
-        ],
-        specifications: {
-          "Print Technology": "Commercial Offset & Digital Press",
-          "Turnaround Time": "2-3 Business Days",
-          "Shipping": "Pan-India Tracked Express",
-        },
-        features: [
-          "Commercial grade high-resolution print output",
-          "Rigid quality inspection before dispatch",
-          "Safe eco-friendly premium substrates",
-        ],
-      } as CatalogProduct;
-    });
+      const customFromDb: CatalogProduct[] = dbProducts
+        .filter(p => !baseIds.has(p.id) && !baseIds.has(p.slug) && p.status !== "draft" && p.status !== "archived")
+        .map(c => {
+          const imgUrls = c.images && c.images.length > 0
+            ? c.images.map((img: any) => img.url)
+            : ["/images/hero-composition.jpg"];
+          
+          const catSlug = c.category?.slug || (c.categoryId && !c.categoryId.startsWith("cm") ? c.categoryId : "business-printing");
+          const catName = c.category?.name || "Business Printing";
+            
+          return {
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            categorySlug: catSlug,
+            categoryName: catName,
+            basePrice: Number(c.basePrice || 0),
+            rating: 5.0,
+            reviewCount: Array.isArray(c.reviews) ? c.reviews.length : 0,
+            shortDescription: c.shortDescription || c.description || "",
+            description: c.description || "",
+            images: imgUrls,
+            isFeatured: c.isFeatured || false,
+            isBestSeller: false,
+            tags: [catSlug || "custom-print"],
+            sizeOptions: [
+              { id: "std", label: "Standard", multiplier: 1, default: true },
+            ],
+            materialOptions: [
+              { id: "mat-std", label: "Premium Standard", extraPricePerUnit: 0, default: true },
+            ],
+            quantityTiers: [
+              { quantity: 100, discountPercent: 0, default: true },
+              { quantity: 250, discountPercent: 10 },
+              { quantity: 500, discountPercent: 20 },
+            ],
+            specifications: {
+              "Print Technology": "Commercial Offset & Digital Press",
+              "Turnaround Time": "2-3 Business Days",
+              "Shipping": "Pan-India Tracked Express",
+            },
+            features: [
+              "Commercial grade high-resolution print output",
+              "Rigid quality inspection before dispatch",
+              "Safe eco-friendly premium substrates",
+            ],
+          } as CatalogProduct;
+        });
 
-  const dbCustomIds = new Set([...customFromDb.map(c => c.id), ...customFromDb.map(c => c.slug)]);
-  
-  const customCatalog: CatalogProduct[] = custom
-    .filter((c) => c.status !== "draft" && c.status !== "archived" && !dbCustomIds.has(c.id) && !dbCustomIds.has(c.slug) && !baseIds.has(c.id) && !baseIds.has(c.slug))
-    .map((c) => {
-      const imgUrls = c.images && Array.isArray(c.images) && c.images.length > 0
-        ? c.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)))
-        : ["/images/hero-composition.jpg"];
+      const dbCustomIds = new Set([...customFromDb.map(c => c.id), ...customFromDb.map(c => c.slug)]);
+      
+      const customCatalog: CatalogProduct[] = custom
+        .filter((c) => c.status !== "draft" && c.status !== "archived" && !dbCustomIds.has(c.id) && !dbCustomIds.has(c.slug) && !baseIds.has(c.id) && !baseIds.has(c.slug))
+        .map((c) => {
+          const imgUrls = c.images && Array.isArray(c.images) && c.images.length > 0
+            ? c.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)))
+            : ["/images/hero-composition.jpg"];
 
-      return {
-        id: c.id,
-        name: c.name,
-        slug: c.slug,
-        categorySlug: c.categorySlug || c.categoryId || "business-printing",
-        categoryName: c.categoryName || "Business Printing",
-        basePrice: Number(c.basePrice || 0),
-        rating: 5.0,
-        reviewCount: 0,
-        shortDescription: c.shortDescription || c.description || "",
-        description: c.description || "",
-        images: imgUrls,
-        isFeatured: c.isFeatured || false,
-        isBestSeller: false,
-        tags: [c.categorySlug || "custom-print"],
-        sizeOptions: [
-          { id: "std", label: "Standard", multiplier: 1, default: true },
-        ],
-        materialOptions: [
-          { id: "mat-std", label: "Premium Standard", extraPricePerUnit: 0, default: true },
-        ],
-        quantityTiers: [
-          { quantity: 100, discountPercent: 0, default: true },
-          { quantity: 250, discountPercent: 10 },
-          { quantity: 500, discountPercent: 20 },
-        ],
-        specifications: {
-          "Print Technology": "Commercial Offset & Digital Press",
-          "Turnaround Time": "2-3 Business Days",
-          "Shipping": "Pan-India Tracked Express",
-        },
-        features: [
-          "Commercial grade high-resolution print output",
-          "Rigid quality inspection before dispatch",
-          "Safe eco-friendly premium substrates",
-        ],
-      };
-    });
+          return {
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            categorySlug: c.categorySlug || c.categoryId || "business-printing",
+            categoryName: c.categoryName || "Business Printing",
+            basePrice: Number(c.basePrice || 0),
+            rating: 5.0,
+            reviewCount: 0,
+            shortDescription: c.shortDescription || c.description || "",
+            description: c.description || "",
+            images: imgUrls,
+            isFeatured: c.isFeatured || false,
+            isBestSeller: false,
+            tags: [c.categorySlug || "custom-print"],
+            sizeOptions: [
+              { id: "std", label: "Standard", multiplier: 1, default: true },
+            ],
+            materialOptions: [
+              { id: "mat-std", label: "Premium Standard", extraPricePerUnit: 0, default: true },
+            ],
+            quantityTiers: [
+              { quantity: 100, discountPercent: 0, default: true },
+              { quantity: 250, discountPercent: 10 },
+              { quantity: 500, discountPercent: 20 },
+            ],
+            specifications: {
+              "Print Technology": "Commercial Offset & Digital Press",
+              "Turnaround Time": "2-3 Business Days",
+              "Shipping": "Pan-India Tracked Express",
+            },
+            features: [
+              "Commercial grade high-resolution print output",
+              "Rigid quality inspection before dispatch",
+              "Safe eco-friendly premium substrates",
+            ],
+          };
+        });
 
-  return [...customFromDb, ...customCatalog, ...mergedBase];
-});
+      const finalResult = [...customFromDb, ...customCatalog, ...mergedBase];
+      cachedCatalogProducts = { data: finalResult, timestamp: Date.now() };
+      return finalResult;
+    } finally {
+      inflightProductsPromise = null;
+    }
+  })();
+
+  return inflightProductsPromise;
+}
+
+export const getLiveCatalogProducts = safeCache(fetchLiveCatalogProducts);
 
 /**
  * Return live, dynamic product by slug with real-time price & image overrides applied.

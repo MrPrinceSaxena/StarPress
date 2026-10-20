@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminAccess } from "@/lib/admin/auth-check";
 import { db } from "@/lib/db";
 import { deleteStorageImage, BUCKETS } from "@/lib/supabase/storage";
+import { invalidateCatalogCache } from "@/server/products";
 
 interface RouteParams {
   params: { id: string };
@@ -70,6 +71,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       });
     } catch {}
 
+    invalidateCatalogCache();
     return NextResponse.json({
       success: true,
       category: {
@@ -158,6 +160,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       });
     } catch {}
 
+    invalidateCatalogCache();
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error(
@@ -202,6 +205,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     );
 
+    invalidateCatalogCache();
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("API /api/admin/categories reorder error:", error);

@@ -183,7 +183,6 @@ export default function Hero({ slides: propSlides }: HeroProps) {
                     src={s.src}
                     alt={s.alt}
                     fill
-                    unoptimized
                     priority={index === 0}
                     sizes="100vw"
                     className="object-cover object-center"

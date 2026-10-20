@@ -41,6 +41,8 @@ interface MenuItem {
   highlight?: boolean;
 }
 
+let clientAnnouncementCache: { text: string; isActive: boolean; color: string } | null = null;
+
 export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -57,13 +59,19 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const [activeSection, setActiveSection] = useState<string>("");
 
   const isHome = pathname === "/";
-  const [announcement, setAnnouncement] = useState<{ text: string; isActive: boolean; color: string } | null>(null);
+  const [announcement, setAnnouncement] = useState<{ text: string; isActive: boolean; color: string } | null>(
+    () => clientAnnouncementCache
+  );
 
   useEffect(() => {
+    if (clientAnnouncementCache) {
+      return;
+    }
     fetch("/api/announcement")
       .then((res) => res.json())
       .then((data) => {
         if (data?.announcement?.isActive && data.announcement.text) {
+          clientAnnouncementCache = data.announcement;
           setAnnouncement(data.announcement);
         }
       })

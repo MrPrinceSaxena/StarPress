@@ -13,7 +13,7 @@ export default function AppProviders({
 }) {
   return (
     <ThemeProvider>
-      <SessionProvider>
+      <SessionProvider refetchOnWindowFocus={false} refetchInterval={0}>
         <CartProvider>
           <WishlistProvider>{children}</WishlistProvider>
         </CartProvider>

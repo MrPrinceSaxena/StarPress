@@ -20,8 +20,7 @@ import {
   getLiveProductsByCategory,
 } from "@/server/products";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 300; // 5-minute ISR cache
 export const dynamicParams = true;
 
 export async function generateStaticParams() {

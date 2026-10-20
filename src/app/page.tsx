@@ -17,8 +17,7 @@ import { getLiveCatalogProducts, getLiveCategories } from "@/server/products";
 import { db } from "@/lib/db";
 import type { Slide } from "@/components/sections/Hero";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function HomePage() {
   // Run independent DB queries in parallel for faster TTFB
@@ -65,7 +64,7 @@ export default async function HomePage() {
 
         {/* 4. Best Selling Products */}
         <div id="shop" className="scroll-mt-24">
-          <BestSellers />
+          <BestSellers products={allProducts} />
         </div>
 
         {/* 5. Why Choose STAR PRESS? */}

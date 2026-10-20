@@ -6,8 +6,12 @@ import { CatalogProduct } from "@/lib/catalog";
 import { getLiveCatalogProducts } from "@/server/products";
 import ProductCard from "@/components/ui/ProductCard";
 
-export default async function BestSellers() {
-  const allProducts = await getLiveCatalogProducts();
+interface BestSellersProps {
+  products?: CatalogProduct[];
+}
+
+export default async function BestSellers({ products }: BestSellersProps = {}) {
+  const allProducts = products || (await getLiveCatalogProducts());
   
   // Sort by rating and review count to get best sellers
   const bestSellers = allProducts

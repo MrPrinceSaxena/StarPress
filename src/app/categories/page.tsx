@@ -5,7 +5,8 @@ import { ArrowRight, Sparkles, Layers } from "lucide-react";
 import { Metadata } from "next";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { getLiveProductsByCategory, getLiveCategories } from "@/server/products";
+import { getLiveCatalogProducts, getLiveCategories } from "@/server/products";
+import { CatalogProduct } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "All Print Categories | Star Press Khatima",
@@ -16,10 +17,22 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function CategoriesPage() {
-  const categories = await getLiveCategories();
+  const [categories, allProducts] = await Promise.all([
+    getLiveCategories(),
+    getLiveCatalogProducts(),
+  ]);
+
+  // Pre-group products by category in-memory to eliminate N+1 database queries
+  const productsByCategory = new Map<string, CatalogProduct[]>();
+  for (const product of allProducts) {
+    const key = (product.categorySlug || "").toLowerCase();
+    const existing = productsByCategory.get(key) || [];
+    existing.push(product);
+    productsByCategory.set(key, existing);
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-base text-text-primary selection:bg-brand-yellow selection:text-black">
@@ -46,15 +59,15 @@ export default async function CategoriesPage() {
 
         {/* E-Commerce Product Category Grid (2 cols mobile, 3 tablet, 4 desktop) */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
-          {await Promise.all(categories.map(async (category) => {
-            const categoryProducts = await getLiveProductsByCategory(category.slug);
+          {categories.map((category) => {
+            const categoryProducts = productsByCategory.get((category.slug || "").toLowerCase()) || [];
             const minPrice =
               categoryProducts.length > 0
-                ? Math.min(...categoryProducts.map((p) => p.basePrice))
+                ? Math.min(...categoryProducts.map((p: CatalogProduct) => p.basePrice))
                 : 199;
             const topProducts = categoryProducts
               .slice(0, 3)
-              .map((p) => p.name)
+              .map((p: CatalogProduct) => p.name)
               .join(", ");
 
             return (
@@ -120,7 +133,7 @@ export default async function CategoriesPage() {
                 </div>
               </Link>
             );
-          }))}
+          })}
         </div>
       </main>
 
