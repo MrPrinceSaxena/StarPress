@@ -165,27 +165,9 @@ export default function OrderPayRecoveryPage() {
         throw new Error(retryData.error || "Failed to prepare payment gateway.");
       }
 
-      // Handle Dev Test Mock
-      if (retryData.isMock) {
-        setStatusNote("Completing simulated test payment...");
-        const verifyRes = await fetch("/api/payments/razorpay/verify", {
-          method: "POST",
-          headers: authHeaders,
-          body: JSON.stringify({
-            orderId: order.id,
-            razorpay_order_id: retryData.razorpayOrderId,
-            razorpay_payment_id: `pay_mock_${Date.now()}`,
-            razorpay_signature: "mock_signature",
-          }),
-        });
-        const vData = await verifyRes.json();
-        if (vData.success) {
-          setPaymentSuccess(true);
-          setStatusNote(null);
-          setIsProcessingPayment(false);
-          return;
-        }
-        throw new Error(vData.error || "Mock payment verification failed.");
+      const activeKey = retryData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      if (!activeKey) {
+        throw new Error("Razorpay checkout key is missing. Please contact support.");
       }
 
       // Load Razorpay SDK
@@ -200,7 +182,7 @@ export default function OrderPayRecoveryPage() {
       const cleanedPhone = String(rawPhone).replace(/[^\d+]/g, "").slice(0, 15);
 
       const options = {
-        key: retryData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_Toz86Nohgur7MU",
+        key: activeKey,
         amount: retryData.amount,
         currency: retryData.currency || "INR",
         name: "Star Press",

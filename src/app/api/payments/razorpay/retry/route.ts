@@ -130,7 +130,6 @@ export async function POST(request: NextRequest) {
       keyId: razorpayOrder.keyId,
       orderNumber: razorpayOrder.orderNumber,
       orderId: order.id,
-      isMock: razorpayOrder.isMock || false,
     });
   } catch (error: any) {
     console.error("API /api/payments/razorpay/retry error:", error);

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
-import { isProductionEnvironment, recordPaymentSuccess } from "@/server/payments";
+import { isProductionEnvironment, recordPaymentSuccess, getRazorpayCredentials } from "@/server/payments";
 import { auditPaymentEvent } from "@/server/payment-audit";
 import { alertOwnerReconciliationDrift, alertOwnerAmountMismatch } from "@/server/email";
 
@@ -20,15 +20,7 @@ export interface ReconciliationResult {
 export async function reconcilePayments(): Promise<ReconciliationResult> {
   const cutoffTime = new Date(Date.now() - 48 * 60 * 60 * 1000); // 48 hours ago
   const isProd = isProductionEnvironment();
-  const keyId =
-    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    process.env.RAZORPAY_KEY_ID ||
-    env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    "rzp_test_Toz86Nohgur7MU";
-  const keySecret =
-    process.env.RAZORPAY_KEY_SECRET ||
-    env.RAZORPAY_KEY_SECRET ||
-    "bHLfw4FddkBAH2YxT4aUofK4";
+  const { keyId, keySecret } = getRazorpayCredentials();
 
   // 1. Find candidates for reconciliation
   const pendingOrders = await db.order.findMany({
@@ -60,13 +52,12 @@ export async function reconcilePayments(): Promise<ReconciliationResult> {
     return result;
   }
 
-  // Non-production mock bypass
-  if (!isProd && (!keyId || !keySecret || keyId.startsWith("rzp_test_mock"))) {
-    console.log(`[Reconciliation] Non-production environment — scanned ${pendingOrders.length} pending orders.`);
+  if (!keyId || !keySecret) {
+    console.warn("[Reconciliation] Razorpay credentials missing on server. Skipping run.");
     await auditPaymentEvent({
       action: "RECONCILIATION_RUN",
       actor: "SYSTEM:CRON",
-      details: { scanned: pendingOrders.length, note: "Mock / Dev run" },
+      details: { scanned: pendingOrders.length, note: "Credentials missing, skipped safely" },
     });
     return result;
   }

@@ -143,7 +143,27 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       if (notes !== undefined) updateData.notes = notes;
       if (trackingNumber !== undefined) updateData.trackingNumber = trackingNumber;
       if (courierPartner !== undefined) updateData.courierPartner = courierPartner;
-      if (paymentStatus !== undefined) updateData.paymentStatus = paymentStatus.toUpperCase();
+      if (paymentStatus !== undefined) {
+        const targetPaymentStatus = paymentStatus.toUpperCase();
+        if (targetPaymentStatus === "PAID") {
+          const currentOrder = await getOrderById(params.id);
+          const method = (currentOrder?.paymentMethod || "").toUpperCase();
+          if (method === "ONLINE") {
+            const verifiedTx = await db.paymentTransaction.findFirst({
+              where: { orderId: params.id, status: "CAPTURED", gateway: "RAZORPAY" },
+            });
+            if (!verifiedTx || !verifiedTx.gatewayPaymentId || verifiedTx.gatewayPaymentId.startsWith("pay_mock_")) {
+              return NextResponse.json(
+                {
+                  error: "Online payment orders cannot be manually marked as PAID without a verified Razorpay payment capture.",
+                },
+                { status: 400 }
+              );
+            }
+          }
+        }
+        updateData.paymentStatus = targetPaymentStatus;
+      }
 
       if (Object.keys(updateData).length > 0) {
         await db.order.update({

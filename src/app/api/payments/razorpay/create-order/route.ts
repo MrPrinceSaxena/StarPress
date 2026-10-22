@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
       details: {
         razorpayOrderId: razorpayOrder.razorpayOrderId,
         amount: razorpayOrder.amount,
-        isMock: razorpayOrder.isMock || false,
       },
     });
 
@@ -63,7 +62,6 @@ export async function POST(request: NextRequest) {
       currency: razorpayOrder.currency,
       keyId: razorpayOrder.keyId,
       orderNumber: razorpayOrder.orderNumber,
-      isMock: razorpayOrder.isMock || false,
     });
   } catch (error: any) {
     console.error("API /api/payments/razorpay/create-order error:", error);

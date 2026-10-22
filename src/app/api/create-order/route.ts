@@ -1,19 +1,20 @@
+// =============================================================================
+// POST /api/create-order
+// Standard Razorpay Order Creation Endpoint
+// =============================================================================
+
 import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
+import { getRazorpayCredentials } from "@/server/payments";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    const keyId =
-      process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-      process.env.RAZORPAY_KEY_ID ||
-      "rzp_test_Toz86Nohgur7MU";
-    const keySecret =
-      process.env.RAZORPAY_KEY_SECRET ||
-      "bHLfw4FddkBAH2YxT4aUofK4";
+    const { keyId, keySecret } = getRazorpayCredentials();
 
     if (!keyId || !keySecret) {
+      console.error("[Razorpay Error] API credentials are not configured on server.");
       return NextResponse.json(
         { error: "Razorpay credentials are not configured on the server." },
         { status: 500 }
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     let amount = Number(body.amount);
-    const currency = body.currency || "INR";
+    const currency = (body.currency || "INR").toUpperCase();
     const receipt = body.receipt || `rcpt_${Date.now()}`;
 
     // Validate minimum amount (100 paise = ₹1)
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize Razorpay SDK instance
+    // Initialize official Razorpay SDK
     const razorpay = new Razorpay({
       key_id: keyId,
       key_secret: keySecret,
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     const orderOptions = {
       amount: Math.round(amount),
-      currency: currency.toUpperCase(),
+      currency,
       receipt: String(receipt).slice(0, 40),
       notes: body.notes || {},
     };
@@ -57,10 +58,15 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error("[Razorpay API] create-order error:", error);
-    const status = error.statusCode || 500;
+    const statusCode =
+      error.statusCode === 401 || error?.error?.description?.includes("Authentication")
+        ? 401
+        : error.statusCode || 500;
     return NextResponse.json(
-      { error: error.message || error.description || "Failed to create Razorpay order." },
-      { status }
+      {
+        error: error.message || error.description || "Failed to create Razorpay order.",
+      },
+      { status: statusCode }
     );
   }
 }

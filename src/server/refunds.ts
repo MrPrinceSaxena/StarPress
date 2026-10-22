@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
-import { isProductionEnvironment } from "@/server/payments";
+import { isProductionEnvironment, getRazorpayCredentials } from "@/server/payments";
 import { auditPaymentEvent } from "@/server/payment-audit";
 import { sendRefundNotificationEmail } from "@/server/email";
 import { Prisma } from "@prisma/client";
@@ -178,88 +178,17 @@ export async function initiateRefund(params: InitiateRefundParams) {
     return { order: lockedOrder, totalAmount: total.toNumber(), refundAmount: requested.toNumber() };
   });
 
-  const isProd = isProductionEnvironment();
-  const keyId =
-    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    process.env.RAZORPAY_KEY_ID ||
-    env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    "rzp_test_Toz86Nohgur7MU";
-  const keySecret =
-    process.env.RAZORPAY_KEY_SECRET ||
-    env.RAZORPAY_KEY_SECRET ||
-    "bHLfw4FddkBAH2YxT4aUofK4";
-
-  // Dev Mock Refund
-  if (!isProd && (paymentId.startsWith("pay_mock_") || !keySecret)) {
-    const mockRefundId = `rfnd_mock_${Date.now()}`;
-    const noteAppend = `[REFUND_MOCK: ${mockRefundId} ₹${refundAmount} reason: ${reason}]`;
-    const updatedNotes = order.notes ? `${order.notes} ${noteAppend}` : noteAppend;
-
-    await db.$transaction(async (tx) => {
-      // 1. Record into Refund model
-      await tx.refund.update({
-        where: { razorpayRefundId: reservationId },
-        data: { razorpayRefundId: mockRefundId, status: "processed" },
-      });
-
-      // 2. Record legacy PaymentTransaction
-      await tx.paymentTransaction.create({
-        data: {
-          orderId: order.id,
-          gateway: "RAZORPAY",
-          gatewayPaymentId: mockRefundId,
-          refundId: mockRefundId,
-          refundStatus: "processed",
-          amount: refundAmount,
-          currency: "INR",
-          status: "REFUND_PROCESSED",
-          rawPayload: { mock: true, paymentId, refundAmount, reason },
-        },
-      });
-
-      // 3. Derive order.refundAmount from sum of processed refunds
-      const processed = await tx.refund.aggregate({ where: { orderId: order.id, status: "processed" }, _sum: { amount: true } });
-      const derivedRefundTotal = processed._sum.amount || new Prisma.Decimal(0);
-      const newRefundTotal = Prisma.Decimal.min(new Prisma.Decimal(totalAmount), derivedRefundTotal);
-
-      // 4. Update Order
-      await tx.order.update({
-        where: { id: order.id },
-        data: {
-          refundAmount: newRefundTotal,
-          refundId: mockRefundId,
-          refundStatus: "processed",
-          notes: updatedNotes,
-          ...(newRefundTotal.greaterThanOrEqualTo(totalAmount) ? { paymentStatus: "REFUNDED" } : {}),
-        },
-      });
-    });
-
-    await auditPaymentEvent({
-      orderId: order.id,
-      action: "REFUND_PROCESSED",
-      actor: initiatedBy,
-      details: {
-        mock: true,
-        refundId: mockRefundId,
-        paymentId,
-        amount: refundAmount,
-        reason,
-      },
-    });
-
-    return {
-      success: true,
-      refundId: mockRefundId,
-      amount: refundAmount,
-      status: "processed",
-      isMock: true,
-    };
-  }
+  const { keyId, keySecret } = getRazorpayCredentials();
 
   if (!keyId || !keySecret) {
     await db.refund.update({ where: { razorpayRefundId: reservationId }, data: { status: "failed" } }).catch(() => {});
     throw new Error("Razorpay credentials are not configured on server.");
+  }
+
+  // Reject mock payment IDs
+  if (paymentId.startsWith("pay_mock_")) {
+    await db.refund.update({ where: { razorpayRefundId: reservationId }, data: { status: "failed" } }).catch(() => {});
+    throw new Error("Cannot refund simulated mock payment. Only genuine Razorpay payments can be refunded.");
   }
 
   // 2. Call Razorpay Refund REST API

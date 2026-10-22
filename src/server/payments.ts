@@ -16,6 +16,17 @@ export interface CreateRazorpayOrderInput {
   isAdmin?: boolean;
 }
 
+export function getRazorpayCredentials(): { keyId: string; keySecret: string } {
+  const keyId =
+    process.env.RAZORPAY_KEY_ID ||
+    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+    "";
+  const keySecret =
+    process.env.RAZORPAY_KEY_SECRET ||
+    "";
+  return { keyId, keySecret };
+}
+
 export function isProductionEnvironment(): boolean {
   return (
     process.env.NODE_ENV === "production" ||
@@ -25,13 +36,9 @@ export function isProductionEnvironment(): boolean {
 }
 
 export function isLiveProductionPayment(keyId?: string): boolean {
-  const activeKey =
-    keyId ||
-    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    process.env.RAZORPAY_KEY_ID ||
-    env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    "";
-  return isProductionEnvironment() && activeKey.startsWith("rzp_live_");
+  const { keyId: resolvedKey } = getRazorpayCredentials();
+  const activeKey = keyId || resolvedKey;
+  return activeKey.startsWith("rzp_live_");
 }
 
 /**
@@ -40,16 +47,7 @@ export function isLiveProductionPayment(keyId?: string): boolean {
  * Fails closed in production if Razorpay keys are not configured.
  */
 export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
-  const isProd = isProductionEnvironment();
-  const keyId =
-    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    process.env.RAZORPAY_KEY_ID ||
-    env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    "rzp_test_Toz86Nohgur7MU";
-  const keySecret =
-    process.env.RAZORPAY_KEY_SECRET ||
-    env.RAZORPAY_KEY_SECRET ||
-    "bHLfw4FddkBAH2YxT4aUofK4";
+  const { keyId, keySecret } = getRazorpayCredentials();
 
   // 1. Fetch authoritative order from DB
   const order = await db.order.findUnique({
@@ -95,60 +93,37 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
     throw err;
   }
 
+  // Fail closed: Require genuine Razorpay credentials
+  if (!keyId || !keySecret || keyId === "rzp_test_placeholder" || keyId.startsWith("rzp_test_mock")) {
+    console.error("[Razorpay Security Alert] Refusing order creation: Razorpay API credentials are not configured on the server.");
+    const err = new Error("Payment gateway service is unavailable (missing API credentials). Please select 'Pay After Proof' or contact support.");
+    (err as any).statusCode = 503;
+    throw err;
+  }
+
   // 4. Reuse existing Razorpay order if already attached and UNPAID
   if (order.razorpayOrderId && order.paymentStatus === "UNPAID") {
-    // If we have live keys, we can safely reuse the existing razorpayOrderId
-    return {
-      success: true,
-      razorpayOrderId: order.razorpayOrderId,
-      amount: amountInPaise,
-      currency: "INR",
-      keyId: keyId || "rzp_test_placeholder",
-      reused: true,
-      orderNumber: order.orderNumber,
-      isMock: false,
-    };
-  }
-
-  const isLive = isLiveProductionPayment(keyId);
-
-  // 5. Fail closed if live keys are completely missing
-  if (!keyId || !keySecret || keyId === "rzp_test_placeholder") {
-    if (isLive) {
-      console.error("[Razorpay Security] Refusing to process payment: Razorpay live credentials missing in production environment.");
-      const err = new Error("Payment gateway service is unavailable in production (missing live credentials).");
-      (err as any).statusCode = 503;
-      throw err;
-    }
-
-    // Test mode fallback
-    console.warn("[Razorpay Test] Missing or placeholder keys. Generating test simulated order.");
-    const mockRazorpayId = `order_mock_${Date.now()}`;
-
-    try {
+    if (order.razorpayOrderId.startsWith("order_mock_")) {
+      // Clean up stale mock order id from DB
       await db.order.update({
         where: { id: order.id },
-        data: { razorpayOrderId: mockRazorpayId },
+        data: { razorpayOrderId: null },
       });
-    } catch {}
-
-    return {
-      success: true,
-      razorpayOrderId: mockRazorpayId,
-      amount: amountInPaise,
-      currency: "INR",
-      keyId: "rzp_test_mock_key",
-      orderNumber: order.orderNumber,
-      isMock: true,
-    };
+      order.razorpayOrderId = null;
+    } else {
+      return {
+        success: true,
+        razorpayOrderId: order.razorpayOrderId,
+        amount: amountInPaise,
+        currency: "INR",
+        keyId,
+        reused: true,
+        orderNumber: order.orderNumber,
+      };
+    }
   }
 
-  // Log active key mode
-  if (keyId.startsWith("rzp_test_")) {
-    console.info("[Razorpay Info] Test mode active with key:", keyId);
-  }
-
-  // 6. Call Razorpay REST API
+  // 5. Call Razorpay REST API to create genuine order
   try {
     const basicAuth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
     const receipt = order.orderNumber.slice(0, 40);
@@ -183,54 +158,15 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
         console.error(
           "[Razorpay Alert] Razorpay credentials rejected with 401 Authentication failed. RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is invalid or expired."
         );
-
-        if (!isLive) {
-          console.warn("[Razorpay Test] Test credentials rejected by Razorpay. Falling back to test simulated order.");
-          const mockRazorpayId = `order_mock_${Date.now()}`;
-          await db.order.update({
-            where: { id: order.id },
-            data: { razorpayOrderId: mockRazorpayId },
-          });
-
-          return {
-            success: true,
-            razorpayOrderId: mockRazorpayId,
-            amount: amountInPaise,
-            currency: "INR",
-            keyId: "rzp_test_mock_key",
-            orderNumber: order.orderNumber,
-            isMock: true,
-          };
-        }
-
         const err = new Error(
-          "Payment Gateway Configuration Error: The server's Razorpay credentials were rejected by Razorpay (Authentication Failed). Please check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET on the server, or choose 'Pay After Proof'."
+          "Payment Gateway Configuration Error: The server's Razorpay credentials were rejected by Razorpay (Authentication Failed). Please check server configuration or choose 'Pay After Proof'."
         );
         (err as any).statusCode = 502;
         throw err;
       }
 
-      if (!isLive) {
-        console.warn("[Razorpay Test] Gateway error in test mode. Falling back to test simulated order.");
-        const mockRazorpayId = `order_mock_${Date.now()}`;
-        await db.order.update({
-          where: { id: order.id },
-          data: { razorpayOrderId: mockRazorpayId },
-        });
-
-        return {
-          success: true,
-          razorpayOrderId: mockRazorpayId,
-          amount: amountInPaise,
-          currency: "INR",
-          keyId: "rzp_test_mock_key",
-          orderNumber: order.orderNumber,
-          isMock: true,
-        };
-      }
-
       const err = new Error(
-        `Payment Gateway Error: ${description}. Please select 'Pay After Proof' or retry shortly.`
+        `Payment Gateway Error: ${description}. Please retry or choose 'Pay After Proof.`
       );
       (err as any).statusCode = 502;
       throw err;
@@ -251,32 +187,10 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
       currency: orderData.currency,
       keyId,
       orderNumber: order.orderNumber,
-      isMock: false,
     };
   } catch (error: any) {
     console.error("[Razorpay Gateway Error]:", error);
     if (error.statusCode) throw error;
-
-    if (!isLive) {
-      console.warn("[Razorpay Test] Gateway unreachable in test mode. Falling back to test checkout mock.");
-      const mockRazorpayId = `order_mock_${Date.now()}`;
-      try {
-        await db.order.update({
-          where: { id: order.id },
-          data: { razorpayOrderId: mockRazorpayId },
-        });
-      } catch {}
-
-      return {
-        success: true,
-        razorpayOrderId: mockRazorpayId,
-        amount: amountInPaise,
-        currency: "INR",
-        keyId: "rzp_test_mock_key",
-        orderNumber: order.orderNumber,
-        isMock: true,
-      };
-    }
 
     const err = new Error(
       error.message?.includes("Failed to fetch") || error.message?.includes("ENOTFOUND")
@@ -288,53 +202,53 @@ export async function createRazorpayOrder(input: CreateRazorpayOrderInput) {
   }
 }
 
-/**
- * Timing-safe HMAC signature verification for client payment verification.
- * Fails closed in production if RAZORPAY_KEY_SECRET is not configured.
- */
 export function verifyRazorpaySignature(
   orderId: string,
   paymentId: string,
   signature: string
 ): boolean {
-  const secret =
-    process.env.RAZORPAY_KEY_SECRET ||
-    env.RAZORPAY_KEY_SECRET ||
-    "bHLfw4FddkBAH2YxT4aUofK4";
-  const isProd = isProductionEnvironment();
+  const { keySecret } = getRazorpayCredentials();
 
-  if (!secret) {
-    if (isProd) {
-      console.error("[Security Alert] RAZORPAY_KEY_SECRET missing in production. Verification failed closed.");
-      return false;
-    }
-    // In local non-production development without keys, allow mock verification
-    return true;
+  if (!keySecret) {
+    console.error("[Security Alert] RAZORPAY_KEY_SECRET missing on server. Verification failed closed.");
+    return false;
   }
 
   if (!orderId || !paymentId || !signature) {
     return false;
   }
 
-  const generatedSignature = crypto
-    .createHmac("sha256", secret)
-    .update(`${orderId}|${paymentId}`)
-    .digest("hex");
-
-  const expectedBuf = Buffer.from(generatedSignature, "utf8");
-  const actualBuf = Buffer.from(signature, "utf8");
-
-  if (expectedBuf.length !== actualBuf.length) {
+  // Reject mock IDs immediately
+  if (
+    orderId.startsWith("order_mock_") ||
+    paymentId.startsWith("pay_mock_") ||
+    signature === "mock_signature" ||
+    signature === "mock_test_signature"
+  ) {
+    console.warn(`[Security Alert] Rejected mock ID/signature in verifyRazorpaySignature: order=${orderId}, payment=${paymentId}`);
     return false;
   }
 
-  return crypto.timingSafeEqual(expectedBuf, actualBuf);
+  try {
+    const generatedSignature = crypto
+      .createHmac("sha256", keySecret)
+      .update(`${orderId}|${paymentId}`)
+      .digest("hex");
+
+    const expectedBuf = Buffer.from(generatedSignature, "utf8");
+    const actualBuf = Buffer.from(signature, "utf8");
+
+    if (expectedBuf.length !== actualBuf.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(expectedBuf, actualBuf);
+  } catch (err) {
+    console.error("[Signature Verification Error]:", err);
+    return false;
+  }
 }
 
-/**
- * Timing-safe webhook HMAC verification over raw payload string.
- * Fails closed in production if RAZORPAY_WEBHOOK_SECRET is missing.
- */
 export function verifyWebhookSignature(rawPayload: string, signature: string): boolean {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET || env.RAZORPAY_WEBHOOK_SECRET;
   const isProd = isProductionEnvironment();
@@ -385,6 +299,32 @@ export async function recordPaymentSuccess(
   client: typeof db = db
 ) {
   try {
+    // Strict defense: Reject mock payments, mock signatures, and mock orders
+    if (
+      params.paymentId.startsWith("pay_mock_") ||
+      (params.razorpayOrderId && params.razorpayOrderId.startsWith("order_mock_")) ||
+      params.method === "DEV_TEST" ||
+      params.signature === "mock_signature" ||
+      params.signature === "mock_test_signature"
+    ) {
+      console.error(
+        `[Payment Security Alert] Refusing to record mock payment ${params.paymentId} for Order ${params.orderId}. Mock payments are permanently prohibited.`
+      );
+      await auditPaymentEvent({
+        orderId: params.orderId,
+        action: "MOCK_PAYMENT_BLOCKED",
+        actor: "PAYMENTS:recordPaymentSuccess",
+        details: {
+          paymentId: params.paymentId,
+          razorpayOrderId: params.razorpayOrderId,
+          reason: "Mock payments are permanently disallowed",
+        },
+      });
+      return {
+        success: false,
+        error: "Mock payments and simulated credentials are prohibited. Payment must be genuine.",
+      };
+    }
     // 1. Idempotency Check: if this payment transaction already exists, skip duplicate write
     const existingTx = await client.paymentTransaction.findFirst({
       where: { gatewayPaymentId: params.paymentId },
@@ -619,18 +559,7 @@ export async function recordPaymentSuccess(
           include: { items: true },
         });
 
-        await auditPaymentEvent({
-          orderId: targetOrder.id,
-          action: "DUPLICATE_PAYMENT_DETECTED",
-          actor: "SYSTEM",
-          details: {
-            paymentId: params.paymentId,
-            existingPaymentId: targetOrder.paymentId,
-            amount: params.amount,
-          },
-        });
-
-        return updatedWithRefund;
+        return { ...updatedWithRefund, duplicatePaymentDetected: true, existingPaymentId: targetOrder.paymentId };
       }
 
       // Record transaction
@@ -694,6 +623,20 @@ export async function recordPaymentSuccess(
 
       return saved;
     });
+
+    if ((updatedOrder as any).duplicatePaymentDetected) {
+      auditPaymentEvent({
+        orderId: params.orderId,
+        action: "DUPLICATE_PAYMENT_DETECTED",
+        actor: "SYSTEM",
+        details: {
+          paymentId: params.paymentId,
+          existingPaymentId: (updatedOrder as any).existingPaymentId,
+          amount: params.amount,
+        },
+      }).catch(console.warn);
+      return { success: true, order: updatedOrder, duplicatePaymentConflict: true };
+    }
 
     if ((updatedOrder as any).latePaymentOutOfStock || (updatedOrder as any).latePaymentFlagged) {
       await auditPaymentEvent({

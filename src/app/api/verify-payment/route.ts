@@ -1,15 +1,20 @@
+// =============================================================================
+// POST /api/verify-payment
+// Standard Razorpay Signature Verification Endpoint (HMAC-SHA256)
+// =============================================================================
+
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { getRazorpayCredentials } from "@/server/payments";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    const keySecret =
-      process.env.RAZORPAY_KEY_SECRET ||
-      "bHLfw4FddkBAH2YxT4aUofK4";
+    const { keySecret } = getRazorpayCredentials();
 
     if (!keySecret) {
+      console.error("[Razorpay Error] RAZORPAY_KEY_SECRET is not configured on the server.");
       return NextResponse.json(
         { error: "RAZORPAY_KEY_SECRET is not configured on the server." },
         { status: 500 }
@@ -28,7 +33,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
+    // Strict defense: Reject mock or simulated values
+    if (
+      String(orderId).startsWith("order_mock_") ||
+      String(paymentId).startsWith("pay_mock_") ||
+      signature === "mock_signature" ||
+      signature === "mock_test_signature"
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Mock payments are prohibited." },
+        { status: 400 }
+      );
+    }
+
+    // Algorithm: HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
     const generatedSignature = crypto
       .createHmac("sha256", keySecret)
       .update(`${orderId}|${paymentId}`)
@@ -42,14 +60,14 @@ export async function POST(request: NextRequest) {
       crypto.timingSafeEqual(expectedBuf, actualBuf);
 
     if (!isMatch) {
-      console.warn(`[Razorpay Signature Verification] Signature mismatch for order: ${orderId}`);
+      console.warn(`[Razorpay Verification] Signature mismatch for order: ${orderId}`);
       return NextResponse.json(
         { success: false, error: "Payment verification failed: Invalid cryptographic signature." },
         { status: 400 }
       );
     }
 
-    // Persist to database if linked to a Star Press order
+    // If linked to an internal Star Press order, sync DB record
     let linkedOrderNumber: string | undefined;
     try {
       const { db } = await import("@/lib/db");
@@ -79,7 +97,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (dbErr) {
-      console.warn("[verify-payment] Database order record notice:", dbErr);
+      console.warn("[verify-payment] Internal order sync notice:", dbErr);
     }
 
     return NextResponse.json({

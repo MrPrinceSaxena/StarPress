@@ -1,16 +1,16 @@
 // =============================================================================
 // POST /api/payments/razorpay/verify
-// Verifies Razorpay client checkout payload (HMAC + REST verification) — Phase A4
+// Authoritative Razorpay Payment Verification (HMAC + Gateway REST Verification)
+// Strictly enforces genuine payments — Zero mock fallbacks
 // =============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
 import {
   verifyRazorpaySignature,
   recordPaymentSuccess,
-  isProductionEnvironment,
+  getRazorpayCredentials,
 } from "@/server/payments";
 import { getOrderById } from "@/server/orders";
-import { env } from "@/lib/env";
 import { rateLimitDistributed, getClientIp, rateLimitExceededResponse } from "@/lib/rate-limit";
 import { auditPaymentEvent } from "@/server/payment-audit";
 
@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
       orderId,
     } = body;
 
-    if (!orderId || !razorpay_order_id || !razorpay_payment_id) {
+    if (!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return NextResponse.json(
-        { error: "orderId, razorpay_order_id, and razorpay_payment_id are mandatory." },
+        { error: "orderId, razorpay_order_id, razorpay_payment_id, and razorpay_signature are all mandatory." },
         { status: 400 }
       );
     }
@@ -45,7 +45,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
 
-    // Defense-in-depth: Verify order ownership
+    // 2. Strict Defense: Reject any mock order IDs, mock payment IDs, or mock signatures
+    if (
+      razorpay_order_id.startsWith("order_mock_") ||
+      razorpay_payment_id.startsWith("pay_mock_") ||
+      razorpay_signature === "mock_signature" ||
+      razorpay_signature === "mock_test_signature"
+    ) {
+      console.warn(`[Payment Security Alert] Mock payment attempt rejected for order ${order.orderNumber}`);
+      await auditPaymentEvent({
+        orderId: order.id,
+        action: "MOCK_PAYMENT_BLOCKED",
+        actor: "CLIENT:verify",
+        ipAddress: ip,
+        details: { razorpay_order_id, razorpay_payment_id },
+      });
+      return NextResponse.json(
+        { error: "Simulated and mock payments are permanently prohibited. Real payment is required." },
+        { status: 400 }
+      );
+    }
+
+    // 3. Defense-in-depth: Verify order ownership
     let user = null;
     try {
       const { resolveUser } = await import("@/lib/auth-resolver");
@@ -70,55 +91,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const expectedPaise = Math.round(Number(order.totalAmount) * 100);
-    const keyId =
-      process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-      process.env.RAZORPAY_KEY_ID ||
-      env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-      "rzp_test_Toz86Nohgur7MU";
-    const keySecret =
-      process.env.RAZORPAY_KEY_SECRET ||
-      env.RAZORPAY_KEY_SECRET ||
-      "bHLfw4FddkBAH2YxT4aUofK4";
-    const isProd = isProductionEnvironment();
-
-    // 2. Dev Mock verification (strictly prohibited when real live keys are active)
-    const isMock = razorpay_order_id.startsWith("order_mock_");
-    if (isMock) {
-      const isLive = isProd && keyId.startsWith("rzp_live_");
-      if (isLive) {
-        return NextResponse.json(
-          { error: "Mock payments are prohibited when live production keys are active." },
-          { status: 403 }
-        );
-      }
-
-      const recorded = await recordPaymentSuccess({
-        orderId: order.id,
-        paymentId: razorpay_payment_id,
-        razorpayOrderId: razorpay_order_id,
-        signature: razorpay_signature || "mock_signature",
-        method: "DEV_TEST",
-        amount: Number(order.totalAmount),
-        rawPayload: { mock: true, verifiedAt: new Date().toISOString() },
-      });
-
-      return NextResponse.json({
-        success: true,
-        orderNumber: order.orderNumber,
-        paymentStatus: "PAID",
-        isMock: true,
-      });
-    }
-
-    // 3. Cryptographic HMAC verification
-    if (!razorpay_signature) {
+    // 4. Verify Razorpay credentials configured on server
+    const { keyId, keySecret } = getRazorpayCredentials();
+    if (!keyId || !keySecret) {
+      console.error("[Payment Security] Missing Razorpay credentials on server during verification.");
       return NextResponse.json(
-        { error: "razorpay_signature is required for online verification." },
-        { status: 400 }
+        { error: "Payment verification unavailable: Server credentials are not configured." },
+        { status: 503 }
       );
     }
 
+    // 5. Cryptographic HMAC verification using RAZORPAY_KEY_SECRET
     const isValidHmac = verifyRazorpaySignature(
       razorpay_order_id,
       razorpay_payment_id,
@@ -148,110 +131,117 @@ export async function POST(request: NextRequest) {
       details: { razorpay_order_id, razorpay_payment_id },
     });
 
-    // 4. Authoritative Gateway REST verification: GET https://api.razorpay.com/v1/payments/:id
+    // 6. Authoritative Gateway REST verification: GET https://api.razorpay.com/v1/payments/:id
+    const expectedPaise = Math.round(Number(order.totalAmount) * 100);
     let capturedMethod = "ONLINE";
-    if (keyId && keySecret) {
-      try {
-        const basicAuth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
-        const rzpRes = await fetch(
-          `https://api.razorpay.com/v1/payments/${razorpay_payment_id}`,
-          {
-            headers: {
-              Authorization: `Basic ${basicAuth}`,
-            },
-          }
-        );
 
-        if (!rzpRes.ok) {
-          console.error(`[Razorpay REST] Payment lookup failed: ${rzpRes.status}`);
-          await auditPaymentEvent({
-            orderId: order.id,
-            action: "REST_VERIFICATION_FAILED",
-            actor: "CLIENT:verify",
-            ipAddress: ip,
-            details: { statusCode: rzpRes.status },
-          });
-          return NextResponse.json(
-            { error: "Could not verify payment with gateway authority." },
-            { status: 502 }
-          );
+    try {
+      const basicAuth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+      const rzpRes = await fetch(
+        `https://api.razorpay.com/v1/payments/${razorpay_payment_id}`,
+        {
+          headers: {
+            Authorization: `Basic ${basicAuth}`,
+          },
         }
+      );
 
-        const paymentData = await rzpRes.json();
-
-        // Validate payment status
-        if (paymentData.status !== "captured" && paymentData.status !== "authorized") {
-          console.warn(`[Razorpay Verify] Unexpected status "${paymentData.status}" for ${razorpay_payment_id}`);
-          await auditPaymentEvent({
-            orderId: order.id,
-            action: "REST_VERIFICATION_FAILED",
-            actor: "CLIENT:verify",
-            ipAddress: ip,
-            details: { status: paymentData.status },
-          });
-          return NextResponse.json(
-            { error: `Payment is not in captured status (current: ${paymentData.status}).` },
-            { status: 400 }
-          );
-        }
-
-        // Validate amount charged against DB total
-        if (paymentData.amount !== expectedPaise) {
-          console.error(
-            `[Payment Security Alert] Amount mismatch! Gateway charged ${paymentData.amount} paise, DB expected ${expectedPaise} paise.`
-          );
-          await auditPaymentEvent({
-            orderId: order.id,
-            action: "AMOUNT_MISMATCH_DETECTED",
-            actor: "CLIENT:verify",
-            ipAddress: ip,
-            details: { expectedPaise, chargedPaise: paymentData.amount },
-          });
-          return NextResponse.json(
-            { error: "Payment amount does not match order total." },
-            { status: 400 }
-          );
-        }
-
-        // Validate order_id match
-        if (paymentData.order_id && paymentData.order_id !== razorpay_order_id) {
-          console.error(
-            `[Payment Security Alert] Order ID mismatch! Gateway: ${paymentData.order_id}, client: ${razorpay_order_id}`
-          );
-          await auditPaymentEvent({
-            orderId: order.id,
-            action: "REST_VERIFICATION_FAILED",
-            actor: "CLIENT:verify",
-            ipAddress: ip,
-            details: { gatewayOrderId: paymentData.order_id, clientOrderId: razorpay_order_id },
-          });
-          return NextResponse.json(
-            { error: "Gateway order ID mismatch." },
-            { status: 400 }
-          );
-        }
-
-        capturedMethod = paymentData.method || "ONLINE";
-
+      if (!rzpRes.ok) {
+        console.error(`[Razorpay REST] Payment lookup failed: ${rzpRes.status}`);
         await auditPaymentEvent({
           orderId: order.id,
-          action: "REST_VERIFIED",
+          action: "REST_VERIFICATION_FAILED",
           actor: "CLIENT:verify",
           ipAddress: ip,
-          details: { paymentId: razorpay_payment_id, method: capturedMethod },
+          details: { statusCode: rzpRes.status },
         });
-      } catch (restErr: any) {
-        console.error("[Razorpay REST Verification Error]:", restErr);
-        if (isProd) {
-          return NextResponse.json(
-            { error: "Failed to communicate with Razorpay verification API." },
-            { status: 502 }
-          );
-        }
+        return NextResponse.json(
+          { error: "Could not verify payment with gateway authority." },
+          { status: 502 }
+        );
       }
+
+      const paymentData = await rzpRes.json();
+
+      // Validate payment status: must be captured
+      if (paymentData.status !== "captured" && paymentData.status !== "authorized") {
+        console.warn(`[Razorpay Verify] Unexpected status "${paymentData.status}" for ${razorpay_payment_id}`);
+        await auditPaymentEvent({
+          orderId: order.id,
+          action: "REST_VERIFICATION_FAILED",
+          actor: "CLIENT:verify",
+          ipAddress: ip,
+          details: { status: paymentData.status },
+        });
+        return NextResponse.json(
+          { error: `Payment is not in captured status (current: ${paymentData.status}).` },
+          { status: 400 }
+        );
+      }
+
+      // Validate amount charged against DB total
+      if (paymentData.amount !== expectedPaise) {
+        console.error(
+          `[Payment Security Alert] Amount mismatch! Gateway charged ${paymentData.amount} paise, DB expected ${expectedPaise} paise.`
+        );
+        await auditPaymentEvent({
+          orderId: order.id,
+          action: "AMOUNT_MISMATCH_DETECTED",
+          actor: "CLIENT:verify",
+          ipAddress: ip,
+          details: { expectedPaise, chargedPaise: paymentData.amount },
+        });
+        return NextResponse.json(
+          { error: "Payment amount does not match order total." },
+          { status: 400 }
+        );
+      }
+
+      // Validate currency is INR
+      if (paymentData.currency && paymentData.currency.toUpperCase() !== "INR") {
+        console.error(`[Payment Security Alert] Currency mismatch! Gateway: ${paymentData.currency}, expected INR`);
+        return NextResponse.json(
+          { error: "Payment currency mismatch." },
+          { status: 400 }
+        );
+      }
+
+      // Validate order_id match
+      if (paymentData.order_id && paymentData.order_id !== razorpay_order_id) {
+        console.error(
+          `[Payment Security Alert] Order ID mismatch! Gateway: ${paymentData.order_id}, client: ${razorpay_order_id}`
+        );
+        await auditPaymentEvent({
+          orderId: order.id,
+          action: "REST_VERIFICATION_FAILED",
+          actor: "CLIENT:verify",
+          ipAddress: ip,
+          details: { gatewayOrderId: paymentData.order_id, clientOrderId: razorpay_order_id },
+        });
+        return NextResponse.json(
+          { error: "Gateway order ID mismatch." },
+          { status: 400 }
+        );
+      }
+
+      capturedMethod = paymentData.method || "ONLINE";
+
+      await auditPaymentEvent({
+        orderId: order.id,
+        action: "REST_VERIFIED",
+        actor: "CLIENT:verify",
+        ipAddress: ip,
+        details: { paymentId: razorpay_payment_id, method: capturedMethod },
+      });
+    } catch (restErr: any) {
+      console.error("[Razorpay REST Verification Error]:", restErr);
+      return NextResponse.json(
+        { error: "Failed to communicate with Razorpay verification API." },
+        { status: 502 }
+      );
     }
 
-    // 5. Authoritatively record payment success in DB
+    // 7. Authoritatively record payment success in DB (idempotent, atomic transaction with row locking)
     const result = await recordPaymentSuccess({
       orderId: order.id,
       paymentId: razorpay_payment_id,

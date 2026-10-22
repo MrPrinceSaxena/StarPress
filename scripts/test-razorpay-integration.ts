@@ -2,8 +2,8 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 
 async function testRazorpay() {
-  const key_id = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_Toz86Nohgur7MU";
-  const key_secret = process.env.RAZORPAY_KEY_SECRET || "bHLfw4FddkBAH2YxT4aUofK4";
+  const key_id = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
+  const key_secret = process.env.RAZORPAY_KEY_SECRET || "";
 
   console.log("1. Initializing Razorpay SDK instance with key:", key_id);
   const razorpay = new Razorpay({ key_id, key_secret });

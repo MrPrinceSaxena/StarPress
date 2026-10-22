@@ -497,40 +497,9 @@ export default function CheckoutPage() {
         throw new Error(rzpData.error || "Payment gateway unavailable. Please retry or choose Pay After Proof.");
       }
 
-      // Non-production test mock order simulation
-      if (rzpData.isMock) {
-        setStatusMessage("Completing simulated test payment...");
-        const verifyRes = await fetch("/api/payments/razorpay/verify", {
-          method: "POST",
-          headers: authHeaders,
-          body: JSON.stringify({
-            orderId: placedOrder.id,
-            razorpay_order_id: rzpData.razorpayOrderId,
-            razorpay_payment_id: `pay_mock_${Date.now()}`,
-            razorpay_signature: "mock_test_signature",
-          }),
-        });
-
-        const vData = await verifyRes.json();
-        if (verifyRes.ok && vData.success) {
-          clearCart();
-          setConfirmedOrder({
-            id: placedOrder.id,
-            orderId: placedOrder.orderNumber,
-            date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-            total: Number(placedOrder.totalAmount),
-            itemsCount: items.reduce((acc, it) => acc + it.quantity, 0),
-            shippingMethod: deliveryOption,
-            paymentMethod: "ONLINE (Test Simulated)",
-            paymentStatus: "PAID",
-          });
-          setCurrentStep(4);
-          setIsSubmitting(false);
-          setStatusMessage(null);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          return;
-        }
-        throw new Error(vData.error || "Mock payment verification failed.");
+      const activeKey = rzpData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      if (!activeKey) {
+        throw new Error("Razorpay checkout key is missing. Please contact support.");
       }
 
       const scriptLoaded = await loadRazorpayScript();
@@ -539,7 +508,7 @@ export default function CheckoutPage() {
       }
 
       const options = {
-        key: rzpData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_Toz86Nohgur7MU",
+        key: activeKey,
         amount: rzpData.amount,
         currency: rzpData.currency || "INR",
         name: "Star Press",
