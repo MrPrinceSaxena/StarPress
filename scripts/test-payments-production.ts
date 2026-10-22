@@ -57,9 +57,30 @@ async function runAllTests() {
     let thrownErrorMsg = "";
     try {
       // Find any order in DB to test order creation
-      const testOrder = await prisma.order.findFirst({ where: { paymentMethod: "ONLINE", paymentStatus: "UNPAID" } });
-      if (testOrder) {
+      let testOrder = await prisma.order.findFirst({ where: { paymentMethod: "ONLINE", paymentStatus: "UNPAID" } });
+      let tempCreated = false;
+      if (!testOrder) {
+        testOrder = await prisma.order.create({
+          data: {
+            orderNumber: "SP-TEST-503-" + Date.now(),
+            status: "PENDING",
+            paymentStatus: "UNPAID",
+            paymentMethod: "ONLINE",
+            subtotal: 100,
+            totalAmount: 100,
+            shippingAddress: { city: "Khatima", state: "UK", pincode: "262308" },
+            guestName: "Security Test",
+            guestEmail: "sectest@starpress.in",
+          },
+        });
+        tempCreated = true;
+      }
+      try {
         await createRazorpayOrder({ orderId: testOrder.id });
+      } finally {
+        if (tempCreated) {
+          await prisma.order.delete({ where: { id: testOrder.id } }).catch(() => {});
+        }
       }
     } catch (err: any) {
       if (err.statusCode === 503 || err.message?.includes("missing API credentials")) {
@@ -156,33 +177,50 @@ async function runAllTests() {
   // TEST 4: Authoritative Razorpay API Order Creation
   // ---------------------------------------------------------------------------
   console.log("\n--- TEST 4: Authoritative Razorpay API Order Creation ---");
-  const testDbOrder = await prisma.order.findFirst({
+  let testDbOrder = await prisma.order.findFirst({
     where: { paymentStatus: "UNPAID", paymentMethod: "ONLINE" },
   });
+  let tempCreated4 = false;
+  if (!testDbOrder) {
+    testDbOrder = await prisma.order.create({
+      data: {
+        orderNumber: "SP-TEST-RZP-" + Date.now(),
+        status: "PENDING",
+        paymentStatus: "UNPAID",
+        paymentMethod: "ONLINE",
+        subtotal: 100,
+        totalAmount: 100,
+        shippingAddress: { city: "Khatima", state: "UK", pincode: "262308" },
+        guestName: "Live Gateway Test",
+        guestEmail: "gatewaytest@starpress.in",
+      },
+    });
+    tempCreated4 = true;
+  }
 
-  if (testDbOrder) {
-    try {
-      const createdRzp = await createRazorpayOrder({ orderId: testDbOrder.id });
-      assert(
-        createdRzp.success === true &&
-          createdRzp.razorpayOrderId.startsWith("order_") &&
-          !createdRzp.razorpayOrderId.startsWith("order_mock_"),
-        "createRazorpayOrder creates a genuine Razorpay order with real order ID",
-        `Order ID: ${createdRzp.razorpayOrderId}`
-      );
-      assert(
-        createdRzp.amount === Math.round(Number(testDbOrder.totalAmount) * 100),
-        "Charged amount strictly derived from server-side DB totalAmount in integer paise"
-      );
-      assert(
-        createdRzp.currency === "INR",
-        "Order currency is strictly INR"
-      );
-    } catch (apiErr: any) {
-      console.warn("   ⚠️ Note: Order creation failed at network:", apiErr.message);
+  try {
+    const createdRzp = await createRazorpayOrder({ orderId: testDbOrder.id });
+    assert(
+      createdRzp.success === true &&
+        createdRzp.razorpayOrderId.startsWith("order_") &&
+        !createdRzp.razorpayOrderId.startsWith("order_mock_"),
+      "createRazorpayOrder creates a genuine Razorpay order with real order ID",
+      `Order ID: ${createdRzp.razorpayOrderId}`
+    );
+    assert(
+      createdRzp.amount === Math.round(Number(testDbOrder.totalAmount) * 100),
+      "Charged amount strictly derived from server-side DB totalAmount in integer paise"
+    );
+    assert(
+      createdRzp.currency === "INR",
+      "Order currency is strictly INR"
+    );
+  } catch (apiErr: any) {
+    console.warn("   ⚠️ Note: Order creation failed at network:", apiErr.message);
+  } finally {
+    if (tempCreated4) {
+      await prisma.order.delete({ where: { id: testDbOrder.id } }).catch(() => {});
     }
-  } else {
-    console.log("   (No UNPAID online order in DB to test live creation)");
   }
 
   // ---------------------------------------------------------------------------
@@ -284,6 +322,10 @@ async function runAllTests() {
     // Clean up created test order
     await prisma.orderItem.deleteMany({ where: { orderId: dummyOrder.order.id } });
     await prisma.order.delete({ where: { id: dummyOrder.order.id } });
+    try {
+      const { persistentStore } = await import("../src/server/storage");
+      await persistentStore.deleteOrder(dummyOrder.order.id);
+    } catch {}
   } catch (err: any) {
     console.warn("createOrder check notice:", err.message);
   }
