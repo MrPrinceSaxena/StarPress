@@ -4,7 +4,7 @@
 // Preserves real products, categories, settings, and verified admin accounts
 // =============================================================================
 
-globalThis.WebSocket = class MockWebSocket {};
+(globalThis as any).WebSocket = class MockWebSocket {} as any;
 import { PrismaClient } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";

@@ -153,6 +153,17 @@ export const persistentStore = {
     return order;
   },
 
+  deleteOrder(idOrNumber: string): boolean {
+    const store = ensureStoreFile();
+    const clean = idOrNumber.trim().toUpperCase();
+    const before = store.orders.length;
+    store.orders = store.orders.filter(
+      (o) => o.id !== idOrNumber && o.orderNumber.toUpperCase() !== clean
+    );
+    saveStore(store);
+    return store.orders.length < before;
+  },
+
   updateOrderStatus(
     idOrNumber: string,
     status: string,
