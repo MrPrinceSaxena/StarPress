@@ -1,5 +1,6 @@
 # Star Press — E-commerce Website
 
+
 E-commerce web app for Star Press, a local printing business. Built phase-by-phase;
 see `docs/` for the full project documentation — start with `docs/00-PROJECT-OVERVIEW.md`.
 
