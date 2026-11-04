@@ -16,6 +16,10 @@ import {
   Type,
   FileText,
   AlertCircle,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Boxes,
 } from "lucide-react";
 import { CatalogProduct } from "@/lib/catalog";
 import { calculateProductPrice, formatINR } from "@/lib/pricing";
@@ -66,8 +70,26 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
   const selectedSize = product.sizeOptions.find((s) => s.id === sizeId);
   const selectedMaterial = product.materialOptions.find((m) => m.id === materialId);
 
+  // Live Inventory Status
+  const isTracked = product.trackInventory !== false;
+  const availableStock = product.stockQuantity !== undefined ? product.stockQuantity : 5000;
+  const lowStockThreshold = product.lowStockThreshold || 25;
+  const isOutOfStock = isTracked && availableStock <= 0;
+  const isLowStock = isTracked && availableStock > 0 && availableStock <= lowStockThreshold;
+  const isQuantityExceeded = isTracked && quantity > availableStock;
+
   // Validation
   const validateCustomization = () => {
+    if (isOutOfStock) {
+      setValidationError("This product is currently out of stock.");
+      return false;
+    }
+    if (isQuantityExceeded) {
+      setValidationError(
+        `Requested quantity (${quantity} units) exceeds available stock (${availableStock} units). Please select up to ${availableStock} units.`
+      );
+      return false;
+    }
     if (customText.length > MAX_CUSTOM_CHARS) {
       setValidationError(`Custom text exceeds maximum limit of ${MAX_CUSTOM_CHARS} characters.`);
       return false;
@@ -137,6 +159,52 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
 
   return (
     <div className="space-y-8">
+      {/* Live Inventory & Availability Status */}
+      {isTracked && (
+        <div
+          className={`p-4 rounded-2xl border flex items-start gap-3 transition-all ${
+            isOutOfStock
+              ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
+              : isLowStock
+              ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+              : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+          }`}
+        >
+          {isOutOfStock ? (
+            <XCircle size={20} className="text-rose-500 shrink-0 mt-0.5" />
+          ) : isLowStock ? (
+            <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-0.5 animate-pulse" />
+          ) : (
+            <CheckCircle2 size={20} className="text-emerald-500 shrink-0 mt-0.5" />
+          )}
+          <div className="flex-1 text-xs">
+            <div className="font-bold text-sm">
+              {isOutOfStock
+                ? "Currently Out of Stock"
+                : isLowStock
+                ? `Only ${availableStock} units left in stock — order soon!`
+                : `In Stock (${availableStock.toLocaleString("en-IN")} units available)`}
+            </div>
+            <p className="mt-0.5 text-text-secondary text-[11px] leading-relaxed">
+              {isOutOfStock
+                ? "This product is temporarily unavailable for online orders. Contact us on WhatsApp for custom inquiries or backorders."
+                : isLowStock
+                ? "High order velocity detected. Secure your batch now before queue replenishment."
+                : "Pan-India delivery in 2-3 business days. Guaranteed pre-flight digital proof."}
+            </p>
+          </div>
+
+          {isQuantityExceeded && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+              <AlertCircle size={15} className="shrink-0" />
+              <span>
+                Selected quantity ({quantity.toLocaleString("en-IN")}) exceeds available inventory ({availableStock.toLocaleString("en-IN")} units). Please select a lower quantity tier.
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 1. Size Selection */}
       {product.sizeOptions.length > 0 && (
         <div className="space-y-3">
@@ -277,6 +345,15 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
               );
             })}
           </div>
+
+          {isQuantityExceeded && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+              <AlertCircle size={15} className="shrink-0" />
+              <span>
+                Selected quantity ({quantity.toLocaleString("en-IN")}) exceeds available inventory ({availableStock.toLocaleString("en-IN")} units). Please select a lower quantity tier.
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -418,18 +495,39 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
           )}
         </div>
 
+        {/* Validation Error Alert */}
+        {validationError && (
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{validationError}</span>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="space-y-3">
           <Button
             variant="primary"
             size="lg"
+            disabled={isOutOfStock || isQuantityExceeded}
             onClick={handleAddToCart}
-            className="w-full !py-3.5 !text-base font-bold shadow-xl shadow-brand-yellow/15"
+            className={`w-full !py-3.5 !text-base font-bold shadow-xl shadow-brand-yellow/15 ${
+              isOutOfStock || isQuantityExceeded ? "!opacity-50 !cursor-not-allowed" : ""
+            }`}
           >
             {isAdded ? (
               <div className="flex items-center gap-2">
                 <Check size={18} className="text-black stroke-[3]" />
                 <span>Added {quantity} Units to Cart!</span>
+              </div>
+            ) : isOutOfStock ? (
+              <div className="flex items-center gap-2">
+                <XCircle size={18} className="text-black" />
+                <span>Currently Out of Stock</span>
+              </div>
+            ) : isQuantityExceeded ? (
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={18} className="text-black" />
+                <span>Quantity Exceeds Stock ({availableStock.toLocaleString()} Max)</span>
               </div>
             ) : (
               <div className="flex items-center gap-2">

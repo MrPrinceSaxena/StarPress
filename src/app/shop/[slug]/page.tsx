@@ -110,7 +110,10 @@ export default async function ProductDetailPage({ params }: PageProps) {
       url: `${baseUrl}/shop/${product.slug}`,
       priceCurrency: "INR",
       price: product.basePrice,
-      availability: "https://schema.org/InStock",
+      availability:
+        product.stockQuantity !== undefined && product.stockQuantity <= 0
+          ? "https://schema.org/OutOfStock"
+          : "https://schema.org/InStock",
       seller: {
         "@type": "Organization",
         name: "Star Press",

@@ -53,6 +53,10 @@ async function main() {
         basePrice: prod.basePrice,
         isFeatured: prod.isFeatured ?? false,
         isActive: true,
+        status: "published",
+        trackInventory: true,
+        stockQuantity: 5000,
+        lowStockThreshold: 25,
       },
       create: {
         name: prod.name,
@@ -62,6 +66,10 @@ async function main() {
         basePrice: prod.basePrice,
         isFeatured: prod.isFeatured ?? false,
         isActive: true,
+        status: "published",
+        trackInventory: true,
+        stockQuantity: 5000,
+        lowStockThreshold: 25,
       },
     });
 

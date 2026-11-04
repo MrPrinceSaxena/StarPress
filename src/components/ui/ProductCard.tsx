@@ -114,9 +114,19 @@ export default function ProductCard({
               reviewCount={product.reviewCount}
               size="sm"
             />
-            <span className="text-[10px] font-mono text-emerald-400 font-medium">
-              In Stock
-            </span>
+            {product.stockQuantity !== undefined && product.stockQuantity <= 0 ? (
+              <span className="text-[10px] font-mono text-rose-400 font-semibold">
+                Out of Stock
+              </span>
+            ) : product.stockQuantity !== undefined && product.stockQuantity <= (product.lowStockThreshold || 25) ? (
+              <span className="text-[10px] font-mono text-amber-400 font-semibold animate-pulse">
+                Only {product.stockQuantity} left
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono text-emerald-400 font-medium">
+                In Stock {product.stockQuantity ? `(${product.stockQuantity})` : ""}
+              </span>
+            )}
           </div>
         </div>
 

@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 import { quoteOrder, QuoteItemInput } from "@/server/quote";
 import { sendOrderPlacedProofEmail } from "@/server/email";
 import { persistentStore, type PersistedOrder } from "@/server/storage";
-import { slugify } from "@/server/products";
+import { slugify, invalidateCatalogCache } from "@/server/products";
 
 export interface CreateOrderInput {
   userId?: string;
@@ -130,10 +130,15 @@ export async function createOrder(input: CreateOrderInput, client: typeof db = d
 
   // 5. Pre-order stock validation — reject if any tracked product has insufficient stock
   for (const snap of quote.lineSnapshots) {
-    if (snap.productId) {
+    if (snap.productId || snap.productSlug) {
       try {
-        const dbProd = await client.product.findUnique({
-          where: { id: snap.productId },
+        const dbProd = await client.product.findFirst({
+          where: {
+            OR: [
+              ...(snap.productId ? [{ id: snap.productId }, { slug: snap.productId }] : []),
+              ...(snap.productSlug ? [{ slug: snap.productSlug }] : []),
+            ],
+          },
           select: { trackInventory: true, stockQuantity: true, name: true },
         });
         if (dbProd && dbProd.trackInventory && dbProd.stockQuantity < snap.quantity) {
@@ -252,15 +257,20 @@ export async function createOrder(input: CreateOrderInput, client: typeof db = d
         // Atomically decrement stock for all tracked products within the same transaction
         await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${created.id} FOR UPDATE`;
         for (const item of created.items) {
-          if (!item.productId) continue;
-          const prod = await tx.product.findUnique({
-            where: { id: item.productId },
+          if (!item.productId && !item.productSlug) continue;
+          const prod = await tx.product.findFirst({
+            where: {
+              OR: [
+                ...(item.productId ? [{ id: item.productId }, { slug: item.productId }] : []),
+                ...(item.productSlug ? [{ slug: item.productSlug }] : []),
+              ],
+            },
             select: { id: true, name: true, trackInventory: true, stockQuantity: true },
           });
           if (prod?.trackInventory) {
             const decResult = await tx.product.updateMany({
               where: {
-                id: item.productId,
+                id: prod.id,
                 trackInventory: true,
                 stockQuantity: { gte: item.quantity },
               },
@@ -282,6 +292,7 @@ export async function createOrder(input: CreateOrderInput, client: typeof db = d
         return created;
       });
 
+      invalidateCatalogCache();
       break; // Success — exit retry loop
     } catch (retryErr: any) {
       // Check if this is a unique constraint violation on orderNumber
@@ -737,6 +748,7 @@ export async function updateOrderStatus(
       return { success: true as const, order: updated };
     });
 
+    invalidateCatalogCache();
     return result;
   } catch (error) {
     // If DB transaction failed, return local order if available

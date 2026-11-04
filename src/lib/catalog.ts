@@ -71,6 +71,10 @@ export interface CatalogProduct {
   features: string[];
   pricingModel?: "batch" | "unit";
   baseQuantity?: number;
+  trackInventory?: boolean;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
+  inStock?: boolean;
 }
 
 export const CATALOG_CATEGORIES: CatalogCategory[] = [
@@ -166,7 +170,13 @@ export const CATALOG_PRODUCTS: CatalogProduct[] = [
   ...PACKAGING_PRODUCTS,
   ...LABELS_STICKERS_PRODUCTS,
   ...PHOTO_CUSTOM_PRODUCTS,
-];
+].map((p) => ({
+  trackInventory: true,
+  stockQuantity: 5000,
+  lowStockThreshold: 25,
+  inStock: true,
+  ...p,
+}));
 
 export const PRODUCT_SLUG_ALIASES: Record<string, string> = {
   // Flyers & Leaflets

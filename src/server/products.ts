@@ -1259,7 +1259,7 @@ async function fetchLiveCatalogProducts(): Promise<CatalogProduct[]> {
       });
 
       const mergedBase: CatalogProduct[] = base
-        .map((prod) => {
+        .map((prod): CatalogProduct | null => {
           const dbMatch = dbProdMap.get(prod.slug) || dbProdMap.get(prod.id);
           
           let finalName = prod.name;
@@ -1268,6 +1268,12 @@ async function fetchLiveCatalogProducts(): Promise<CatalogProduct[]> {
           let finalShort = prod.shortDescription;
           let finalImages = prod.images;
           let finalStatus = "published";
+
+          const override = overrides[prod.id] || overrides[prod.slug];
+
+          let trackInventory = prod.trackInventory ?? true;
+          let stockQuantity = prod.stockQuantity ?? 5000;
+          let lowStockThreshold = prod.lowStockThreshold ?? 25;
 
           if (dbMatch) {
              finalStatus = dbMatch.status;
@@ -1278,18 +1284,27 @@ async function fetchLiveCatalogProducts(): Promise<CatalogProduct[]> {
              if (dbMatch.images && dbMatch.images.length > 0) {
                finalImages = dbMatch.images.map((img: any) => img.url);
              }
-          } else {
-             const override = overrides[prod.id] || overrides[prod.slug];
-             if (override) {
-               finalStatus = override.status || "published";
-               finalName = override.name ?? prod.name;
-               finalPrice = override.basePrice !== undefined ? Number(override.basePrice) : prod.basePrice;
-               finalDesc = override.description ?? prod.description;
-               finalShort = override.shortDescription ?? prod.shortDescription;
-               if (override.images && Array.isArray(override.images) && override.images.length > 0) {
-                 finalImages = override.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)));
-               }
+             if (dbMatch.trackInventory !== undefined && dbMatch.trackInventory !== null) {
+               trackInventory = Boolean(dbMatch.trackInventory);
              }
+             if (dbMatch.stockQuantity !== undefined && dbMatch.stockQuantity !== null) {
+               stockQuantity = Number(dbMatch.stockQuantity);
+             }
+             if (dbMatch.lowStockThreshold !== undefined && dbMatch.lowStockThreshold !== null) {
+               lowStockThreshold = Number(dbMatch.lowStockThreshold);
+             }
+          } else if (override) {
+             finalStatus = override.status || "published";
+             finalName = override.name ?? prod.name;
+             finalPrice = override.basePrice !== undefined ? Number(override.basePrice) : prod.basePrice;
+             finalDesc = override.description ?? prod.description;
+             finalShort = override.shortDescription ?? prod.shortDescription;
+             if (override.images && Array.isArray(override.images) && override.images.length > 0) {
+               finalImages = override.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)));
+             }
+             if (override.trackInventory !== undefined) trackInventory = Boolean(override.trackInventory);
+             if (override.stockQuantity !== undefined) stockQuantity = Number(override.stockQuantity);
+             if (override.lowStockThreshold !== undefined) lowStockThreshold = Number(override.lowStockThreshold);
           }
 
           if (finalStatus === "draft" || finalStatus === "archived") return null;
@@ -1302,6 +1317,10 @@ async function fetchLiveCatalogProducts(): Promise<CatalogProduct[]> {
             description: finalDesc,
             shortDescription: finalShort,
             images: finalImages,
+            trackInventory,
+            stockQuantity,
+            lowStockThreshold,
+            inStock: !trackInventory || stockQuantity > 0,
           };
         })
         .filter((p): p is CatalogProduct => p !== null);
@@ -1317,6 +1336,9 @@ async function fetchLiveCatalogProducts(): Promise<CatalogProduct[]> {
           
           const catSlug = c.category?.slug || (c.categoryId && !c.categoryId.startsWith("cm") ? c.categoryId : "business-printing");
           const catName = c.category?.name || "Business Printing";
+          const trackInventory = c.trackInventory ?? true;
+          const stockQuantity = c.stockQuantity !== undefined && c.stockQuantity !== null ? Number(c.stockQuantity) : 5000;
+          const lowStockThreshold = c.lowStockThreshold !== undefined && c.lowStockThreshold !== null ? Number(c.lowStockThreshold) : 25;
             
           return {
             id: c.id,
@@ -1354,6 +1376,10 @@ async function fetchLiveCatalogProducts(): Promise<CatalogProduct[]> {
               "Rigid quality inspection before dispatch",
               "Safe eco-friendly premium substrates",
             ],
+            trackInventory,
+            stockQuantity,
+            lowStockThreshold,
+            inStock: !trackInventory || stockQuantity > 0,
           } as CatalogProduct;
         });
 
@@ -1365,6 +1391,10 @@ async function fetchLiveCatalogProducts(): Promise<CatalogProduct[]> {
           const imgUrls = c.images && Array.isArray(c.images) && c.images.length > 0
             ? c.images.map((img: any) => (typeof img === "object" && img.url ? img.url : String(img)))
             : ["/images/hero-composition.jpg"];
+
+          const trackInventory = c.trackInventory ?? true;
+          const stockQuantity = c.stockQuantity !== undefined && c.stockQuantity !== null ? Number(c.stockQuantity) : 5000;
+          const lowStockThreshold = c.lowStockThreshold !== undefined && c.lowStockThreshold !== null ? Number(c.lowStockThreshold) : 25;
 
           return {
             id: c.id,
@@ -1402,6 +1432,10 @@ async function fetchLiveCatalogProducts(): Promise<CatalogProduct[]> {
               "Rigid quality inspection before dispatch",
               "Safe eco-friendly premium substrates",
             ],
+            trackInventory,
+            stockQuantity,
+            lowStockThreshold,
+            inStock: !trackInventory || stockQuantity > 0,
           };
         });
 

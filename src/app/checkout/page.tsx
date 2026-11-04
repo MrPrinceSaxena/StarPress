@@ -150,7 +150,6 @@ export default function CheckoutPage() {
   // Server Quote & In-Flight State
   const [serverQuote, setServerQuote] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [recoveryOrderId, setRecoveryOrderId] = useState<string | null>(null);
 
@@ -380,15 +379,12 @@ export default function CheckoutPage() {
     }
 
     setCheckoutError(null);
-    setStatusMessage(null);
     setIsSubmitting(true);
 
     try {
       const clientEmail = session?.user?.email || "customer@starpress.in";
       const cleanPhone = phoneNumber.replace(/\D/g, "").slice(-10);
       const fullPhone = `+91 ${cleanPhone}`;
-
-      setStatusMessage("Registering print specifications on server...");
 
       const payload = {
         userId: session?.user?.id || undefined,
@@ -485,7 +481,6 @@ export default function CheckoutPage() {
       }
 
       // 3. Online Razorpay Payment flow
-      setStatusMessage("Launching secure Razorpay payment modal...");
       const razorpayResponse = await fetch("/api/payments/razorpay/create-order", {
         method: "POST",
         headers: authHeaders,
@@ -525,7 +520,6 @@ export default function CheckoutPage() {
         modal: {
           ondismiss: function () {
             setIsSubmitting(false);
-            setStatusMessage(null);
             setRecoveryOrderId(placedOrder.id);
             setCheckoutError(
               "Payment window was closed before completion. Your order has been preserved — you can retry payment whenever ready."
@@ -536,7 +530,6 @@ export default function CheckoutPage() {
         },
         handler: async function (response: any) {
           setIsSubmitting(true);
-          setStatusMessage("Verifying payment capture with server...");
 
           try {
             const verifyRes = await fetch("/api/payments/razorpay/verify", {
@@ -576,7 +569,6 @@ export default function CheckoutPage() {
             setCheckoutError(vErr.message);
           } finally {
             setIsSubmitting(false);
-            setStatusMessage(null);
           }
         },
       };
@@ -584,7 +576,6 @@ export default function CheckoutPage() {
       const razorpayInstance = new (window as any).Razorpay(options);
       razorpayInstance.on("payment.failed", function (resp: any) {
         setIsSubmitting(false);
-        setStatusMessage(null);
         setRecoveryOrderId(placedOrder.id);
         setCheckoutError(
           resp.error?.description || "Payment failed at card/bank network. Please retry or choose Pay After Proof."
@@ -594,9 +585,13 @@ export default function CheckoutPage() {
       razorpayInstance.open();
     } catch (err: any) {
       console.error("Error during checkout:", err);
-      setCheckoutError(err.message || "An unexpected error occurred. Please try again.");
+      const rawMsg = err.message || "An unexpected error occurred. Please try again.";
+      let userFriendlyMsg = rawMsg;
+      if (rawMsg.includes("Insufficient stock") || rawMsg.includes("out of stock")) {
+        userFriendlyMsg = `${rawMsg} Please adjust your cart quantity to available inventory.`;
+      }
+      setCheckoutError(userFriendlyMsg);
       setIsSubmitting(false);
-      setStatusMessage(null);
     }
   };
 
@@ -842,14 +837,6 @@ export default function CheckoutPage() {
                     </Link>
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* In-Flight Status Notice */}
-            {statusMessage && (
-              <div className="mb-6 p-4 rounded-2xl bg-brand-indigo/10 border border-brand-indigo/20 text-brand-indigo text-xs sm:text-sm flex items-center gap-3 shadow-xs">
-                <Loader2 size={16} className="animate-spin text-brand-indigo shrink-0" />
-                <span className="font-medium">{statusMessage}</span>
               </div>
             )}
 
@@ -1428,20 +1415,15 @@ export default function CheckoutPage() {
                       className="w-full h-12 rounded-2xl bg-brand-indigo hover:bg-brand-indigo/90 active:scale-[0.99] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-brand-indigo/25 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {isSubmitting ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" />
-                          <span>Processing Secure Order...</span>
-                        </>
+                        <Loader2 size={22} className="animate-spin text-white" />
                       ) : (
-                        <>
-                          <span>
-                            {currentStep === 2
-                              ? "Proceed to Payment →"
-                              : paymentMethod === "online"
-                              ? `Place Order & Pay ₹${grandTotal.toLocaleString("en-IN")}`
-                              : `Confirm Order (Pay After Proof)`}
-                          </span>
-                        </>
+                        <span>
+                          {currentStep === 2
+                            ? "Proceed to Payment →"
+                            : paymentMethod === "online"
+                            ? `Place Order & Pay ₹${grandTotal.toLocaleString("en-IN")}`
+                            : `Confirm Order (Pay After Proof)`}
+                        </span>
                       )}
                     </button>
 

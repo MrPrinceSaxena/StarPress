@@ -1,5 +1,186 @@
 {
-  "orders": [],
+  "orders": [
+    {
+      "id": "order-1793816703119-p0uci",
+      "orderNumber": "SP-2026-5EHB62212",
+      "userId": null,
+      "guestEmail": "customer@example.com",
+      "guestPhone": "9876543210",
+      "guestName": "Test Customer",
+      "status": "PENDING",
+      "subtotal": 398,
+      "gstAmount": null,
+      "shippingFee": null,
+      "discountAmount": null,
+      "totalAmount": 569,
+      "paymentMethod": "ONLINE",
+      "paymentStatus": "UNPAID",
+      "notes": null,
+      "items": [
+        {
+          "id": "item-1",
+          "productId": "prod-6B",
+          "productName": "Envelopes",
+          "productSlug": "prod-6B",
+          "quantity": 2,
+          "unitPrice": 199,
+          "lineTotal": 398
+        }
+      ],
+      "createdAt": "undefined",
+      "updatedAt": "undefined"
+    },
+    {
+      "id": "order-1793816700481-3fpsc",
+      "orderNumber": "SP-2026-5CG015641",
+      "userId": null,
+      "guestEmail": "customer@example.com",
+      "guestPhone": "9876543210",
+      "guestName": "Test Customer",
+      "status": "PENDING",
+      "subtotal": 398,
+      "gstAmount": null,
+      "shippingFee": null,
+      "discountAmount": null,
+      "totalAmount": 569,
+      "paymentMethod": "ONLINE",
+      "paymentStatus": "UNPAID",
+      "notes": null,
+      "items": [
+        {
+          "id": "item-1",
+          "productId": "prod-6A",
+          "productName": "Letterheads",
+          "productSlug": "prod-6A",
+          "quantity": 2,
+          "unitPrice": 199,
+          "lineTotal": 398
+        }
+      ],
+      "createdAt": "undefined",
+      "updatedAt": "undefined"
+    },
+    {
+      "id": "order-1793816696857-gqudb",
+      "orderNumber": "SP-2026-59ND78259",
+      "userId": null,
+      "guestEmail": "customer@example.com",
+      "guestPhone": "9876543210",
+      "guestName": "Test Customer",
+      "status": "CANCELLED",
+      "subtotal": 796,
+      "gstAmount": null,
+      "shippingFee": null,
+      "discountAmount": null,
+      "totalAmount": 1038,
+      "paymentMethod": "ONLINE",
+      "paymentStatus": "UNPAID",
+      "notes": null,
+      "items": [
+        {
+          "id": "item-1",
+          "productId": "prod-5",
+          "productName": "Brochures",
+          "productSlug": "prod-5",
+          "quantity": 4,
+          "unitPrice": 199,
+          "lineTotal": 796
+        }
+      ],
+      "createdAt": "undefined",
+      "updatedAt": "2026-11-04T18:25:00.478Z"
+    },
+    {
+      "id": "order-1793816696856-0l13z",
+      "orderNumber": "SP-2026-59NC82633",
+      "userId": null,
+      "guestEmail": "customer@example.com",
+      "guestPhone": "9876543210",
+      "guestName": "Test Customer",
+      "status": "CANCELLED",
+      "subtotal": 398,
+      "gstAmount": null,
+      "shippingFee": null,
+      "discountAmount": null,
+      "totalAmount": 569,
+      "paymentMethod": "ONLINE",
+      "paymentStatus": "UNPAID",
+      "notes": null,
+      "items": [
+        {
+          "id": "item-1",
+          "productId": "prod-4",
+          "productName": "Flyers",
+          "productSlug": "prod-4",
+          "quantity": 2,
+          "unitPrice": 199,
+          "lineTotal": 398
+        }
+      ],
+      "createdAt": "undefined",
+      "updatedAt": "2026-11-04T18:24:56.857Z"
+    },
+    {
+      "id": "order-1793816696855-1hddb",
+      "orderNumber": "SP-2026-59NB43452",
+      "userId": null,
+      "guestEmail": "customer@example.com",
+      "guestPhone": "9876543210",
+      "guestName": "Race Buyer",
+      "status": "PENDING",
+      "subtotal": 199,
+      "gstAmount": null,
+      "shippingFee": null,
+      "discountAmount": null,
+      "totalAmount": 334,
+      "paymentMethod": "ONLINE",
+      "paymentStatus": "UNPAID",
+      "notes": null,
+      "items": [
+        {
+          "id": "item-1",
+          "productId": "prod-last",
+          "productName": "Exclusive Foil Card",
+          "productSlug": "prod-last",
+          "quantity": 1,
+          "unitPrice": 199,
+          "lineTotal": 199
+        }
+      ],
+      "createdAt": "undefined",
+      "updatedAt": "undefined"
+    },
+    {
+      "id": "order-1793816696831-w3ric",
+      "orderNumber": "SP-2026-59MN46646",
+      "userId": null,
+      "guestEmail": "customer@example.com",
+      "guestPhone": "9876543210",
+      "guestName": "Test Customer",
+      "status": "PENDING",
+      "subtotal": 398,
+      "gstAmount": null,
+      "shippingFee": null,
+      "discountAmount": null,
+      "totalAmount": 569,
+      "paymentMethod": "ONLINE",
+      "paymentStatus": "UNPAID",
+      "notes": null,
+      "items": [
+        {
+          "id": "item-1",
+          "productId": "prod-1",
+          "productName": "Standard Visiting Cards",
+          "productSlug": "prod-1",
+          "quantity": 2,
+          "unitPrice": 199,
+          "lineTotal": 398
+        }
+      ],
+      "createdAt": "undefined",
+      "updatedAt": "undefined"
+    }
+  ],
   "customProducts": [],
   "settings": {
     "storeName": "Star Press",

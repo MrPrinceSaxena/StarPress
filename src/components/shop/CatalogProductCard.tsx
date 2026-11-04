@@ -27,9 +27,20 @@ export default function CatalogProductCard({ product }: CatalogProductCardProps)
     toggleWishlist(product.id);
   };
 
+  const isOutOfStock =
+    product.trackInventory !== false &&
+    product.stockQuantity !== undefined &&
+    product.stockQuantity <= 0;
+  const isLowStock =
+    product.trackInventory !== false &&
+    product.stockQuantity !== undefined &&
+    product.stockQuantity > 0 &&
+    product.stockQuantity <= (product.lowStockThreshold || 25);
+
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isOutOfStock) return;
     addItem(
       {
         id: product.id,
@@ -111,9 +122,27 @@ export default function CatalogProductCard({ product }: CatalogProductCardProps)
             {product.shortDescription}
           </p>
 
-          {/* Rating */}
-          <div className="mb-3">
+          {/* Rating & Stock Availability Strip */}
+          <div className="flex items-center justify-between gap-2 mb-3">
             <StarRating rating={product.rating} reviewCount={product.reviewCount} />
+            {product.trackInventory !== false && (
+              isOutOfStock ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  Out of Stock
+                </span>
+              ) : isLowStock ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/25 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Only {product.stockQuantity} left
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  In Stock ({product.stockQuantity !== undefined ? product.stockQuantity.toLocaleString("en-IN") : "Ready"})
+                </span>
+              )
+            )}
           </div>
 
           {/* Pricing Row */}
@@ -143,9 +172,14 @@ export default function CatalogProductCard({ product }: CatalogProductCardProps)
 
           <button
             type="button"
+            disabled={isOutOfStock}
             onClick={handleQuickAdd}
-            title="Quick Add to Cart"
-            className="col-span-1 inline-flex items-center justify-center rounded-lg bg-brand-yellow text-black hover:bg-[#FFE04D] active:scale-95 transition-all"
+            title={isOutOfStock ? "Out of Stock" : "Quick Add to Cart"}
+            className={`col-span-1 inline-flex items-center justify-center rounded-lg transition-all ${
+              isOutOfStock
+                ? "bg-slate-700/40 text-slate-500 cursor-not-allowed border border-border-subtle"
+                : "bg-brand-yellow text-black hover:bg-[#FFE04D] active:scale-95 cursor-pointer"
+            }`}
           >
             {isAdded ? (
               <Check size={16} className="stroke-[3]" />

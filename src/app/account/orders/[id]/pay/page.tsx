@@ -82,7 +82,6 @@ export default function OrderPayRecoveryPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [statusNote, setStatusNote] = useState<string | null>(null);
 
   // 1. Fetch order details
   useEffect(() => {
@@ -138,7 +137,6 @@ export default function OrderPayRecoveryPage() {
   const handleInitiatePayment = async () => {
     if (!order) return;
     setErrorMessage(null);
-    setStatusNote("Initializing secure gateway session...");
     setIsProcessingPayment(true);
 
     try {
@@ -171,7 +169,6 @@ export default function OrderPayRecoveryPage() {
       }
 
       // Load Razorpay SDK
-      setStatusNote("Connecting to Razorpay...");
       const sdkLoaded = await loadRazorpayScript();
       if (!sdkLoaded) {
         throw new Error("Unable to load Razorpay SDK. Please check your internet connection.");
@@ -199,14 +196,12 @@ export default function OrderPayRecoveryPage() {
         modal: {
           ondismiss: function () {
             setIsProcessingPayment(false);
-            setStatusNote(null);
             setErrorMessage("Payment window was closed. Your order is reserved — click below to retry.");
           },
           escape: true,
           backdropclose: false,
         },
         handler: async function (response: any) {
-          setStatusNote("Verifying payment capture with server...");
           try {
             const verifyRes = await fetch("/api/payments/razorpay/verify", {
               method: "POST",
@@ -225,7 +220,6 @@ export default function OrderPayRecoveryPage() {
             }
 
             setPaymentSuccess(true);
-            setStatusNote(null);
           } catch (err: any) {
             setErrorMessage(err.message || "Payment verification failed. Please contact support.");
           } finally {
@@ -237,7 +231,6 @@ export default function OrderPayRecoveryPage() {
       const rzp = new (window as any).Razorpay(options);
       rzp.on("payment.failed", function (resp: any) {
         setIsProcessingPayment(false);
-        setStatusNote(null);
         const desc = resp.error?.description || "Payment failed at issuing bank.";
         setErrorMessage(`Transaction declined: ${desc}. Please try another card, UPI, or netbanking.`);
       });
@@ -246,7 +239,6 @@ export default function OrderPayRecoveryPage() {
     } catch (err: any) {
       setErrorMessage(err.message || "An unexpected error occurred. Please try again.");
       setIsProcessingPayment(false);
-      setStatusNote(null);
     }
   };
 
@@ -387,13 +379,6 @@ export default function OrderPayRecoveryPage() {
                 </div>
               )}
 
-              {statusNote && (
-                <div className="p-4 rounded-2xl border border-brand-yellow/30 bg-brand-yellow/10 text-xs text-brand-yellow flex items-center gap-3">
-                  <div className="w-4 h-4 border-2 border-brand-yellow border-t-transparent rounded-full animate-spin shrink-0" />
-                  <span>{statusNote}</span>
-                </div>
-              )}
-
               {/* Order Items Summary */}
               <div className="space-y-3 pt-2">
                 <span className="text-xs font-bold text-text-primary uppercase tracking-wider block">
@@ -444,10 +429,7 @@ export default function OrderPayRecoveryPage() {
                   className="w-full py-4 px-6 rounded-2xl bg-brand-yellow hover:bg-yellow-400 text-black font-display font-black text-sm uppercase tracking-wider flex items-center justify-center gap-3 shadow-lg shadow-brand-yellow/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isProcessingPayment ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                      <span>Processing Gateway Session...</span>
-                    </>
+                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
                       <CreditCard size={18} />

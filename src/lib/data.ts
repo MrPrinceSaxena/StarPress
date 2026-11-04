@@ -32,6 +32,10 @@ export interface ProductItem {
   reviewCount: number;
   imageSrc: string;
   href: string;
+  trackInventory?: boolean;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
+  inStock?: boolean;
 }
 
 export interface BenefitItem {
