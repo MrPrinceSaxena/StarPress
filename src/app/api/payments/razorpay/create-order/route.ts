@@ -26,6 +26,13 @@ export async function POST(request: NextRequest) {
       console.warn("[Payments Create-Order] User resolution notice:", authErr);
     }
 
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required to initiate payment. Please sign in." },
+        { status: 401 }
+      );
+    }
+
     const ip = getClientIp(request);
     const key = user ? `payment:create:${user.id}` : `payment:create:${ip}`;
     const rl = await rateLimitDistributed(key, 8, 60);

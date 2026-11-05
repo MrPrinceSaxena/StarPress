@@ -48,6 +48,8 @@ export default function CatalogProductCard({ product }: CatalogProductCardProps)
         price: product.basePrice,
         imageSrc: product.images[0] || "/images/hero-composition.jpg",
         href: `/shop/${product.slug}`,
+        stockQuantity: product.stockQuantity,
+        inStock: product.inStock,
       },
       1
     );

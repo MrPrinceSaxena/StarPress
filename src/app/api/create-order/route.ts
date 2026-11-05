@@ -21,6 +21,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Authenticate user across Supabase, NextAuth, and Bearer tokens
+    let user = null;
+    try {
+      const { resolveUser } = await import("@/lib/auth-resolver");
+      user = await resolveUser(request);
+    } catch {}
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required to initiate payment. Please sign in." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     let amount = Number(body.amount);
     const currency = (body.currency || "INR").toUpperCase();

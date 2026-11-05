@@ -54,23 +54,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Require either authenticated user or valid contact email for guest checkout
-    const orderEmail = user?.email || body.guestEmail || body.shippingAddress?.email;
-    if (!user && !orderEmail) {
+    // Mandatory User Authentication Enforcement: reject unauthenticated or guest requests
+    if (!user) {
       return NextResponse.json(
-        { error: "A valid email address is required to place an order." },
-        { status: 400 }
+        { error: "Authentication required to place an order. Please sign in." },
+        { status: 401 }
       );
     }
 
-    if (user) {
-      body.userId = user.id;
-      body.guestEmail = body.guestEmail || user.email;
-      body.guestName = body.guestName || user.name || "Valued Customer";
-    } else {
-      body.guestEmail = orderEmail;
-      body.guestName = body.guestName || body.shippingAddress?.fullName || "Valued Customer";
-    }
+    body.userId = user.id;
+    body.guestEmail = user.email || body.shippingAddress?.email;
+    body.guestName = user.name || body.shippingAddress?.fullName || "Valued Customer";
 
     // Read Idempotency Key from standard headers
     const idempotencyKey =

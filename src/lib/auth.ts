@@ -214,9 +214,9 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user && token) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as Role;
-        session.user.phone = token.phone as string | null;
+        (session.user as any).id = token.id as string;
+        (session.user as any).role = token.role as Role;
+        (session.user as any).phone = token.phone as string | null;
       }
       return session;
     },

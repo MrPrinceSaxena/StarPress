@@ -29,9 +29,12 @@ export default function ProductCard({
     toggleWishlist(product.id);
   };
 
+  const isOutOfStock = product.stockQuantity !== undefined && product.stockQuantity <= 0;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isOutOfStock) return;
     addItem(product, 1);
     setIsAdded(true);
     if (onAddToCart) {
@@ -144,15 +147,20 @@ export default function ProductCard({
           {/* Inline Quick Add Button */}
           <button
             type="button"
+            disabled={isOutOfStock}
             onClick={handleAddToCart}
-            aria-label={`Add ${product.name} to cart`}
+            aria-label={isOutOfStock ? `${product.name} is out of stock` : `Add ${product.name} to cart`}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 shadow-sm shrink-0 ${
-              isAdded
+              isOutOfStock
+                ? "bg-bg-surface-alt text-text-muted cursor-not-allowed border border-border-subtle opacity-60"
+                : isAdded
                 ? "bg-brand-yellow text-black"
-                : "bg-bg-surface-alt hover:bg-brand-yellow hover:text-black text-text-primary border border-border-strong hover:border-brand-yellow active:scale-95"
+                : "bg-bg-surface-alt hover:bg-brand-yellow hover:text-black text-text-primary border border-border-strong hover:border-brand-yellow active:scale-95 cursor-pointer"
             }`}
           >
-            {isAdded ? (
+            {isOutOfStock ? (
+              <span>Out of Stock</span>
+            ) : isAdded ? (
               <>
                 <Check size={13} className="text-black stroke-[3]" />
                 <span>Added</span>

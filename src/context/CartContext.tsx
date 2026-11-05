@@ -28,6 +28,8 @@ export interface CartItem {
   customizations?: CartItemCustomizations;
   specs?: Record<string, any>;
   artworkUrl?: string;
+  stockQuantity?: number;
+  inStock?: boolean;
 }
 
 export interface AddItemInput {
@@ -47,6 +49,8 @@ export interface AddItemInput {
   customizations?: CartItemCustomizations;
   specs?: Record<string, any>;
   artworkUrl?: string;
+  stockQuantity?: number;
+  inStock?: boolean;
 }
 
 export interface CartContextType {
@@ -128,6 +132,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           customText: product.customText !== undefined ? product.customText : updated[existingIndex].customText,
           customizations: product.customizations || updated[existingIndex].customizations,
           specs: product.specs || updated[existingIndex].specs,
+          stockQuantity: product.stockQuantity !== undefined ? product.stockQuantity : updated[existingIndex].stockQuantity,
+          inStock: product.inStock !== undefined ? product.inStock : updated[existingIndex].inStock,
         };
         return updated;
       }
@@ -149,6 +155,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         customizations: product.customizations,
         specs: product.specs,
         artworkUrl: product.artworkUrl,
+        stockQuantity: product.stockQuantity,
+        inStock: product.inStock,
       };
 
       return [...prev, newItem];
@@ -165,7 +173,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const finalQty =
+          item.stockQuantity !== undefined && item.stockQuantity > 0 && quantity > item.stockQuantity
+            ? item.stockQuantity
+            : quantity;
+        return { ...item, quantity: finalQty };
+      })
     );
   };
 

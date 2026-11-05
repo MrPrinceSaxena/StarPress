@@ -82,7 +82,7 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { session, status, isHydrated } = useAuthSession();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/";
 
   // Redirect if already authenticated
   useEffect(() => {

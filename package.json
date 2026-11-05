@@ -13,6 +13,7 @@
     "test:refund": "ts-node -r tsconfig-paths/register --compiler-options '{\"module\":\"commonjs\"}' scripts/test-refund-accounting.ts",
     "test:inventory": "ts-node -r tsconfig-paths/register --compiler-options '{\"module\":\"commonjs\"}' scripts/test-inventory.ts",
     "test:ordering": "ts-node -r tsconfig-paths/register --compiler-options '{\"module\":\"commonjs\"}' scripts/test-ordering-system.ts",
+    "test:checkout": "ts-node -r tsconfig-paths/register --compiler-options '{\"module\":\"commonjs\"}' scripts/test-checkout-auth-security.ts",
     "test:razorpay": "ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/test-razorpay-integration.ts",
     "prisma:studio": "prisma studio",
     "prisma:migrate": "prisma migrate dev"

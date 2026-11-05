@@ -152,6 +152,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [recoveryOrderId, setRecoveryOrderId] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Confirmed Order Result
   const [confirmedOrder, setConfirmedOrder] = useState<{
@@ -172,6 +173,13 @@ export default function CheckoutPage() {
       idempotencyKeyRef.current = `idemp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     }
   }, []);
+
+  // Show authentication prompt if unauthenticated when hydrated
+  useEffect(() => {
+    if (isHydrated && status === "unauthenticated") {
+      setShowAuthModal(true);
+    }
+  }, [isHydrated, status]);
 
   // Preload Razorpay checkout SDK
   useEffect(() => {
@@ -361,6 +369,11 @@ export default function CheckoutPage() {
 
   // Proceed button click
   const handleProceedClick = () => {
+    if (!session?.user) {
+      setShowAuthModal(true);
+      setCheckoutError("Please sign in or create an account to proceed with checkout.");
+      return;
+    }
     if (currentStep === 2) {
       if (validateDetails()) {
         setCurrentStep(3);
@@ -373,6 +386,12 @@ export default function CheckoutPage() {
 
   // Place Order Action
   const handlePlaceOrder = async () => {
+    if (!session?.user) {
+      setShowAuthModal(true);
+      setCheckoutError("Authentication is mandatory to place an order. Please sign in.");
+      return;
+    }
+
     if (!validateDetails()) {
       setCurrentStep(2);
       return;
@@ -382,17 +401,36 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      const clientEmail = session?.user?.email || "customer@starpress.in";
+      // Validate session token with Supabase to reject expired sessions
+      let authToken: string | undefined;
+      try {
+        const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+        if (sessionErr || !sessionData?.session || !sessionData.session.user) {
+          setShowAuthModal(true);
+          setCheckoutError("Your login session has expired. Please sign in again to complete your order.");
+          setIsSubmitting(false);
+          return;
+        }
+        authToken = sessionData.session.access_token;
+      } catch {
+        setShowAuthModal(true);
+        setCheckoutError("Authentication session error. Please sign in again to continue.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const clientEmail = session.user.email;
+      const clientName = fullName.trim() || session.user.name || "Valued Customer";
       const cleanPhone = phoneNumber.replace(/\D/g, "").slice(-10);
       const fullPhone = `+91 ${cleanPhone}`;
 
       const payload = {
-        userId: session?.user?.id || undefined,
+        userId: session.user.id,
         guestEmail: clientEmail,
         guestPhone: fullPhone,
-        guestName: fullName.trim(),
+        guestName: clientName,
         shippingAddress: {
-          fullName: fullName.trim(),
+          fullName: clientName,
           phone: fullPhone,
           email: clientEmail,
           addressLine1: addressLine.trim(),
@@ -402,7 +440,7 @@ export default function CheckoutPage() {
         },
         billingAddress: isGstRequired
           ? {
-              companyName: companyName.trim() || fullName.trim(),
+              companyName: companyName.trim() || clientName,
               gstin: gstin.toUpperCase().trim(),
               addressLine1: addressLine.trim(),
               city: city.trim(),
@@ -426,12 +464,6 @@ export default function CheckoutPage() {
         })),
       };
 
-      let authToken: string | undefined;
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        authToken = sessionData?.session?.access_token;
-      } catch {}
-
       const authHeaders: Record<string, string> = {
         "Content-Type": "application/json",
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
@@ -450,6 +482,10 @@ export default function CheckoutPage() {
       const orderData = await orderResponse.json();
 
       if (!orderResponse.ok || !orderData.order) {
+        if (orderResponse.status === 401) {
+          setShowAuthModal(true);
+          throw new Error("Authentication required to place an order. Please sign in.");
+        }
         throw new Error(
           orderData.error || "Failed to create order on server. Please verify your details."
         );
@@ -587,7 +623,10 @@ export default function CheckoutPage() {
       console.error("Error during checkout:", err);
       const rawMsg = err.message || "An unexpected error occurred. Please try again.";
       let userFriendlyMsg = rawMsg;
-      if (rawMsg.includes("Insufficient stock") || rawMsg.includes("out of stock")) {
+      if (rawMsg.includes("401") || rawMsg.includes("Authentication required") || rawMsg.includes("sign in")) {
+        setShowAuthModal(true);
+        userFriendlyMsg = "Please sign in or create an account to complete your order.";
+      } else if (rawMsg.includes("Insufficient stock") || rawMsg.includes("out of stock")) {
         userFriendlyMsg = `${rawMsg} Please adjust your cart quantity to available inventory.`;
       }
       setCheckoutError(userFriendlyMsg);
@@ -595,13 +634,13 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!isLoaded) {
+  if (!isLoaded || !isHydrated || status === "loading") {
     return (
       <div className="flex min-h-screen flex-col bg-bg-base">
         <Header />
-        <main className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-24 text-center">
-          <div className="inline-block w-9 h-9 border-3 border-brand-indigo border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-sm font-medium text-text-secondary">Preparing secure checkout...</p>
+        <main className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-28 text-center">
+          <Loader2 size={36} className="animate-spin text-brand-indigo mx-auto mb-4" />
+          <p className="text-sm font-medium text-text-secondary">Verifying secure checkout session...</p>
         </main>
         <Footer />
       </div>
@@ -805,6 +844,28 @@ export default function CheckoutPage() {
                 </div>
               </div>
             </div>
+
+            {/* Unauthenticated Alert Banner */}
+            {status === "unauthenticated" && (
+              <div className="mb-6 p-4.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-start gap-3">
+                  <Lock size={19} className="text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-amber-800 dark:text-amber-200">Sign In Required to Place Order</p>
+                    <p className="text-text-secondary mt-0.5">
+                      Orders require a Star Press account. Your cart items are preserved and will remain intact.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push("/login?callbackUrl=/checkout")}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs shrink-0 transition-colors shadow-sm cursor-pointer"
+                >
+                  Sign In to Continue →
+                </button>
+              </div>
+            )}
 
             {/* Error Banner */}
             {checkoutError && (
@@ -1012,23 +1073,23 @@ export default function CheckoutPage() {
                         {/* Standard Delivery */}
                         <div
                           onClick={() => setDeliveryOption("standard")}
-                          className={`relative p-4.5 rounded-2xl cursor-pointer transition-all border flex items-center justify-between ${
+                          className={`relative p-5 rounded-2xl cursor-pointer transition-all border-2 flex items-center justify-between ${
                             deliveryOption === "standard"
-                              ? "border-2 border-brand-indigo bg-brand-indigo/5 shadow-xs"
+                              ? "border-brand-indigo bg-brand-indigo/5 shadow-xs"
                               : "border-border-subtle hover:border-border-strong bg-bg-surface"
                           }`}
                         >
                           <div className="flex items-start gap-3">
                             <div className="pt-0.5">
                               <div
-                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                                   deliveryOption === "standard"
-                                    ? "border-brand-indigo"
-                                    : "border-border-strong"
+                                    ? "border-brand-indigo bg-brand-indigo/10"
+                                    : "border-border-strong bg-transparent"
                                 }`}
                               >
                                 {deliveryOption === "standard" && (
-                                  <div className="w-2 h-2 rounded-full bg-brand-indigo" />
+                                  <div className="w-2.5 h-2.5 rounded-full bg-brand-indigo" />
                                 )}
                               </div>
                             </div>
@@ -1045,9 +1106,9 @@ export default function CheckoutPage() {
                         {/* Express Delivery */}
                         <div
                           onClick={() => setDeliveryOption("express")}
-                          className={`relative p-4.5 rounded-2xl cursor-pointer transition-all border flex items-center justify-between ${
+                          className={`relative p-5 rounded-2xl cursor-pointer transition-all border-2 flex items-center justify-between ${
                             deliveryOption === "express"
-                              ? "border-2 border-brand-indigo bg-brand-indigo/5 shadow-xs"
+                              ? "border-brand-indigo bg-brand-indigo/5 shadow-xs"
                               : "border-border-subtle hover:border-border-strong bg-bg-surface"
                           }`}
                         >
@@ -1057,14 +1118,14 @@ export default function CheckoutPage() {
                           <div className="flex items-start gap-3">
                             <div className="pt-0.5">
                               <div
-                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                                   deliveryOption === "express"
-                                    ? "border-brand-indigo"
-                                    : "border-border-strong"
+                                    ? "border-brand-indigo bg-brand-indigo/10"
+                                    : "border-border-strong bg-transparent"
                                 }`}
                               >
                                 {deliveryOption === "express" && (
-                                  <div className="w-2 h-2 rounded-full bg-brand-indigo" />
+                                  <div className="w-2.5 h-2.5 rounded-full bg-brand-indigo" />
                                 )}
                               </div>
                             </div>
@@ -1133,9 +1194,9 @@ export default function CheckoutPage() {
                       {/* Option 1: Online Payment */}
                       <div
                         onClick={() => setPaymentMethod("online")}
-                        className={`p-5 rounded-2xl cursor-pointer border transition-all ${
+                        className={`p-5 rounded-2xl cursor-pointer border-2 transition-all ${
                           paymentMethod === "online"
-                            ? "border-2 border-brand-indigo bg-brand-indigo/5 shadow-xs"
+                            ? "border-brand-indigo bg-brand-indigo/5 shadow-xs"
                             : "border-border-subtle hover:border-border-strong bg-bg-surface"
                         }`}
                       >
@@ -1143,12 +1204,14 @@ export default function CheckoutPage() {
                           <div className="flex items-start gap-3">
                             <div className="pt-0.5">
                               <div
-                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                  paymentMethod === "online" ? "border-brand-indigo" : "border-border-strong"
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                  paymentMethod === "online"
+                                    ? "border-brand-indigo bg-brand-indigo/10"
+                                    : "border-border-strong bg-transparent"
                                 }`}
                               >
                                 {paymentMethod === "online" && (
-                                  <div className="w-2 h-2 rounded-full bg-brand-indigo" />
+                                  <div className="w-2.5 h-2.5 rounded-full bg-brand-indigo" />
                                 )}
                               </div>
                             </div>
@@ -1166,16 +1229,16 @@ export default function CheckoutPage() {
                               </p>
                             </div>
                           </div>
-                          <Lock size={16} className="text-brand-indigo shrink-0" />
+                          <Lock size={18} className="text-brand-indigo shrink-0 mt-0.5" />
                         </div>
                       </div>
 
                       {/* Option 2: Pay After Proof (Approval / COD) */}
                       <div
                         onClick={() => setPaymentMethod("cod_proof")}
-                        className={`p-5 rounded-2xl cursor-pointer border transition-all ${
+                        className={`p-5 rounded-2xl cursor-pointer border-2 transition-all ${
                           paymentMethod === "cod_proof"
-                            ? "border-2 border-brand-indigo bg-brand-indigo/5 shadow-xs"
+                            ? "border-brand-indigo bg-brand-indigo/5 shadow-xs"
                             : "border-border-subtle hover:border-border-strong bg-bg-surface"
                         }`}
                       >
@@ -1183,25 +1246,32 @@ export default function CheckoutPage() {
                           <div className="flex items-start gap-3">
                             <div className="pt-0.5">
                               <div
-                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                  paymentMethod === "cod_proof" ? "border-brand-indigo" : "border-border-strong"
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                  paymentMethod === "cod_proof"
+                                    ? "border-brand-indigo bg-brand-indigo/10"
+                                    : "border-border-strong bg-transparent"
                                 }`}
                               >
                                 {paymentMethod === "cod_proof" && (
-                                  <div className="w-2 h-2 rounded-full bg-brand-indigo" />
+                                  <div className="w-2.5 h-2.5 rounded-full bg-brand-indigo" />
                                 )}
                               </div>
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-text-primary">
-                                Pay After Digital Proof Approval
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-bold text-text-primary">
+                                  Pay After Digital Proof Approval
+                                </p>
+                                <span className="px-2 py-0.5 rounded-md bg-brand-indigo/10 text-brand-indigo text-[10px] font-bold">
+                                  ZERO RISK
+                                </span>
+                              </div>
                               <p className="text-xs text-text-secondary mt-1">
                                 Our design team sends your final print proof on WhatsApp before printing starts. Pay securely upon your full approval.
                               </p>
                             </div>
                           </div>
-                          <FileCheck size={16} className="text-text-muted shrink-0" />
+                          <FileCheck size={18} className="text-text-muted shrink-0 mt-0.5" />
                         </div>
                       </div>
                     </div>
@@ -1222,26 +1292,26 @@ export default function CheckoutPage() {
                       </label>
 
                       {isGstRequired && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-border-subtle">
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-semibold text-text-secondary">Company Legal Name</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 pt-3 border-t border-border-subtle">
+                          <div className="space-y-1.5">
+                            <label className="block text-xs font-semibold text-text-secondary">Company Legal Name</label>
                             <input
                               type="text"
                               value={companyName}
                               onChange={(e) => setCompanyName(e.target.value)}
                               placeholder="e.g. Star Press Pvt Ltd"
-                              className="w-full h-10 px-3 rounded-xl border border-border-subtle bg-bg-surface-alt text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-indigo"
+                              className="w-full h-11 px-3.5 rounded-xl border border-border-subtle bg-bg-surface-alt text-xs sm:text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/20 transition-all"
                             />
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-semibold text-text-secondary">15-Digit GSTIN</label>
+                          <div className="space-y-1.5">
+                            <label className="block text-xs font-semibold text-text-secondary">15-Digit GSTIN</label>
                             <input
                               type="text"
                               value={gstin}
                               onChange={(e) => setGstin(e.target.value.toUpperCase())}
                               placeholder="07AAAAA0000A1Z5"
                               maxLength={15}
-                              className="w-full h-10 px-3 rounded-xl border border-border-subtle bg-bg-surface-alt text-xs font-mono uppercase text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-indigo"
+                              className="w-full h-11 px-3.5 rounded-xl border border-border-subtle bg-bg-surface-alt text-xs sm:text-sm font-mono uppercase text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/20 transition-all"
                             />
                           </div>
                         </div>
@@ -1303,7 +1373,12 @@ export default function CheckoutPage() {
                               {materialLabel && (
                                 <p className="text-[11px] text-text-secondary">{materialLabel}</p>
                               )}
-                              <p className="text-[11px] text-text-secondary">Qty: {item.quantity}</p>
+                              <div className="flex items-center gap-2 pt-0.5">
+                                <p className="text-[11px] text-text-secondary">Qty: {item.quantity}</p>
+                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                  ● In Stock
+                                </span>
+                              </div>
                             </div>
                           </div>
 
@@ -1334,11 +1409,11 @@ export default function CheckoutPage() {
                             value={couponInput}
                             onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                             placeholder="PROMO CODE"
-                            className="flex-1 h-9 px-3 rounded-xl border border-border-subtle bg-bg-surface-alt text-xs font-mono uppercase text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-indigo"
+                            className="flex-1 h-10 px-3.5 rounded-xl border border-border-subtle bg-bg-surface-alt text-xs font-mono uppercase text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/20 transition-all"
                           />
                           <button
                             type="submit"
-                            className="h-9 px-3.5 rounded-xl bg-brand-yellow text-brand-dark font-bold text-xs hover:brightness-105 transition-colors"
+                            className="h-10 px-4 rounded-xl bg-brand-yellow text-brand-dark font-bold text-xs hover:brightness-105 transition-colors"
                           >
                             Apply
                           </button>
@@ -1531,6 +1606,83 @@ export default function CheckoutPage() {
                   <p className="text-xs text-text-muted mt-1">Phone: {addr.phone}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clean Submission Overlay (No raw background process text) */}
+      {isSubmitting && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-bg-surface rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl border border-border-subtle animate-fadeIn">
+            <div className="w-16 h-16 rounded-full bg-brand-indigo/10 text-brand-indigo flex items-center justify-center mx-auto">
+              <Loader2 size={36} className="animate-spin text-brand-indigo" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-text-primary">
+                Processing Your Order Securely
+              </h3>
+              <p className="text-xs text-text-secondary mt-1">
+                Verifying inventory and registering your order. Please do not close or reload this window...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Authentication Required Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-bg-surface rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-5 shadow-2xl border border-border-subtle text-center animate-fadeIn">
+            <div className="w-16 h-16 rounded-2xl bg-brand-indigo/10 text-brand-indigo flex items-center justify-center mx-auto shadow-inner">
+              <Lock size={30} className="text-brand-indigo" />
+            </div>
+
+            <div>
+              <h3 className="font-display font-bold text-xl sm:text-2xl text-text-primary">
+                Sign In to Complete Order
+              </h3>
+              <p className="text-xs sm:text-sm text-text-secondary mt-2">
+                User authentication is mandatory before placing an order. Your cart items ({items.reduce((acc, it) => acc + it.quantity, 0)} units, ₹{grandTotal.toLocaleString("en-IN")}) have been securely preserved.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-bg-surface-alt border border-border-subtle flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-text-secondary">
+                <ShoppingBag size={15} className="text-brand-indigo" />
+                <span>Cart Status</span>
+              </div>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <CheckCircle2 size={13} />
+                Preserved & Safe
+              </span>
+            </div>
+
+            <div className="space-y-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => router.push("/login?callbackUrl=/checkout")}
+                className="w-full h-12 rounded-xl bg-brand-indigo hover:bg-brand-indigo/90 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-brand-indigo/25 transition-all cursor-pointer"
+              >
+                <span>Sign In to Continue Checkout</span>
+                <ArrowRight size={16} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => router.push("/register?callbackUrl=/checkout")}
+                className="w-full h-11 rounded-xl bg-bg-surface-alt hover:bg-border-subtle text-text-primary font-semibold text-xs transition-colors border border-border-subtle cursor-pointer"
+              >
+                Create New Star Press Account
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAuthModal(false)}
+                className="text-xs text-text-muted hover:text-text-primary pt-1 font-medium transition-colors cursor-pointer"
+              >
+                Review Cart & Delivery Details First
+              </button>
             </div>
           </div>
         </div>

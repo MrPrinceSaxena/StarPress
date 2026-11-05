@@ -143,6 +143,8 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
           customText: customText.trim() || undefined,
           notes: customNotes.trim() || undefined,
         },
+        stockQuantity: product.stockQuantity,
+        inStock: product.inStock,
       },
       quantity
     );

@@ -312,6 +312,21 @@ export default function CartPage() {
                                 <Sparkles size={10} />
                                 <span>Digital Proof Included</span>
                               </span>
+
+                              {/* Stock Badge */}
+                              {item.stockQuantity !== undefined && item.stockQuantity <= 0 ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-[10px] text-rose-400 font-bold uppercase tracking-wider">
+                                  Out of Stock
+                                </span>
+                              ) : item.stockQuantity !== undefined && item.stockQuantity <= 25 ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-400 font-semibold uppercase tracking-wider">
+                                  Only {item.stockQuantity} left
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-medium uppercase tracking-wider">
+                                  In Stock {item.stockQuantity ? `(${item.stockQuantity.toLocaleString("en-IN")})` : "(Ready)"}
+                                </span>
+                              )}
                             </div>
 
                             {/* Inscription Display */}
@@ -346,27 +361,39 @@ export default function CartPage() {
                         {/* Quantity Stepper & Subtotal */}
                         <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-border-subtle">
                           {/* Quantity Counter */}
-                          <div className="flex items-center border border-border-subtle rounded-xl bg-bg-surface-alt">
-                            <button
-                              type="button"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5 rounded-l-xl transition-colors active:scale-90"
-                              aria-label="Decrease quantity"
-                            >
-                              <Minus size={15} />
-                            </button>
-                            <span className="w-12 text-center font-mono font-bold text-sm text-text-primary select-none">
-                              {item.quantity}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5 rounded-r-xl transition-colors active:scale-90"
-                              aria-label="Increase quantity"
-                            >
-                              <Plus size={15} />
-                            </button>
-                          </div>
+                          {(() => {
+                            const maxStock = item.stockQuantity !== undefined ? item.stockQuantity : 5000;
+                            const isAtMax = item.quantity >= maxStock;
+                            return (
+                              <div className="flex items-center border border-border-subtle rounded-xl bg-bg-surface-alt">
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5 rounded-l-xl transition-colors active:scale-90"
+                                  aria-label="Decrease quantity"
+                                >
+                                  <Minus size={15} />
+                                </button>
+                                <span className="w-12 text-center font-mono font-bold text-sm text-text-primary select-none">
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={isAtMax}
+                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  className={`w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center text-text-secondary rounded-r-xl transition-colors ${
+                                    isAtMax
+                                      ? "opacity-30 cursor-not-allowed"
+                                      : "hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5 active:scale-90"
+                                  }`}
+                                  aria-label="Increase quantity"
+                                  title={isAtMax ? `Max available stock reached (${maxStock})` : "Increase quantity"}
+                                >
+                                  <Plus size={15} />
+                                </button>
+                              </div>
+                            );
+                          })()}
 
                           {/* Line Subtotal */}
                           <div className="text-right min-w-[90px]">
@@ -627,19 +654,44 @@ export default function CartPage() {
 
                 {/* Proceed to Checkout CTA */}
                 <div className="space-y-3 pt-2">
-                  <Link
-                    href={`/checkout${appliedPromo ? `?coupon=${encodeURIComponent(appliedPromo.code)}` : ""}`}
-                    className="block w-full"
-                  >
-                    <Button
-                      variant="primary"
-                      size="lg"
-                      className="w-full justify-center !py-4 font-black uppercase tracking-wider text-sm shadow-xl shadow-brand-yellow/15"
-                    >
-                      <span>Proceed to Checkout</span>
-                      <ArrowRight size={17} />
-                    </Button>
-                  </Link>
+                  {(() => {
+                    const hasOutOfStock = items.some(
+                      (it) => it.stockQuantity !== undefined && (it.stockQuantity <= 0 || it.quantity > it.stockQuantity)
+                    );
+                    if (hasOutOfStock) {
+                      return (
+                        <div className="space-y-2">
+                          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+                            <AlertCircle size={15} className="shrink-0" />
+                            <span>Some items exceed available stock. Please reduce quantity to proceed.</span>
+                          </div>
+                          <Button
+                            variant="primary"
+                            size="lg"
+                            disabled
+                            className="w-full justify-center !py-4 font-black uppercase tracking-wider text-sm opacity-50 cursor-not-allowed"
+                          >
+                            <span>Resolve Stock to Checkout</span>
+                          </Button>
+                        </div>
+                      );
+                    }
+                    return (
+                      <Link
+                        href={`/checkout${appliedPromo ? `?coupon=${encodeURIComponent(appliedPromo.code)}` : ""}`}
+                        className="block w-full"
+                      >
+                        <Button
+                          variant="primary"
+                          size="lg"
+                          className="w-full justify-center !py-4 font-black uppercase tracking-wider text-sm shadow-xl shadow-brand-yellow/15"
+                        >
+                          <span>Proceed to Checkout</span>
+                          <ArrowRight size={17} />
+                        </Button>
+                      </Link>
+                    );
+                  })()}
 
                   <div className="flex items-center justify-center gap-2 text-[11px] text-text-muted">
                     <Lock size={12} className="text-emerald-400" />

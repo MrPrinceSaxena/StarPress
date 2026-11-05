@@ -86,7 +86,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { session, status, isHydrated, signInWithGoogle } = useAuthSession();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/";
   const registered = searchParams.get("registered");
   const errorParam = searchParams.get("error");
 

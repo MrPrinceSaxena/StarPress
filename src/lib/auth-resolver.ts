@@ -43,7 +43,7 @@ export async function resolveUser(request?: NextRequest): Promise<ResolvedUser |
       const nextAuthSession = await getServerSession(authOptions);
       if (nextAuthSession?.user?.email) {
         resolved = {
-          id: nextAuthSession.user.id || "",
+          id: (nextAuthSession.user as any).id || "",
           email: nextAuthSession.user.email,
           name:
             nextAuthSession.user.name ||
