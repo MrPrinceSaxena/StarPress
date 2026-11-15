@@ -1,5 +1,6 @@
 "use client";
 
+import { priceConfiguration, productConfigurationSchema, configurationSelectionSchema } from "@/lib/product-configuration";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export interface CartItemCustomizations {
@@ -191,6 +192,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           item.stockQuantity !== undefined && item.stockQuantity > 0 && quantity > item.stockQuantity
             ? item.stockQuantity
             : quantity;
+        if (item.specs?.configurationSelection) {
+          try {
+            const config = productConfigurationSchema.parse(item.specs.configuration);
+            const selection = configurationSelectionSchema.parse(item.specs.configurationSelection);
+            const price = priceConfiguration(config, finalQty, selection.selections, selection.addOnIds);
+            return { ...item, quantity: finalQty, price: price.totalPaise / 100 / finalQty };
+          } catch { return item; }
+        }
         return { ...item, quantity: finalQty };
       })
     );

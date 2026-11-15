@@ -124,6 +124,7 @@ model Product {
   updatedAt          DateTime       @updatedAt
   cartItems          CartItem[]
   orderItems         OrderItem[]
+  configurationDraft ProductConfigurationDraft?
   pricingRules       PricingRule[]
   category           Category       @relation(fields: [categoryId], references: [id])
   images             ProductImage[]
@@ -425,4 +426,15 @@ enum OrderStatus {
   DISPATCHED
   DELIVERED
   CANCELLED
+}
+
+// Draft configuration is deliberately separate from published product behavior.
+model ProductConfigurationDraft {
+  productId String @id
+  revision Int @default(1)
+  published Json?
+  configuration Json
+  updatedAt DateTime @updatedAt
+  updatedBy String
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }

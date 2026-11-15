@@ -1,5 +1,6 @@
 'use client';
 
+import ProductConfigurationEditor from '@/components/admin/ProductConfigurationEditor';
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import {
@@ -543,86 +544,7 @@ export default function ProductDetailPage({ params }: { params?: { id?: string }
             </div>
           )}
 
-          {activeTab === 'variants' && (
-            <div className="space-y-5">
-              <div>
-                <h2 className="text-base font-bold text-slate-900">Product Variants</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Configure attributes such as sizes, finishes, paper weights, or colors.</p>
-              </div>
-              {variantOptions.map((opt, idx) => (
-                <div key={idx} className="p-4.5 rounded-xl bg-slate-50/70 border border-[#E5E7EB] space-y-3.5">
-                  <div className="flex items-center justify-between">
-                    <InputGroup label={`Option ${idx + 1}`}>
-                      <input
-                        type="text"
-                        value={opt.name}
-                        onChange={(e) => {
-                          const u = [...variantOptions];
-                          u[idx] = { ...u[idx], name: e.target.value };
-                          setVariantOptions(u);
-                        }}
-                        placeholder="e.g. Size, Color"
-                        className={inputClass + ' max-w-xs'}
-                      />
-                    </InputGroup>
-                    <button
-                      type="button"
-                      onClick={() => setVariantOptions(variantOptions.filter((_, i) => i !== idx))}
-                      className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-white border border-[#E5E7EB] min-h-[40px] items-center">
-                    {opt.values.map((val) => (
-                      <span
-                        key={val}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700"
-                      >
-                        {val}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const u = [...variantOptions];
-                            u[idx] = { ...u[idx], values: u[idx].values.filter((v) => v !== val) };
-                            setVariantOptions(u);
-                          }}
-                          className="hover:text-rose-600 text-slate-400 transition-colors cursor-pointer"
-                        >
-                          <X size={12} />
-                        </button>
-                      </span>
-                    ))}
-                    <input
-                      type="text"
-                      placeholder="Add value…"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const val = (e.target as HTMLInputElement).value.trim();
-                          if (val && !opt.values.includes(val)) {
-                            const u = [...variantOptions];
-                            u[idx] = { ...u[idx], values: [...u[idx].values, val] };
-                            setVariantOptions(u);
-                            (e.target as HTMLInputElement).value = '';
-                          }
-                        }
-                      }}
-                      className="flex-1 min-w-[100px] bg-transparent text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none px-1"
-                    />
-                  </div>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => setVariantOptions([...variantOptions, { name: '', values: [] }])}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-slate-800 hover:text-black bg-slate-100 hover:bg-slate-200 border border-[#E5E7EB] transition-colors cursor-pointer"
-              >
-                <Plus size={14} /> Add Option
-              </button>
-            </div>
-          )}
-
+          {activeTab === 'variants' && <ProductConfigurationEditor productId={id} />}
           {activeTab === 'shipping' && (
             <div className="space-y-5">
               <div>

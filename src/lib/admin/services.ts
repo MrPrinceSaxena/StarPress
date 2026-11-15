@@ -23,7 +23,7 @@ import type {
 
 
 // Helper to safely fetch from window origin with Supabase Bearer token attached
-async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   let authHeader: Record<string, string> = {};
 
   if (typeof window !== 'undefined') {

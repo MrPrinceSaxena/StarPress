@@ -41,6 +41,7 @@ interface OrderItem {
   unitPrice: number;
   lineTotal: number;
   specs?: any;
+  artworkUrl?: string | null;
   customText?: string | null;
   previewUrl?: string | null;
 }
@@ -187,6 +188,7 @@ export default function OrderDetailPage() {
             notes: specs.notes,
           },
           specs: item.specs,
+          artworkUrl: item.artworkUrl || undefined,
         },
         item.quantity
       );

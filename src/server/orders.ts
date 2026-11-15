@@ -1,3 +1,4 @@
+import type { ConfigurationSelection } from "@/lib/product-configuration";
 import { orderRequestHash, assertSameOrderRequest, claimOrderCoupon, mergeOrderNotes } from "./order-integrity";
 import { db } from "@/lib/db";
 import { Prisma, OrderStatus } from "@prisma/client";
@@ -36,12 +37,14 @@ export interface CreateOrderInput {
   paymentMethod?: string;
   notes?: string;
   items: Array<{
+    configuration?: ConfigurationSelection;
     productId?: string;
     slug?: string;
     productSlug?: string;
     quantity: number;
     sizeId?: string;
     materialId?: string;
+    productionNotes?: string;
     customText?: string;
     artworkUrl?: string;
     previewUrl?: string;
@@ -111,13 +114,28 @@ export async function createOrder(input: CreateOrderInput, client: typeof db = d
     throw err;
   }
 
+  for (const item of input.items) {
+    if (!item.configuration || !item.artworkUrl) continue;
+    const prefix = "/api/artwork?path=";
+    let path = "";
+    try { path = decodeURIComponent(item.artworkUrl.slice(prefix.length)); } catch {}
+    if (!input.userId || !item.artworkUrl.startsWith(prefix) || !path.startsWith(`${input.userId}/`) || !/^[a-zA-Z0-9_-]+\/[a-f0-9-]{36}$/.test(path)) {
+      throw Object.assign(new Error("Upload artwork using your own account."), { statusCode: 400 });
+    }
+    const { getAdminClient } = await import("@/lib/supabase/admin");
+    const { data, error } = await getAdminClient().storage.from("customer-artwork").list(input.userId, { search: path.split("/")[1], limit: 1 });
+    if (error || !data?.some(file => file.name === path.split("/")[1])) throw Object.assign(new Error("Artwork upload could not be verified."), { statusCode: 400 });
+  }
+
   // 4. Authoritative server quote calculation (NEVER trust client unit prices or totals)
   const quoteItems: QuoteItemInput[] = input.items.map((it) => ({
+    configuration: it.configuration,
     productId: it.productId,
     slug: it.slug || it.productSlug,
     quantity: it.quantity,
     sizeId: it.sizeId,
     materialId: it.materialId,
+    productionNotes: it.productionNotes,
     customText: it.customText,
     artworkUrl: it.artworkUrl,
     previewUrl: it.previewUrl,
@@ -221,6 +239,13 @@ export async function createOrder(input: CreateOrderInput, client: typeof db = d
           }
         }
         await claimOrderCoupon(tx, quote, quote.grandTotal === 0 ? "PAY_AFTER_PROOF" : normalizedPaymentMethod);
+        for (const item of [...quote.lineSnapshots].filter(i => i.specs.configurationSelection).sort((a, b) => (a.productId || '').localeCompare(b.productId || ''))) {
+          await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${item.productId} FOR UPDATE`;
+          const current = await tx.productConfigurationDraft.findUnique({ where: { productId: item.productId! } });
+          if ((current?.published as { revision?: number } | null)?.revision !== item.specs.configurationSelection.revision) {
+            throw Object.assign(new Error("Product options changed. Refresh checkout."), { statusCode: 409 });
+          }
+        }
         const created = await tx.order.create({
           data: {
             orderNumber: currentOrderNumber,

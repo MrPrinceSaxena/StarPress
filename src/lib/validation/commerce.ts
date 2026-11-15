@@ -1,14 +1,17 @@
+import { configurationSelectionSchema } from "@/lib/product-configuration";
 import { z } from "zod";
 
 const shortText = z.string().trim().max(200);
 export const quoteInputSchema = z.object({
   items: z.array(z.object({
+    configuration: configurationSelectionSchema.optional(),
     productId: shortText.optional(),
     slug: shortText.optional(),
     productSlug: shortText.optional(),
     quantity: z.number().int().positive().max(1000000),
     sizeId: shortText.optional(),
     materialId: shortText.optional(),
+    productionNotes: z.string().trim().max(2000).optional(),
     customText: z.string().max(5000).optional(),
     artworkUrl: z.string().max(2048).optional(),
     previewUrl: z.string().max(2048).optional(),

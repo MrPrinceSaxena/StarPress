@@ -23,7 +23,8 @@
     "typecheck": "tsc --noEmit",
     "test:audit": "node scripts/local-check.cjs audit",
     "build:local": "node scripts/local-check.cjs build",
-    "test:local": "node scripts/local-check.cjs all"
+    "test:local": "node scripts/local-check.cjs all",
+    "test:configuration": "node scripts/test-product-configuration.cjs"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

@@ -59,6 +59,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const [activeSection, setActiveSection] = useState<string>("");
 
   const isHome = pathname === "/";
+  const heroControls = isHome && !isScrolled;
   const [announcement, setAnnouncement] = useState<{ text: string; isActive: boolean; color: string } | null>(
     () => clientAnnouncementCache
   );
@@ -385,7 +386,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 type="button"
                 onClick={() => setIsSearchOpen((prev) => !prev)}
                 aria-label="Search products"
-                className="p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
+                className={`p-2 rounded-lg border min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-brand-yellow ${heroControls ? "text-white border-white bg-black/50 hover:bg-black/70" : "text-text-secondary border-border-subtle hover:bg-black/5"}`}
               >
                 <Search size={19} />
               </button>
@@ -428,13 +429,13 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               onClick={toggleTheme}
               aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
               title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              className="p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center relative group"
+              className={`p-2 rounded-lg border min-h-[44px] min-w-[44px] flex items-center justify-center relative group focus-visible:ring-2 focus-visible:ring-brand-yellow ${heroControls ? "text-white border-white bg-black/50 hover:bg-black/70" : "text-text-secondary border-border-subtle"}`}
             >
               {isMounted ? (
                 theme === "dark" ? (
                   <Sun size={19} className="text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
                 ) : (
-                  <Moon size={19} className="text-slate-700 group-hover:-rotate-12 transition-transform duration-300" />
+                  <Moon size={19} className={`${heroControls ? "text-white" : "text-slate-700"} group-hover:-rotate-12 transition-transform duration-300`} />
                 )
               ) : (
                 <div className="w-5 h-5 rounded-full bg-border-subtle animate-pulse" />
@@ -445,7 +446,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             <Link
               href="/cart"
               aria-label={`Cart with ${cartCount} items`}
-              className="relative p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] flex items-center justify-center"
+              className={`relative p-2 rounded-lg border min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-brand-yellow ${heroControls ? "text-white border-white bg-black/50 hover:bg-black/70" : "text-text-secondary border-border-subtle"}`}
             >
               <ShoppingBag size={20} />
               {cartCount > 0 && (
@@ -470,7 +471,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   aria-label={`User menu for ${session.user.name || session.user.email}`}
                   aria-haspopup="menu"
                   aria-expanded={isProfileOpen}
-                  className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-border-subtle transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
+                  className={`flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-full border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow ${heroControls ? "border-white bg-black/50 text-white" : "border-transparent hover:border-border-subtle hover:bg-black/5"}`}
                 >
                   <div className="relative">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all shadow-sm bg-brand-yellow text-black">
@@ -479,7 +480,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-bg-base bg-emerald-400" />
                   </div>
 
-                  <span className="hidden xl:inline-block text-xs font-semibold text-text-primary max-w-[85px] truncate">
+                  <span className={`hidden xl:inline-block text-xs font-semibold max-w-[85px] truncate ${heroControls ? "text-white" : "text-text-primary"}`}>
                     {session.user.name?.split(" ")[0] || "Account"}
                   </span>
 

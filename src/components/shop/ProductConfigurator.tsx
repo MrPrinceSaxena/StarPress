@@ -103,6 +103,8 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
 
     // Generate deterministic ID so same options merge, different options remain distinct
     const customKey = [
+      encodeURIComponent(customNotes.trim()),
+      encodeURIComponent(customInitials.trim()),
       product.id,
       sizeId || "default",
       materialId || "default",
@@ -404,10 +406,12 @@ export default function ProductConfigurator({ product }: ProductConfiguratorProp
 
         {/* Print Notes / Special Instructions */}
         <div className="space-y-1.5 pt-2 border-t border-border-subtle/60">
-          <label className="block text-xs text-text-secondary font-medium">
+          <label htmlFor="production-notes" className="block text-xs text-text-secondary font-medium">
             Production Instructions / Special Requests
           </label>
           <textarea
+            id="production-notes"
+            maxLength={2000}
             rows={2}
             placeholder="e.g. Center-aligned foil stamp, deliver before Friday, etc."
             value={customNotes}

@@ -1,3 +1,5 @@
+import ConfiguredProduct from "@/components/shop/ConfiguredProduct";
+import { readPublishedConfiguration } from "@/server/product-configuration";
 import React from "react";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
@@ -221,7 +223,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
           {/* Right Column: Interactive Multi-Attribute Price Configurator */}
           <div className="lg:col-span-6">
-            <ProductConfigurator product={product} />
+            {await readPublishedConfiguration(product.id).then(config => config ? <ConfiguredProduct product={product} config={config} /> : <ProductConfigurator product={product} />)}
           </div>
         </div>
 

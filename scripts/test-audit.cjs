@@ -266,6 +266,21 @@ async function main() {
     await assert.rejects(updateAdminProduct('p', { name: 'Changed', images: [{ url: 'https://example.test/image.png' }] }, 'admin@example.test'), /could not be saved/);
     assert.equal(name, 'Original');
   });
+  await test('Published configuration prices add-ons and preserves immutable selections', async () => {
+    process.env.PRODUCT_CONFIGURATION_ENABLED = 'true';
+    const configuration = { version: 1, revision: 2, quantity: { unit: 'pack', piecesPerUnit: 100, minimum: 1, maximum: 10, step: 1 }, unitPricePaise: 29900, options: [], addOns: [{ id: 'design', label: 'Design', pricePaise: 50000, charge: 'per_order' }], fields: [{ id: 'name', label: 'Name', required: true, maxLength: 50 }], artwork: { mode: 'optional', instructions: '' } };
+    const configuredClient = { product: { findFirst: async () => ({ id: 'configured', slug: 'business-cards', name: 'Cards', status: 'published', basePrice: 299 }) }, productConfigurationDraft: { findUnique: async () => ({ published: configuration }) } };
+    const item = { productId: 'configured', quantity: 2, configuration: { revision: 2, selections: {}, addOnIds: ['design'], fields: { name: 'Test' } } };
+    try {
+      const result = await quoteOrder({ items: [item] }, configuredClient);
+      assert.equal(result.subtotal, 1098);
+      assert.equal(result.lineSnapshots[0].specs.pieces, 200);
+      assert.deepEqual(result.lineSnapshots[0].specs.selection, item.configuration);
+      await assert.rejects(quoteOrder({ items: [{ ...item, configuration: { ...item.configuration, revision: 1 } }] }, configuredClient), /changed/);
+      await assert.rejects(quoteOrder({ items: [{ productId: 'configured', quantity: 2 }] }, configuredClient), /Configure/);
+      await assert.rejects(quoteOrder({ items: [{ ...item, configuration: { ...item.configuration, fields: {} } }] }, configuredClient), /Name/);
+    } finally { process.env.PRODUCT_CONFIGURATION_ENABLED = 'false'; }
+  });
   console.log(`\n${count} offline regression checks passed.`);
 }
 if (process.argv[2]) {

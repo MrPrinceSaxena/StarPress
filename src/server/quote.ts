@@ -1,15 +1,20 @@
+import { readPublishedConfiguration } from "@/server/product-configuration";
+import { priceConfiguration, validateConfigurationSelection } from "@/lib/product-configuration";
+import type { ConfigurationSelection } from "@/lib/product-configuration";
 import { quoteInputSchema } from "../lib/validation/commerce";
 import { db } from "../lib/db";
 import { calculateProductPrice, PriceBreakdown } from "../lib/pricing";
 import { getProductBySlug, CATALOG_PRODUCTS, CatalogProduct } from "../lib/catalog";
 
 export interface QuoteItemInput {
+  configuration?: ConfigurationSelection;
   productId?: string;
   slug?: string;
   productSlug?: string;
   quantity: number;
   sizeId?: string;
   materialId?: string;
+  productionNotes?: string;
   customText?: string;
   artworkUrl?: string;
   previewUrl?: string;
@@ -294,6 +299,28 @@ export async function quoteOrder(
         client
       );
 
+    const published = productId ? await readPublishedConfiguration(productId, client) : null;
+    if (published) {
+      try {
+        if (!item.configuration) throw new Error("Configure this product before checkout.");
+        validateConfigurationSelection(published, item.configuration);
+        if (published.artwork.mode === "required" && !item.artworkUrl) throw new Error("Artwork is required for this product.");
+        const priced = priceConfiguration(published, quantity, item.configuration.selections, item.configuration.addOnIds);
+        const lineTotal = priced.totalPaise / 100;
+        subtotal += lineTotal;
+        lineSnapshots.push({ productId, productName, productSlug, quantity, unitPrice: lineTotal / quantity, lineTotal,
+          specs: { configuration: published, configurationSelection: item.configuration, selection: item.configuration, pieces: priced.pieces, productionNotes: item.productionNotes, unitPrice: lineTotal / quantity, subtotal: lineTotal },
+          customText: [
+            ...published.options.map(o => `${o.label}: ${o.choices.find(c => c.id === item.configuration!.selections[o.id])?.label || 'None'}`),
+            ...published.addOns.filter(a => item.configuration!.addOnIds.includes(a.id)).map(a => `Add-on: ${a.label}`),
+            ...published.fields.map(f => `${f.label}: ${item.configuration!.fields[f.id] || ''}`),
+            `Quantity: ${quantity} ${published.quantity.unit}(s), ${priced.pieces} pieces`,
+          ].join('\n'),
+          artworkUrl: item.artworkUrl, previewUrl: item.previewUrl, requiresArtwork: published.artwork.mode === "required" });
+        continue;
+      } catch (error) { throw Object.assign(error as Error, { statusCode: 400 }); }
+    }
+    if (item.configuration) throw Object.assign(new Error("Product configuration is unavailable. Reconfigure this item."), { statusCode: 409 });
     if ((item.sizeId && !config.sizeOptions.some((option) => option.id === item.sizeId)) ||
         (item.materialId && !config.materialOptions.some((option) => option.id === item.materialId))) {
       throw Object.assign(new Error("Selected product option is unavailable."), { statusCode: 400 });
@@ -323,6 +350,7 @@ export async function quoteOrder(
         sizeLabel: selectedSize?.label || "Standard",
         materialId: item.materialId || selectedMaterial?.id,
         materialLabel: selectedMaterial?.label || "Standard",
+        productionNotes: item.productionNotes?.trim() || undefined,
         customText: item.customText?.trim() || undefined,
         artworkUrl: item.artworkUrl || undefined,
         previewUrl: item.previewUrl || config.images[0] || undefined,

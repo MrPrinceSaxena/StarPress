@@ -11,6 +11,7 @@ for (const file of ['.env', '.env.local', '.env.production', '.env.production.lo
   }
 }
 Object.assign(env, {
+  PRODUCT_CONFIGURATION_ENABLED: "false",
   DATABASE_URL: 'postgresql://local_check:local_check@127.0.0.1:1/local_check?connect_timeout=1',
   NEXTAUTH_SECRET: 'local-check-only-secret-never-use-in-production',
   NEXTAUTH_URL: 'http://localhost:3000',
