@@ -386,9 +386,13 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 type="button"
                 onClick={() => setIsSearchOpen((prev) => !prev)}
                 aria-label="Search products"
-                className={`p-2 rounded-lg border min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-brand-yellow ${heroControls ? "text-white border-white bg-black/50 hover:bg-black/70" : "text-text-secondary border-border-subtle hover:bg-black/5"}`}
+                className={`p-2 rounded-full min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow ${
+                  heroControls
+                    ? "text-white hover:text-brand-yellow hover:bg-white/10"
+                    : "text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5"
+                }`}
               >
-                <Search size={19} />
+                <Search size={20} />
               </button>
 
               {/* Quick Search Popover */}
@@ -429,13 +433,17 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               onClick={toggleTheme}
               aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
               title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              className={`p-2 rounded-lg border min-h-[44px] min-w-[44px] flex items-center justify-center relative group focus-visible:ring-2 focus-visible:ring-brand-yellow ${heroControls ? "text-white border-white bg-black/50 hover:bg-black/70" : "text-text-secondary border-border-subtle"}`}
+              className={`p-2 rounded-full min-h-[40px] min-w-[40px] flex items-center justify-center relative group transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow ${
+                heroControls
+                  ? "text-white hover:text-brand-yellow hover:bg-white/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5"
+              }`}
             >
               {isMounted ? (
                 theme === "dark" ? (
-                  <Sun size={19} className="text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
+                  <Sun size={20} className="text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
                 ) : (
-                  <Moon size={19} className={`${heroControls ? "text-white" : "text-slate-700"} group-hover:-rotate-12 transition-transform duration-300`} />
+                  <Moon size={20} className={`${heroControls ? "text-white" : "text-slate-700"} group-hover:-rotate-12 transition-transform duration-300`} />
                 )
               ) : (
                 <div className="w-5 h-5 rounded-full bg-border-subtle animate-pulse" />
@@ -446,11 +454,15 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             <Link
               href="/cart"
               aria-label={`Cart with ${cartCount} items`}
-              className={`relative p-2 rounded-lg border min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-brand-yellow ${heroControls ? "text-white border-white bg-black/50 hover:bg-black/70" : "text-text-secondary border-border-subtle"}`}
+              className={`relative p-2 rounded-full min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow ${
+                heroControls
+                  ? "text-white hover:text-brand-yellow hover:bg-white/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5"
+              }`}
             >
               <ShoppingBag size={20} />
               {cartCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-brand-magenta text-white font-black text-[10px] min-w-[17px] h-[17px] rounded-full flex items-center justify-center shadow-md animate-in zoom-in">
+                <span className="absolute top-0 right-0 bg-brand-magenta text-white font-black text-[10px] min-w-[17px] h-[17px] rounded-full flex items-center justify-center shadow-md animate-in zoom-in">
                   {cartCount}
                 </span>
               )}
@@ -499,12 +511,16 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   aria-label="Sign In or Register"
                   aria-haspopup="menu"
                   aria-expanded={isProfileOpen}
-                  className="flex items-center gap-1 p-2 text-text-secondary hover:text-text-primary rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] justify-center"
+                  className={`flex items-center gap-1 p-2 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow min-h-[40px] min-w-[40px] justify-center ${
+                    heroControls
+                      ? "text-white hover:text-brand-yellow hover:bg-white/10"
+                      : "text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5"
+                  }`}
                 >
                   <User size={20} />
                   <ChevronDown
                     size={13}
-                    className={`text-slate-500 transition-transform duration-200 ${
+                    className={`${heroControls ? "text-white/70" : "text-slate-500"} transition-transform duration-200 ${
                       isProfileOpen ? "rotate-180 text-brand-yellow" : ""
                     }`}
                   />
